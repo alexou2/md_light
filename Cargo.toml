@@ -7,8 +7,11 @@ edition = "2021"
 
 [dependencies]
 actix-web = "4.3.1"
-reqwest = "0.11.18"
-router = "0.6.0"
+# anyhow = "1.0.72"
+# mangadex = "0.1.2"
+maud = "0.25.0"
+reqwest = { version = "0.11.18", features = ["blocking"] }
 serde = "1.0.181"
 serde_json = "1.0.104"
-tera = "1.19.0"
+# tera = "1.19.0"
+# tokio = { version = "1.29.1", features = ["full"] }
