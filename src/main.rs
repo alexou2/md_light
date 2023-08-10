@@ -2,16 +2,17 @@
 // use serde;
 // use serde_json;
 // use tera::Tera;
+mod md_struct;
 mod online_md;
-mod struct_constructor;
 mod templates;
-use actix_web::{get, web, App, HttpServer, Responder};
+use actix_web::{get, web, App, HttpServer, Responder, HttpResponse, http::StatusCode};
 use reqwest::header::HeaderName;
 use std::{
     os::unix::process,
     time::{Duration, SystemTime},
 };
-
+use serde_json::Value;
+use serde_json::*;
 #[get("/")]
 async fn index() -> impl Responder {
     //    let t = online_md::test_connection().await;
@@ -38,6 +39,22 @@ async fn get_chapter(path: web::Path<(String, String)>) -> impl Responder {
 
     format!("Manga: {}, Chapter: {}", manga_name, chapter_number)
 }
+
+#[get("/search/{query}")]
+async fn search_for_manga(name: web::Path<String>) -> HttpResponse {
+    
+    let t = online_md::search_manga(name.to_string()).await.unwrap();
+    // format!("search for {}", name)
+    // let y = &t[1].manga_name.to_string();
+    // y.to_owned()
+  let html =   templates::render_search_page(t);
+    // "<h1>sdfsdf</h1>".to_string()
+    HttpResponse::build(StatusCode::OK)
+        .content_type("text/html; charset=utf-8")
+        .body(html)
+
+}
+
 #[get("/server/kill")]
 async fn kill_server() -> impl Responder {
     println!("The server was killed with exit code 1");
@@ -55,6 +72,7 @@ async fn main() -> std::io::Result<()> {
             .service(kill_server)
             .service(get_chapter)
             .service(get_manga_info)
+            .service(search_for_manga)
     })
     .bind(("127.0.0.1", 8080))?
     .run()
