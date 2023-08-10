@@ -5,6 +5,7 @@
 mod md_struct;
 mod online_md;
 mod templates;
+mod utills;
 use actix_web::{get, web, App, HttpServer, Responder, HttpResponse, http::StatusCode};
 use reqwest::header::HeaderName;
 use std::{
@@ -14,20 +15,26 @@ use std::{
 use serde_json::Value;
 use serde_json::*;
 #[get("/")]
-async fn index() -> impl Responder {
+async fn index() -> HttpResponse {
     //    let t = online_md::test_connection().await;
     //    println!("{}", t.unwrap());
-    match online_md::test_connection().await {
-        Ok(e) => return "connection established",
-        Err(v) => return "no connection with the server",
-    }
+    let feed = online_md::get_md_homepage_feed().await.unwrap();
+    // match online_md::test_connection().await {
+    //     Ok(e) => return "connection established",
+    //     Err(v) => return "no connection with the server",
+    // }
+    let popular = online_md::get_popular_manga().await.unwrap();
+    let html = templates::render_homepage(popular);
+    HttpResponse::build(StatusCode::OK)
+        .content_type("text/html; charset=utf-8")
+        .body(html)
 }
 
 #[get("/{name}")]
 async fn hello(name: web::Path<String>) -> impl Responder {
     format!("Hello {}u suck!", &name)
 }
-#[get("/manga/{name}")]
+#[get("/manga/{id}")]
 async fn get_manga_info(name: web::Path<String>) -> impl Responder {
     format!("infos about {} not found", &name)
 }

@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 actix-web = "4.3.1"
+chrono = "0.4.26"
 # anyhow = "1.0.72"
 # mangadex = "0.1.2"
 maud = "0.25.0"
