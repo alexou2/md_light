@@ -29,24 +29,27 @@ pub struct MangaSearch {
 }
 // used in /manga/{id}
 pub struct MangaInfo {
-    pub manga_name: Value,
-    pub manga_id: Value,
+    pub manga_name: String,
+    pub manga_id: String,
     pub author: Vec<Author>,
-
-    pub tags: Vec<Value>,
+    pub tags: Vec<String>,
     pub thumbnail: String,
-    pub status: Value,
-    pub original_language: Value,
-    pub translated_languages: Vec<Value>,
-    pub chapters: Vec<ChapterInfo>,
+    pub status: String,
+    pub original_language: String,
+    pub translated_languages: Vec<String>,
+    pub year: Option<i64>,
+    pub description: String,
+     // pub chapters: Vec<ChapterInfo>,
 }
 pub struct Author {
-    pub author_name: Value,
-    pub author_id: Value,
+    pub author_name: String,
+    pub author_id: String,
+    pub role:String
 }
 pub struct ChapterInfo {
-    pub tl_group: Value,
+    pub tl_group: String,
     pub chapter_name: String,
+    pub language: String,
     pub chapter_id: Value,
 }
 pub struct AuthorInfo {

@@ -6,7 +6,7 @@ use chrono::Date;
 use reqwest;
 use serde_json::json;
 use serde_json::{from_str, Value};
-use std::{error::Error, fmt::format};
+use std::{error::Error, fs::write};
 
 const BASE_URL: &'static str = "https://api.mangadex.org";
 
@@ -16,11 +16,12 @@ pub async fn test_connection() -> Result<String, reqwest::Error> {
         .text()
         .await?)
 }
-
+// gets the informations for the homepage
 pub async fn get_md_homepage_feed() -> Result<MdHomepageFeed, Box<dyn Error>> {
     let popular_manga = get_popular_manga().await?;
     let new_chapters: Vec<NewChapters> = Vec::new();
 
+    // builds the struct for the popular titles+ new chapters
     let homepage_feed = MdHomepageFeed {
         currently_popular: popular_manga,
         new_chapter_releases: new_chapters,
@@ -41,17 +42,19 @@ pub async fn get_popular_manga() -> Result<Vec<PopularManga>, Box<dyn std::error
         r"https://api.mangadex.org/manga?includes[]=cover_art&includes[]=artist&includes[]=author&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive&hasAvailableChapters=true&createdAtSince={}",
         formatted_time
     );
-println!("{}", url);
+    println!("{}", url);
     let resp = reqwest::get(url).await?.text().await?;
     let json_resp: Value = serde_json::from_str(&resp)?;
 
     if let Some(response_data) = json_resp["data"].as_array() {
         let mut ranking_number = 1;
         for manga in response_data {
-            let title = &manga["attributes"]["title"]["en"].to_string().replace('"', "");
+            let title = &manga["attributes"]["title"]["en"]
+                .to_string()
+                .replace('"', "");
             let manga_id = &manga["id"].to_string().replace('"', "");
             let thumbnail = get_manga_cover(manga_id, manga)?;
-           
+
             let manga_instance = PopularManga {
                 manga_name: title.clone(),
                 thumbnail: thumbnail.clone(),
@@ -86,10 +89,11 @@ pub async fn search_manga(
             let original_language = &attributes["originalLanguage"].to_string().replace('"', "");
             let available_languages = &attributes["availableTranslatedLanguages"]
                 .as_array()
-                .unwrap();
+                .ok_or("available languages is not an array")?;
 
             let thumbnail = get_manga_cover(manga_id, &manga)?;
 
+            // creating the struct instnce containing all of the usefull ionfos about the manga
             let manga_attributes = MangaSearch {
                 manga_name: title.clone(),
                 manga_id: manga_id.clone(),
@@ -101,10 +105,10 @@ pub async fn search_manga(
             search_results.push(manga_attributes)
         }
     }
-    // std::fs::write("t.json", resp);
     Ok(search_results)
 }
 
+// gets the cover from the json
 pub fn get_manga_cover(manga_id: &String, manga: &Value) -> Result<String, Box<dyn Error>> {
     let mut thumbnail = String::new();
     if let Some(manga_cover) = manga["relationships"].as_array() {
@@ -120,4 +124,86 @@ pub fn get_manga_cover(manga_id: &String, manga: &Value) -> Result<String, Box<d
         }
     }
     Ok(thumbnail)
+}
+
+pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, Box<dyn Error>> {
+    let url = format!(
+        "{}/manga/{}?includes[]=author&includes[]=artist&includes[]=cover_art",
+        BASE_URL, manga_id
+    );
+    let resp = reqwest::get(&url).await?.text().await?;
+    let json_resp: Value = from_str(&resp)?;
+    let data = &json_resp["data"];
+    let attributes = &data["attributes"];
+    // gets all of the infos about manga
+    let manga_name = &attributes["title"]["en"].to_string().replace('"', "");
+    let thumbnail = get_manga_cover(&manga_id, &data)?;
+    let status = &attributes["status"].to_string().replace('"', "");
+    let original_language = &attributes["originalLanguage"].to_string().replace('"', "");
+    let description = &attributes["description"]["en"].to_string().replace('"', "");
+    println!("{}", &attributes["year"]);
+    let year = &attributes["year"].as_i64();
+    let mut author_list: Vec<Author> = Vec::new();
+    let mut tag_list = Vec::new();
+    let mut translated_language_list = Vec::new();
+
+    // transforming the json part containing the authors into an array
+    let author_json = data["relationships"]
+        .as_array()
+        .ok_or("authors is not an array")?;
+
+    // gets the list pf authors involved in the manga
+    for author in author_json {
+        // breaks the loop if the data isn't about an author/drawer
+        match author["type"].to_string().replace('"', "").as_str() {
+            "author" | "artist" => {
+                let author_name = &author["attributes"]["name"].to_string().replace('"', "");
+                let author_id = &author["id"].to_string().replace('"', "");
+                let role = &author["type"].to_string().replace('"', "");
+                let author_instance = Author {
+                    author_name: author_name.clone(),
+                    author_id: author_id.clone(),
+                    role: role.clone(),
+                };
+                author_list.push(author_instance)
+            }
+            _ => break,
+        }
+    }
+
+    let tag_json = attributes["tags"]
+        .as_array()
+        .ok_or("tags is not an array")?;
+
+    for tag in tag_json {
+        let tag_name = &tag["attributes"]["name"]["en"].to_string().replace('"', "");
+        tag_list.push(tag_name.clone());
+    }
+
+    let translation_options_json = attributes["availableTranslatedLanguages"]
+        .as_array()
+        .ok_or("translated_languages is not an array")?;
+
+    for language in translation_options_json {
+        translated_language_list.push(language.to_string().replace('"', ""));
+    }
+
+    // building the struct
+    let manga_info = MangaInfo {
+        manga_name: manga_name.clone(),
+        manga_id: manga_id,
+        author: author_list,
+        tags: tag_list,
+        thumbnail: thumbnail,
+        status: status.clone(),
+        original_language: original_language.clone(),
+        translated_languages: translated_language_list,
+        year: year.clone(),
+        description: description.clone(),
+    };
+    Ok(manga_info)
+}
+
+pub fn get_manga_chapters(manga_id: String) -> Result<Vec<ChapterInfo>, Box<dyn Error>> {
+    todo!()
 }
