@@ -16,7 +16,6 @@ use std::{
 };
 #[get("/")]
 async fn index() -> HttpResponse {
-    let feed = online_md::get_md_homepage_feed().await.unwrap();
 
     let popular = online_md::get_popular_manga().await.unwrap();
     let html = templates::render_homepage(popular);

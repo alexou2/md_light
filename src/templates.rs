@@ -27,9 +27,13 @@ pub fn render_manga_info_page(manga_info: MangaInfo) -> String {
         img src = {(manga_info.thumbnail)};
         h1 {(manga_info.manga_name)}
         h3{"authors: "}
-        @for author in manga_info.author{
-        p{(author.author_name)": "(author.role)}
-        };
+            @for author in manga_info.author{
+            p{(author.author_name)": "(author.role)}
+            };
+
+            @for chapter in manga_info.chapters{
+                p{(chapter.chapter_name)": "(chapter.language)"        "(chapter.i)}
+            };
 
     );
     println!("{}", manga_info.manga_id);
@@ -56,7 +60,7 @@ pub fn render_search_page(search_results: Vec<MangaSearch>) -> String {
                         {(i.manga_name)}
                         }
                     }
-            }
+                }
             }
         }
     );

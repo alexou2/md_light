@@ -127,9 +127,10 @@ pub fn get_manga_cover(manga_id: &String, manga: &Value) -> Result<String, Box<d
 }
 
 pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, Box<dyn Error>> {
+    let manga_chapters_promise = get_manga_chapters(&manga_id);
     let url = format!(
         "{}/manga/{}?includes[]=author&includes[]=artist&includes[]=cover_art",
-        BASE_URL, manga_id
+        BASE_URL, &manga_id
     );
     let resp = reqwest::get(&url).await?.text().await?;
     let json_resp: Value = from_str(&resp)?;
@@ -191,7 +192,7 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, Box<dyn Error
     // building the struct
     let manga_info = MangaInfo {
         manga_name: manga_name.clone(),
-        manga_id: manga_id,
+        manga_id: manga_id.clone(),
         author: author_list,
         tags: tag_list,
         thumbnail: thumbnail,
@@ -200,10 +201,37 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, Box<dyn Error
         translated_languages: translated_language_list,
         year: year.clone(),
         description: description.clone(),
+        chapters: manga_chapters_promise.await?,
     };
     Ok(manga_info)
 }
 
-pub fn get_manga_chapters(manga_id: String) -> Result<Vec<ChapterInfo>, Box<dyn Error>> {
-    todo!()
+pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<ChapterInfo>, Box<dyn Error>> {
+    let url = format!("{}/manga/{}/feed", BASE_URL, manga_id);
+    let resp = reqwest::get(&url).await?.text().await?;
+    let json_resp: Value = from_str(&resp)?;
+    let data = &json_resp["data"]; //transforming the response string into a json object
+    let mut chapter_list: Vec<ChapterInfo> = Vec::new();
+    let chapter_json = data.as_array().ok_or("there are no chapters")?; // transforming the json into an array
+let mut  i = 0;
+    for chapter in chapter_json {
+        let attributes = &chapter["attributes"];
+        // let tl_group = &manga["relationships"][""]
+        let chapter_number = &attributes["chapter"].to_string().replace('"', "");
+        // let chapter_name = format!("{number} {name}",number = chapter_number, name = &attributes["title"].to_string().replace('"', ""));
+        let chapter_name = format!("Chapter {}", chapter_number.clone());
+        let language = &attributes["translatedLanguage"].to_string().replace('"', "");
+        let chapter_id = chapter["id"].to_string().replace('"', "");
+        i+=1;
+let chapter_instance = ChapterInfo{
+    chapter_name:chapter_name,
+    chapter_number:chapter_number.clone(),
+    language:language.clone(),
+    chapter_id:chapter_id,
+    i:i
+};
+chapter_list.push(chapter_instance)
+    }
+    // chapter_list.push(ChapterInfo {chapter_name: "ch1".to_string(), chapter_number: "1".to_string(), language: "en".to_string(), chapter_id: "123".to_string() });
+    Ok(chapter_list)
 }

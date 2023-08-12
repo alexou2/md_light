@@ -39,18 +39,20 @@ pub struct MangaInfo {
     pub translated_languages: Vec<String>,
     pub year: Option<i64>,
     pub description: String,
-     // pub chapters: Vec<ChapterInfo>,
+    pub chapters: Vec<ChapterInfo>,
 }
 pub struct Author {
     pub author_name: String,
     pub author_id: String,
-    pub role:String
+    pub role: String,
 }
 pub struct ChapterInfo {
-    pub tl_group: String,
+    // pub tl_group: String,
     pub chapter_name: String,
+    pub chapter_number: String,
     pub language: String,
-    pub chapter_id: Value,
+    pub chapter_id: String,
+    pub i:i32
 }
 pub struct AuthorInfo {
     name: Value,
