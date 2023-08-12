@@ -31,22 +31,22 @@ pub struct MangaSearch {
 pub struct MangaInfo {
     pub manga_name: String,
     pub manga_id: String,
-    pub author: Vec<Author>,
-    pub tags: Vec<String>,
+    pub author: Option<Vec<Author>>,
+    pub tags: Option<Vec<String>>,
     pub thumbnail: String,
     pub status: String,
     pub original_language: String,
     pub translated_languages: Vec<String>,
     pub year: Option<i64>,
-    pub description: String,
-    pub chapters: Vec<ChapterInfo>,
+    pub description: Option<String>,
+    pub chapters: Vec<Chapters>,
 }
 pub struct Author {
     pub author_name: String,
     pub author_id: String,
     pub role: String,
 }
-pub struct ChapterInfo {
+pub struct Chapters {
     // pub tl_group: String,
     pub chapter_name: String,
     pub chapter_number: String,
@@ -58,4 +58,8 @@ pub struct AuthorInfo {
     name: Value,
     id: Value,
     titles: Vec<MangaInfo>,
+}
+pub struct ChapterInfo{
+    pub chapter_name:String,
+    pub pages:Vec<String>
 }

@@ -2,9 +2,7 @@
 
 use crate::md_struct::*;
 use crate::utills;
-use chrono::Date;
 use reqwest;
-use serde_json::json;
 use serde_json::{from_str, Value};
 use std::{error::Error, fs::write};
 
@@ -38,16 +36,17 @@ async fn get_new_chapters() -> Result<Vec<NewChapters>, Box<dyn std::error::Erro
 pub async fn get_popular_manga() -> Result<Vec<PopularManga>, Box<dyn std::error::Error>> {
     let mut popular_manga: Vec<PopularManga> = Vec::new();
     let formatted_time = utills::get_offset_time();
+    // formatting the request url to include the atrists/authores and the cover fileName
     let url = format!(
         r"https://api.mangadex.org/manga?includes[]=cover_art&includes[]=artist&includes[]=author&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive&hasAvailableChapters=true&createdAtSince={}",
         formatted_time
     );
-    println!("{}", url);
+    // doing the get request to the api and transforming it into a json object
     let resp = reqwest::get(url).await?.text().await?;
     let json_resp: Value = serde_json::from_str(&resp)?;
 
+    // transforming the json into an array in order to get all of the search results
     if let Some(response_data) = json_resp["data"].as_array() {
-        let mut ranking_number = 1;
         for manga in response_data {
             let title = &manga["attributes"]["title"]["en"]
                 .to_string()
@@ -55,6 +54,7 @@ pub async fn get_popular_manga() -> Result<Vec<PopularManga>, Box<dyn std::error
             let manga_id = &manga["id"].to_string().replace('"', "");
             let thumbnail = get_manga_cover(manga_id, manga)?;
 
+            // creating the search result for each popular manga
             let manga_instance = PopularManga {
                 manga_name: title.clone(),
                 thumbnail: thumbnail.clone(),
@@ -193,45 +193,69 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, Box<dyn Error
     let manga_info = MangaInfo {
         manga_name: manga_name.clone(),
         manga_id: manga_id.clone(),
-        author: author_list,
-        tags: tag_list,
+        author: Some(author_list),
+        tags: Some(tag_list),
         thumbnail: thumbnail,
         status: status.clone(),
         original_language: original_language.clone(),
         translated_languages: translated_language_list,
         year: year.clone(),
-        description: description.clone(),
+        description: Some(description.clone()),
         chapters: manga_chapters_promise.await?,
     };
     Ok(manga_info)
 }
 
-pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<ChapterInfo>, Box<dyn Error>> {
+pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, Box<dyn Error>> {
     let url = format!("{}/manga/{}/feed", BASE_URL, manga_id);
     let resp = reqwest::get(&url).await?.text().await?;
     let json_resp: Value = from_str(&resp)?;
     let data = &json_resp["data"]; //transforming the response string into a json object
-    let mut chapter_list: Vec<ChapterInfo> = Vec::new();
+    let mut chapter_list: Vec<Chapters> = Vec::new();
     let chapter_json = data.as_array().ok_or("there are no chapters")?; // transforming the json into an array
-let mut  i = 0;
+    let mut i = 0;
     for chapter in chapter_json {
         let attributes = &chapter["attributes"];
         // let tl_group = &manga["relationships"][""]
         let chapter_number = &attributes["chapter"].to_string().replace('"', "");
         // let chapter_name = format!("{number} {name}",number = chapter_number, name = &attributes["title"].to_string().replace('"', ""));
         let chapter_name = format!("Chapter {}", chapter_number.clone());
-        let language = &attributes["translatedLanguage"].to_string().replace('"', "");
+        let language = &attributes["translatedLanguage"]
+            .to_string()
+            .replace('"', "");
         let chapter_id = chapter["id"].to_string().replace('"', "");
-        i+=1;
-let chapter_instance = ChapterInfo{
-    chapter_name:chapter_name,
-    chapter_number:chapter_number.clone(),
-    language:language.clone(),
-    chapter_id:chapter_id,
-    i:i
-};
-chapter_list.push(chapter_instance)
+        i += 1;
+        let chapter_instance = Chapters {
+            chapter_name: chapter_name,
+            chapter_number: chapter_number.clone(),
+            language: language.clone(),
+            chapter_id: chapter_id,
+            i: i,
+        };
+        chapter_list.push(chapter_instance)
     }
     // chapter_list.push(ChapterInfo {chapter_name: "ch1".to_string(), chapter_number: "1".to_string(), language: "en".to_string(), chapter_id: "123".to_string() });
     Ok(chapter_list)
+}
+
+
+pub async fn get_chapter_pages(
+    manga_id: String,
+    chapter_id: String,
+) -> Result<ChapterInfo, Box<dyn Error>> {
+    let url = format!("{}/at-home/server/{}",BASE_URL, chapter_id);
+    let resp = reqwest::get(&url).await?.text().await?;
+    let json_resp: Value = from_str(&resp)?;
+    // write("l.json", resp);
+    let chapter_hash = json_resp["chapter"]["hash"].to_string().replace('"', "");
+    let pages_json = json_resp["chapter"]["data"].as_array().ok_or("there are no pages")?; //transforming the response string into a json object
+
+let mut page_list = Vec::new();
+    for page in pages_json{
+        let mut page_link = page.to_string().replace('"', "");
+        page_link = format!("https://uploads.mangadex.org/data/{}/{}", chapter_hash, page_link);
+        page_list.push(page_link)
+    }
+    let chapter = ChapterInfo{chapter_name:"ch".to_string(), pages:page_list};
+    Ok(chapter)
 }

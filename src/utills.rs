@@ -1,4 +1,4 @@
-use chrono::{Datelike, Local, Timelike};
+use chrono::{Datelike, Timelike};
 
 pub fn get_offset_time() -> String {
     let current_time = chrono::Local::now();
@@ -16,9 +16,9 @@ pub fn get_offset_time() -> String {
         year,
         month,
         current_time.day() + 1,
-        0,
-        0,
-        0
+        current_time.hour(),
+        current_time.minute(),
+        current_time.second()
     );
 
     println!("{}", formatted_time);
