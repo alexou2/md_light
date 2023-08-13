@@ -29,6 +29,8 @@ pub async fn get_md_homepage_feed() -> Result<MdHomepageFeed, Box<dyn Error>> {
 
 async fn get_new_chapters() -> Result<Vec<NewChapters>, Box<dyn std::error::Error>> {
     let new_chapters = Vec::new();
+    let url = "https://api.mangadex.org/chapter?includes[]=scanlation_group&translatedLanguage[]=en&translatedLanguage[]=de&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&order[readableAt]=desc&limit=64";
+
     Ok(new_chapters)
 }
 
@@ -238,23 +240,28 @@ pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, Box<
     Ok(chapter_list)
 }
 
-
-pub async fn get_chapter_pages(
-    chapter_id: String,
-) -> Result<ChapterInfo, Box<dyn Error>> {
-    let url = format!("{}/at-home/server/{}",BASE_URL, chapter_id);
+pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterInfo, Box<dyn Error>> {
+    let url = format!("{}/at-home/server/{}", BASE_URL, chapter_id);
     let resp = reqwest::get(&url).await?.text().await?;
     let json_resp: Value = from_str(&resp)?;
     // write("l.json", resp);
     let chapter_hash = json_resp["chapter"]["hash"].to_string().replace('"', "");
-    let pages_json = json_resp["chapter"]["data"].as_array().ok_or("there are no pages")?; //transforming the response string into a json object
+    let pages_json = json_resp["chapter"]["data"]
+        .as_array()
+        .ok_or("there are no pages")?; //transforming the response string into a json object
 
-let mut page_list = Vec::new();
-    for page in pages_json{
+    let mut page_list = Vec::new();
+    for page in pages_json {
         let mut page_link = page.to_string().replace('"', "");
-        page_link = format!("https://uploads.mangadex.org/data/{}/{}", chapter_hash, page_link);
+        page_link = format!(
+            "https://uploads.mangadex.org/data/{}/{}",
+            chapter_hash, page_link
+        );
         page_list.push(page_link)
     }
-    let chapter = ChapterInfo{chapter_name:"ch".to_string(), pages:page_list};
+    let chapter = ChapterInfo {
+        chapter_name: "ch".to_string(),
+        pages: page_list,
+    };
     Ok(chapter)
 }
