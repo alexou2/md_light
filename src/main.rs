@@ -8,6 +8,8 @@ mod templates;
 mod utills;
 use actix_files::Files;
 use actix_web::{get, http::StatusCode, web, App, HttpResponse, HttpServer, Responder};
+use clap::Parser;
+
 #[get("/")]
 async fn index() -> HttpResponse {
     let popular = online_md::get_popular_manga().await.unwrap();
@@ -31,7 +33,7 @@ async fn get_manga_info(manga_id: web::Path<String>) -> HttpResponse {
 #[get("/manga/{manga}/{chapter}")]
 async fn get_chapter(path: web::Path<(String, String)>) -> HttpResponse {
     let chapter_id: String = path.1.to_string();
-let chapter_info = online_md::get_chapter_pages(chapter_id).await;
+    let chapter_info = online_md::get_chapter_pages(chapter_id).await;
     let html = templates::render_chapter(chapter_info.unwrap());
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
@@ -67,6 +69,7 @@ async fn kill_server() -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    manage_args(Args::parse());
     println!("Server running at port 8080");
     HttpServer::new(|| {
         App::new()
@@ -81,4 +84,23 @@ async fn main() -> std::io::Result<()> {
     .bind(("127.0.0.1", 8080))?
     .run()
     .await
+}
+// manages all of the arguments like creating the correct folders
+fn manage_args(args: Args) {}
+
+/// A web server that uses the mangadex api with a lighweight frontend for potato devices
+#[derive(Parser, Debug)]
+#[command(author = "_alexou_", version, about, long_about = None)]
+struct Args {
+    /// Creates all of the necessary files and folders for the program to run
+    #[arg(short, long)]
+    install: bool,
+
+    /// Allows other lan devices to connect to the server
+    #[arg(short, long, default_value_t = false)]
+    lan: bool,
+
+    /// Uses the low quality images from mangadex instead of the high quality ones
+    #[arg(short, long, default_value_t = false)]
+    saver: bool,
 }

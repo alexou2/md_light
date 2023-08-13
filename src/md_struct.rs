@@ -11,11 +11,11 @@ pub struct PopularManga {
 }
 pub struct NewChapters {
     pub name: String,
-    pub chpter: String,
+    pub chapter: Chapters,
     pub language: String,
-    pub chapter_link: String,
-    pub manga_link: String,
+    pub manga_id: String,
     pub thumbnail: String,
+    pub original_language: String,
 }
 
 pub struct MangaSearch {
