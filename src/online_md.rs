@@ -240,7 +240,6 @@ pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, Box<
 
 
 pub async fn get_chapter_pages(
-    manga_id: String,
     chapter_id: String,
 ) -> Result<ChapterInfo, Box<dyn Error>> {
     let url = format!("{}/at-home/server/{}",BASE_URL, chapter_id);

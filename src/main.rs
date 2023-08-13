@@ -6,6 +6,7 @@ mod md_struct;
 mod online_md;
 mod templates;
 mod utills;
+use actix_files::Files;
 use actix_web::{get, http::StatusCode, web, App, HttpResponse, HttpServer, Responder};
 #[get("/")]
 async fn index() -> HttpResponse {
@@ -29,9 +30,8 @@ async fn get_manga_info(manga_id: web::Path<String>) -> HttpResponse {
 
 #[get("/manga/{manga}/{chapter}")]
 async fn get_chapter(path: web::Path<(String, String)>) -> HttpResponse {
-    let manga_id: String = path.0.to_string();
     let chapter_id: String = path.1.to_string();
-let chapter_info = online_md::get_chapter_pages(manga_id, chapter_id).await;
+let chapter_info = online_md::get_chapter_pages(chapter_id).await;
     let html = templates::render_chapter(chapter_info.unwrap());
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
@@ -76,6 +76,7 @@ async fn main() -> std::io::Result<()> {
             .service(get_manga_info)
             .service(search_for_manga)
             .service(ping_md)
+            .service(Files::new("/", "/ressources"))
     })
     .bind(("127.0.0.1", 8080))?
     .run()

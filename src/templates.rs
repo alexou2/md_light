@@ -4,6 +4,7 @@ use maud::*;
 pub fn render_homepage(popular_manga: Vec<PopularManga>) -> String {
     let template = html!(
             (DOCTYPE)
+            link rel="stylesheet" href="/ressources/styles.css";
             body {
             h1 {"search results"}
             div.search_list{
@@ -22,7 +23,9 @@ pub fn render_homepage(popular_manga: Vec<PopularManga>) -> String {
 }
 
 pub fn render_manga_info_page(manga_info: MangaInfo) -> String {
-    let template = html!((DOCTYPE)
+    let template = html!(
+        (DOCTYPE)
+        link rel="stylesheet" href="/ressources/styles.css";
         img src = {(manga_info.thumbnail)};
         h1 {(manga_info.manga_name)}
         h3{"authors: "}
@@ -41,25 +44,27 @@ pub fn render_manga_info_page(manga_info: MangaInfo) -> String {
     template.into_string()
 }
 
-pub fn render_chapter(chapter_info:ChapterInfo) ->String {
+pub fn render_chapter(chapter_info: ChapterInfo) -> String {
     let template = html!(
-        (DOCTYPE)
-        body {
-        h1 {"search results"}
-        div.search_list{
-            @for i in chapter_info.pages{
-                img src = (i);
+            (DOCTYPE)
+            link rel="stylesheet" href="/ressources/styles.css";
+            body {
+            h1 {"search results"}
+            div.page_list{
+                @for i in chapter_info.pages{
+                    img.chapter_page src = (i);
+                }
             }
         }
-    }
-);
-// println!("{}", template.clone().into_string());
-template.into_string()
+    );
+    // println!("{}", template.clone().into_string());
+    template.into_string()
 }
 
 pub fn render_search_page(search_results: Vec<MangaSearch>) -> String {
     let template = html!(
             (DOCTYPE)
+            link rel="stylesheet" href="/ressources/styles.css";
             body {
             h1 {"search results"}
             div.search_list{
