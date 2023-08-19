@@ -6,7 +6,7 @@ pub fn render_homepage(popular_manga: Vec<PopularManga>) -> String {
             (DOCTYPE)
             link rel="stylesheet" href="/ressources/styles.css";
             body {
-            h1 {"search results"}
+            h1 {"HOME"}
             div.search_list{
                 @for i in popular_manga{
                     div.manga_restult{

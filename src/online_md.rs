@@ -3,7 +3,10 @@
 use crate::md_struct::*;
 use crate::utills;
 use reqwest;
+use reqwest::header::{HeaderMap, HeaderValue, USER_AGENT};
+use reqwest::Client;
 use serde_json::{from_str, Value};
+use std::future::Future;
 use std::{error::Error, fs::write};
 
 const BASE_URL: &'static str = "https://api.mangadex.org";
@@ -14,23 +17,44 @@ pub async fn test_connection() -> Result<String, reqwest::Error> {
         .text()
         .await?)
 }
+
+// makes the request to the url with custom user agents, since MD requires them now
+pub async fn request_with_agent(
+    url: String,
+) -> Result<impl Future<Output = Result<reqwest::Response, reqwest::Error>>, Box<dyn Error>> {
+    let client: Client = reqwest::Client::new();
+    let response = client
+        .get(url)
+        .header(reqwest::header::USER_AGENT, USER_AGENT)
+        .send();
+
+    Ok(response)
+}
+
 // gets the informations for the homepage
 pub async fn get_md_homepage_feed() -> Result<MdHomepageFeed, Box<dyn Error>> {
-    let popular_manga = get_popular_manga().await?;
-    let new_chapters: Vec<NewChapters> = Vec::new();
+    let popular_manga = get_popular_manga();
+    let new_chapters = get_new_chapters();
 
     // builds the struct for the popular titles+ new chapters
     let homepage_feed = MdHomepageFeed {
-        currently_popular: popular_manga,
-        new_chapter_releases: new_chapters,
+        currently_popular: popular_manga.await?,
+        new_chapter_releases: new_chapters.await?,
     };
     Ok(homepage_feed)
 }
 
-async fn get_new_chapters() -> Result<Vec<NewChapters>, Box<dyn std::error::Error>> {
+pub async fn get_new_chapters() -> Result<Vec<NewChapters>, Box<dyn std::error::Error>> {
     let new_chapters = Vec::new();
     let url = "https://api.mangadex.org/chapter?includes[]=scanlation_group&translatedLanguage[]=en&translatedLanguage[]=de&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&order[readableAt]=desc&limit=64";
-
+    // let resp = reqwest::get(url).await?.text().await?;
+    let resp = request_with_agent(url.to_string())
+        .await?
+        .await?
+        .text()
+        .await?;
+    let json_resp: Value = from_str(&resp)?;
+    write("t.json", resp);
     Ok(new_chapters)
 }
 
@@ -44,7 +68,8 @@ pub async fn get_popular_manga() -> Result<Vec<PopularManga>, Box<dyn std::error
         formatted_time
     );
     // doing the get request to the api and transforming it into a json object
-    let resp = reqwest::get(url).await?.text().await?;
+    // let resp = reqwest::get(url).await?.text().await?;
+    let resp = request_with_agent(url).await?.await?.text().await?;
     let json_resp: Value = serde_json::from_str(&resp)?;
 
     // transforming the json into an array in order to get all of the search results
@@ -134,7 +159,8 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, Box<dyn Error
         "{}/manga/{}?includes[]=author&includes[]=artist&includes[]=cover_art",
         BASE_URL, &manga_id
     );
-    let resp = reqwest::get(&url).await?.text().await?;
+    // let resp = reqwest::get(&url).await?.text().await?;
+    let resp = request_with_agent(url).await?.await?.text().await?;
     let json_resp: Value = from_str(&resp)?;
     let data = &json_resp["data"];
     let attributes = &data["attributes"];
@@ -210,7 +236,9 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, Box<dyn Error
 
 pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, Box<dyn Error>> {
     let url = format!("{}/manga/{}/feed", BASE_URL, manga_id);
-    let resp = reqwest::get(&url).await?.text().await?;
+    // let resp = reqwest::get(&url).await?.text().await?;
+    let resp = request_with_agent(url).await?.await?.text().await?;
+
     let json_resp: Value = from_str(&resp)?;
     let data = &json_resp["data"]; //transforming the response string into a json object
     let mut chapter_list: Vec<Chapters> = Vec::new();
@@ -236,13 +264,14 @@ pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, Box<
         };
         chapter_list.push(chapter_instance)
     }
-    // chapter_list.push(ChapterInfo {chapter_name: "ch1".to_string(), chapter_number: "1".to_string(), language: "en".to_string(), chapter_id: "123".to_string() });
     Ok(chapter_list)
 }
 
 pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterInfo, Box<dyn Error>> {
     let url = format!("{}/at-home/server/{}", BASE_URL, chapter_id);
-    let resp = reqwest::get(&url).await?.text().await?;
+    // let resp = reqwest::get(&url).await?.text().await?;
+    let resp = request_with_agent(url).await?.await?.text().await?;
+
     let json_resp: Value = from_str(&resp)?;
     // write("l.json", resp);
     let chapter_hash = json_resp["chapter"]["hash"].to_string().replace('"', "");
