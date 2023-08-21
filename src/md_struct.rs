@@ -52,7 +52,6 @@ pub struct Chapters {
     pub chapter_number: String,
     pub language: String,
     pub chapter_id: String,
-    pub i:i32
 }
 pub struct AuthorInfo {
     name: Value,

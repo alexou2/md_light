@@ -3,7 +3,7 @@
 use crate::md_struct::*;
 use crate::utills;
 use reqwest;
-use reqwest::header::{HeaderMap, HeaderValue, USER_AGENT};
+use reqwest::header::USER_AGENT;
 use reqwest::Client;
 use serde_json::{from_str, Value};
 use std::future::Future;
@@ -54,7 +54,7 @@ pub async fn get_new_chapters() -> Result<Vec<NewChapters>, Box<dyn std::error::
         .text()
         .await?;
     let json_resp: Value = from_str(&resp)?;
-    write("t.json", resp);
+    // write("t.json", resp);
     Ok(new_chapters)
 }
 
@@ -99,25 +99,35 @@ pub async fn search_manga(
     search_query: String,
 ) -> Result<Vec<MangaSearch>, Box<dyn std::error::Error>> {
     let mut search_results: Vec<MangaSearch> = Vec::new();
+    // sending the get request for the search
     let url = format!("{}/manga?includes[]=cover_art", BASE_URL); // formatting the correct url for the api endpoint
-
     let params = [("title", search_query)]; // setting the parameters of the search
     let client: reqwest::Client = reqwest::Client::new();
-    let resp = client.get(url).query(&params).send().await?.text().await?;
-    let json_resp: Value = serde_json::from_str(&resp)?; // converting the response string into a json object
+    let resp = client
+        .get(url)
+        .query(&params)
+        .header(reqwest::header::USER_AGENT, USER_AGENT)
+        .send()
+        .await?
+        .text()
+        .await?;
 
+    // converting the response string into a json object
+    let json_resp: Value = serde_json::from_str(&resp)?;
+
+    // if the api response is an array, add every manga to the search_results vector
     if let Some(response_data) = json_resp["data"].as_array() {
         for manga in response_data {
             let attributes = &manga["attributes"];
 
+            // getting eery necessary info from the manga
             let manga_id = &manga["id"].to_string().replace('"', "");
             let title = &attributes["title"]["en"].to_string().replace('"', "");
             let status = &attributes["status"].to_string().replace('"', "");
             let original_language = &attributes["originalLanguage"].to_string().replace('"', "");
-            let available_languages = &attributes["availableTranslatedLanguages"]
+            let available_languages = attributes["availableTranslatedLanguages"]
                 .as_array()
-                .ok_or("available languages is not an array")?;
-
+                .ok_or("error while getting translated languages options")?;
             let thumbnail = get_manga_cover(manga_id, &manga)?;
 
             // creating the struct instnce containing all of the usefull ionfos about the manga
@@ -127,8 +137,9 @@ pub async fn search_manga(
                 thumbnail: thumbnail,
                 status: status.clone(),
                 original_language: original_language.clone(),
-                translated_languages: available_languages.clone().clone(),
+                translated_languages: available_languages.clone(),
             };
+            // adding each search result to the search list
             search_results.push(manga_attributes)
         }
     }
@@ -153,17 +164,24 @@ pub fn get_manga_cover(manga_id: &String, manga: &Value) -> Result<String, Box<d
     Ok(thumbnail)
 }
 
+// gets the manga info and chapters
 pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, Box<dyn Error>> {
+    // calls the function to get chapters for a faster page loading
     let manga_chapters_promise = get_manga_chapters(&manga_id);
+
     let url = format!(
         "{}/manga/{}?includes[]=author&includes[]=artist&includes[]=cover_art",
         BASE_URL, &manga_id
     );
-    // let resp = reqwest::get(&url).await?.text().await?;
+    // calling the function to make the request to the api
     let resp = request_with_agent(url).await?.await?.text().await?;
+
+    // parsing the api response into a json
     let json_resp: Value = from_str(&resp)?;
+    // separating the json response to make it easier to access items
     let data = &json_resp["data"];
     let attributes = &data["attributes"];
+
     // gets all of the infos about manga
     let manga_name = &attributes["title"]["en"].to_string().replace('"', "");
     let thumbnail = get_manga_cover(&manga_id, &data)?;
@@ -200,19 +218,19 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, Box<dyn Error
         }
     }
 
+    // getting the tags
     let tag_json = attributes["tags"]
         .as_array()
         .ok_or("tags is not an array")?;
-
     for tag in tag_json {
         let tag_name = &tag["attributes"]["name"]["en"].to_string().replace('"', "");
         tag_list.push(tag_name.clone());
     }
 
+    // getting the translation options
     let translation_options_json = attributes["availableTranslatedLanguages"]
         .as_array()
         .ok_or("translated_languages is not an array")?;
-
     for language in translation_options_json {
         translated_language_list.push(language.to_string().replace('"', ""));
     }
@@ -243,7 +261,6 @@ pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, Box<
     let data = &json_resp["data"]; //transforming the response string into a json object
     let mut chapter_list: Vec<Chapters> = Vec::new();
     let chapter_json = data.as_array().ok_or("there are no chapters")?; // transforming the json into an array
-    let mut i = 0;
     for chapter in chapter_json {
         let attributes = &chapter["attributes"];
         // let tl_group = &manga["relationships"][""]
@@ -254,13 +271,11 @@ pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, Box<
             .to_string()
             .replace('"', "");
         let chapter_id = chapter["id"].to_string().replace('"', "");
-        i += 1;
         let chapter_instance = Chapters {
             chapter_name: chapter_name,
             chapter_number: chapter_number.clone(),
             language: language.clone(),
             chapter_id: chapter_id,
-            i: i,
         };
         chapter_list.push(chapter_instance)
     }

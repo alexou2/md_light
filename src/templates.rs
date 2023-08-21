@@ -38,7 +38,7 @@ pub fn render_manga_info_page(manga_info: MangaInfo) -> String {
         }
             @for chapter in manga_info.chapters{
                 a href = (format!("/manga/{manga_id}/{chapter}", manga_id = manga_info.manga_id, chapter = chapter.chapter_id )){
-                    p{(chapter.chapter_name)": "(chapter.language)"        "(chapter.i)}
+                    p{(chapter.chapter_name)": "(chapter.language)}
                 }
             };
         }

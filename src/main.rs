@@ -9,6 +9,7 @@ mod utills;
 use actix_files::Files;
 use actix_web::{get, http::StatusCode, web, App, HttpResponse, HttpServer, Responder};
 use clap::Parser;
+use local_ip_address::local_ip;
 
 #[get("/")]
 async fn index() -> HttpResponse {
@@ -69,7 +70,11 @@ async fn kill_server() -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    // manages the cli options
     manage_args(Args::parse());
+    
+    let addr = local_ip().unwrap();
+    println!("local ip address is: {}", addr);
     println!("Server running at port 8080");
     HttpServer::new(|| {
         App::new()
@@ -81,7 +86,9 @@ async fn main() -> std::io::Result<()> {
             .service(ping_md)
             .service(Files::new("/", "/ressources"))
     })
+    // the ip addreses used to access the server
     .bind(("127.0.0.1", 8080))?
+    .bind((addr.to_string(), 8080))?
     .run()
     .await
 }
@@ -97,10 +104,14 @@ struct Args {
     install: bool,
 
     /// Allows other lan devices to connect to the server
-    #[arg(short, long, default_value_t = false)]
+    #[arg(short, long)]
     lan: bool,
 
-    /// Uses the low quality images from mangadex instead of the high quality ones
-    #[arg(short, long, default_value_t = false)]
+    /// Uses the lower quality images from mangadex instead of the high quality ones
+    #[arg(short, long)]
     saver: bool,
+
+    /// Restricts download access for other users on the lan
+    #[arg(short, long)]
+    restrict: bool,
 }
