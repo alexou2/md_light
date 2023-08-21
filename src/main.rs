@@ -6,9 +6,12 @@ mod md_struct;
 mod online_md;
 mod templates;
 mod utills;
+use std::net::{IpAddr, Ipv4Addr};
+
 use actix_files::Files;
 use actix_web::{
-    get, http::StatusCode, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
+    cookie::time::util, get, http::StatusCode, web, App, HttpRequest, HttpResponse, HttpServer,
+    Responder,
 };
 use clap::Parser;
 use local_ip_address::local_ip;
@@ -16,8 +19,7 @@ use reqwest::Client;
 
 #[get("/")]
 async fn index(path: HttpRequest) -> HttpResponse {
-    let is_localhost = path.connection_info().host() == "172.0.0.1:8080"||path.connection_info().host() =="localhost:8080";
-    println!("path: {}\nis localhost: {}", path.connection_info().host(), is_localhost );
+    let is_localhost = utills::check_localhost(path);
     let popular = online_md::get_popular_manga().await.unwrap();
     let html = templates::render_homepage(popular, is_localhost);
     HttpResponse::build(StatusCode::OK)
@@ -27,8 +29,8 @@ async fn index(path: HttpRequest) -> HttpResponse {
 
 #[get("/manga/{id}")]
 async fn get_manga_info(manga_id: web::Path<String>, path: HttpRequest) -> HttpResponse {
-    let is_localhost = path.connection_info().host() == "172.0.0.1"||path.connection_info().host() =="localhost:8080";
-println!("uri: {}", path.uri());
+    let is_localhost = utills::check_localhost(path);
+
     let manga_info = online_md::get_manga_info(manga_id.to_string())
         .await
         .unwrap();
@@ -38,9 +40,10 @@ println!("uri: {}", path.uri());
         .body(html)
 }
 
+// returns the chapter's pages
 #[get("/manga/{manga}/{chapter}")]
 async fn get_chapter(chapter: web::Path<(String, String)>, path: HttpRequest) -> HttpResponse {
-    let is_localhost = path.connection_info().host() == "172.0.0.1"||path.connection_info().host() =="localhost:8080";
+    let is_localhost = utills::check_localhost(path);
 
     let chapter_id: String = chapter.1.to_string();
     let chapter_info = online_md::get_chapter_pages(chapter_id).await;
@@ -50,14 +53,13 @@ async fn get_chapter(chapter: web::Path<(String, String)>, path: HttpRequest) ->
         .body(html)
 }
 
+// searches for a manga
 #[get("/search/{query}")]
 async fn search_for_manga(name: web::Path<String>, path: HttpRequest) -> HttpResponse {
-    let is_localhost = path.connection_info().host() == "172.0.0.1"||path.connection_info().host() =="localhost:8080";
+    let is_localhost = utills::check_localhost(path);
 
-    let t = online_md::search_manga(name.to_string()).await.unwrap();
-
-    let html = templates::render_search_page(t, is_localhost);
-    // "<h1>sdfsdf</h1>".to_string()
+    let search_results = online_md::search_manga(name.to_string()).await.unwrap();
+    let html = templates::render_search_page(search_results, is_localhost);
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
         .body(html)
@@ -74,7 +76,7 @@ async fn ping_md() -> impl Responder {
 async fn kill_server() -> impl Responder {
     println!("The server was killed with exit code 1");
     std::process::exit(1);
-    "killed"
+    ""
 }
 
 async fn image_proxy(image_url: web::Path<String>) -> Result<HttpResponse> {
@@ -101,13 +103,12 @@ async fn image_proxy(image_url: web::Path<String>) -> Result<HttpResponse> {
 async fn main() -> std::io::Result<()> {
     // manages the cli options
     let args = Args::parse();
-    let mut lan_addr = "172.0.0.1";
+    let mut lan_addr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
     if args.lan {
-        lan_addr = "10.150.145.205";
+        lan_addr = local_ip().unwrap();
         println!("local ip address is: {}", lan_addr);
     }
     println!("{}", lan_addr);
-    // let addr = local_ip().unwrap();
 
     println!("Server running at port 8080");
     HttpServer::new(|| {
@@ -122,7 +123,7 @@ async fn main() -> std::io::Result<()> {
             .service(Files::new("/", "/ressources"))
     })
     // the ip addreses used to access the server
-    .bind(("127.0.0.1", 8080))?
+    // .bind(("127.0.0.1", 8080))?
     .bind((lan_addr, 8080))?
     .run()
     .await

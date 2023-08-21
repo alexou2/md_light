@@ -1,5 +1,7 @@
+use actix_web::HttpRequest;
 use chrono::{Datelike, Timelike};
 
+// returns the local time, offset by a month
 pub fn get_offset_time() -> String {
     let current_time = chrono::Local::now();
 
@@ -23,4 +25,9 @@ pub fn get_offset_time() -> String {
 
     println!("{}", formatted_time);
     formatted_time
+}
+pub fn check_localhost(path: HttpRequest) -> bool {
+    let is_localhost = path.connection_info().host() == "172.0.0.1:8080"
+        || path.connection_info().host() == "localhost:8080";
+    is_localhost
 }
