@@ -13,13 +13,13 @@ pub fn render_homepage(popular_manga: Vec<PopularManga>, is_localhost: bool) -> 
                         a href = (format!("/manga/{}",i.manga_id)){
 
                             // uses the proxied images if not localhost or links the images directly
-                        @if !is_localhost{
-                        img src = { (format!("/proxy/images/{}", i.thumbnail))};
-                        }@else{
-                        img src = (i.thumbnail);
-                        }
+                            @if !is_localhost{
+                                img src = { (format!("/proxy/images/{}", i.thumbnail))};
+                            }@else{
+                                img src = (i.thumbnail);
+                            }
 
-                        {(i.manga_name)}
+                            {(i.manga_name)}
                         }
                     }
             }
@@ -39,13 +39,13 @@ pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> Stri
                 // uses the proxied images if not localhost or links the images directly
                 @if !is_localhost{
                     img src = { (format!("/proxy/images/{}", manga_info.thumbnail))};
-                    }@else{
+                }@else{
                     img src = (manga_info.thumbnail);
-                    }
+                }
         h1 {(manga_info.manga_name)}
         h3{"authors: "}
             @for author in manga_info.author.unwrap(){
-            p{(author.author_name)": "(author.role)}
+                p{(author.author_name)": "(author.role)}
             };
             {(manga_info.description.unwrap())}
         }
@@ -72,14 +72,13 @@ pub fn render_chapter(chapter_info: ChapterInfo, is_localhost: bool) -> String {
                     // uses the proxied images if not localhost or links the images directly
                     @if !is_localhost{
                         img.chapter_page src = { (format!("/proxy/images/{}", i))};
-                        }@else{
+                    }@else{
                         img.chapter_page src = (i);
-                        }
+                    }
                 }
             }
         }
     );
-    // println!("{}", template.clone().into_string());
     template.into_string()
 }
 
@@ -97,9 +96,9 @@ pub fn render_search_page(search_results: Vec<MangaSearch>, is_localhost: bool) 
                             // uses the proxied images if not localhost or links the images directly
                             @if !is_localhost{
                                 img src = { (format!("/proxy/images/{}", i.thumbnail))};
-                                }@else{
+                            }@else{
                                 img src = (i.thumbnail);
-                                }
+                            }
                         {(i.manga_name)}
                         }
                     }
