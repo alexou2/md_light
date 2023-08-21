@@ -1,7 +1,7 @@
 use crate::md_struct::*;
 use maud::*;
 
-pub fn render_homepage(popular_manga: Vec<PopularManga>) -> String {
+pub fn render_homepage(popular_manga: Vec<PopularManga>, is_localhost: bool) -> String {
     let template = html!(
             (DOCTYPE)
             link rel="stylesheet" href="/ressources/styles.css";
@@ -11,7 +11,12 @@ pub fn render_homepage(popular_manga: Vec<PopularManga>) -> String {
                 @for i in popular_manga{
                     div.manga_restult{
                         a href = (format!("/manga/{}",i.manga_id)){
-                        img src = { (i.thumbnail)};
+
+                        @if !is_localhost{
+                        img src = { (format!("/proxy/images/{}", i.thumbnail))};
+                        }@else{
+                        img src = (i.thumbnail);
+                        }
                         {(i.manga_name)}
                         }
                     }
@@ -22,13 +27,17 @@ pub fn render_homepage(popular_manga: Vec<PopularManga>) -> String {
     template.into_string()
 }
 
-pub fn render_manga_info_page(manga_info: MangaInfo) -> String {
+pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> String {
     let template = html!(
         (DOCTYPE)
         link rel="stylesheet" href="/ressources/styles.css";
         body{
             div.manga_info{
-        img src = {(manga_info.thumbnail)};
+                @if !is_localhost{
+                    img src = { (format!("/proxy/images/{}", manga_info.thumbnail))};
+                    }@else{
+                    img src = (manga_info.thumbnail);
+                    }
         h1 {(manga_info.manga_name)}
         h3{"authors: "}
             @for author in manga_info.author.unwrap(){
@@ -47,7 +56,7 @@ pub fn render_manga_info_page(manga_info: MangaInfo) -> String {
     template.into_string()
 }
 
-pub fn render_chapter(chapter_info: ChapterInfo) -> String {
+pub fn render_chapter(chapter_info: ChapterInfo, is_localhost: bool) -> String {
     let template = html!(
             (DOCTYPE)
             link rel="stylesheet" href="/ressources/styles.css";
@@ -55,7 +64,11 @@ pub fn render_chapter(chapter_info: ChapterInfo) -> String {
             h1 {(chapter_info.chapter_name)}
             div.page_list{
                 @for i in chapter_info.pages{
-                    img.chapter_page src = (i);
+                    @if !is_localhost{
+                        img.chapter_page src = { (format!("/proxy/images/{}", i))};
+                        }@else{
+                        img.chapter_page src = (i);
+                        }
                 }
             }
         }
@@ -64,7 +77,7 @@ pub fn render_chapter(chapter_info: ChapterInfo) -> String {
     template.into_string()
 }
 
-pub fn render_search_page(search_results: Vec<MangaSearch>) -> String {
+pub fn render_search_page(search_results: Vec<MangaSearch>, is_localhost: bool) -> String {
     let template = html!(
             (DOCTYPE)
             link rel="stylesheet" href="/ressources/styles.css";
@@ -74,7 +87,11 @@ pub fn render_search_page(search_results: Vec<MangaSearch>) -> String {
                 @for i in search_results{
                     div.manga_restult{
                         a href = (format!("/manga/{}",i.manga_id)){
-                        img src = { (i.thumbnail)};
+                            @if !is_localhost{
+                                img src = { (format!("/proxy/images/{}", i.thumbnail))};
+                                }@else{
+                                img src = (i.thumbnail);
+                                }
                         {(i.manga_name)}
                         }
                     }

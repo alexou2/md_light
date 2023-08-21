@@ -7,47 +7,56 @@ mod online_md;
 mod templates;
 mod utills;
 use actix_files::Files;
-use actix_web::{get, http::StatusCode, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{
+    get, http::StatusCode, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
+};
 use clap::Parser;
 use local_ip_address::local_ip;
+use reqwest::Client;
 
 #[get("/")]
-async fn index() -> HttpResponse {
+async fn index(path: HttpRequest) -> HttpResponse {
+    let is_localhost = path.connection_info().host() == "172.0.0.1:8080"||path.connection_info().host() =="localhost:8080";
+    println!("path: {}\nis localhost: {}", path.connection_info().host(), is_localhost );
     let popular = online_md::get_popular_manga().await.unwrap();
-    let html = templates::render_homepage(popular);
+    let html = templates::render_homepage(popular, is_localhost);
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
         .body(html)
 }
 
 #[get("/manga/{id}")]
-async fn get_manga_info(manga_id: web::Path<String>) -> HttpResponse {
+async fn get_manga_info(manga_id: web::Path<String>, path: HttpRequest) -> HttpResponse {
+    let is_localhost = path.connection_info().host() == "172.0.0.1"||path.connection_info().host() =="localhost:8080";
+println!("uri: {}", path.uri());
     let manga_info = online_md::get_manga_info(manga_id.to_string())
         .await
         .unwrap();
-    let html = templates::render_manga_info_page(manga_info);
+    let html = templates::render_manga_info_page(manga_info, is_localhost);
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
         .body(html)
 }
 
 #[get("/manga/{manga}/{chapter}")]
-async fn get_chapter(path: web::Path<(String, String)>) -> HttpResponse {
-    let chapter_id: String = path.1.to_string();
+async fn get_chapter(chapter: web::Path<(String, String)>, path: HttpRequest) -> HttpResponse {
+    let is_localhost = path.connection_info().host() == "172.0.0.1"||path.connection_info().host() =="localhost:8080";
+
+    let chapter_id: String = chapter.1.to_string();
     let chapter_info = online_md::get_chapter_pages(chapter_id).await;
-    let html = templates::render_chapter(chapter_info.unwrap());
+    let html = templates::render_chapter(chapter_info.unwrap(), is_localhost);
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
         .body(html)
 }
 
 #[get("/search/{query}")]
-async fn search_for_manga(name: web::Path<String>) -> HttpResponse {
+async fn search_for_manga(name: web::Path<String>, path: HttpRequest) -> HttpResponse {
+    let is_localhost = path.connection_info().host() == "172.0.0.1"||path.connection_info().host() =="localhost:8080";
+
     let t = online_md::search_manga(name.to_string()).await.unwrap();
-    // format!("search for {}", name)
-    // let y = &t[1].manga_name.to_string();
-    // y.to_owned()
-    let html = templates::render_search_page(t);
+
+    let html = templates::render_search_page(t, is_localhost);
     // "<h1>sdfsdf</h1>".to_string()
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
@@ -68,16 +77,42 @@ async fn kill_server() -> impl Responder {
     "killed"
 }
 
+async fn image_proxy(image_url: web::Path<String>) -> Result<HttpResponse> {
+    let client = Client::new();
+    let image_url = image_url.into_inner();
+
+    let response = client.get(&image_url).send().await;
+
+    match response {
+        Ok(resp) => {
+            let bytes = resp.bytes().await.unwrap();
+            Ok(HttpResponse::Ok()
+                // .content_type(resp.headers().get("content-type").unwrap())
+                .body(bytes))
+        }
+        Err(_) => {
+            // Return an error response or a placeholder image
+            Ok(HttpResponse::NotFound().finish())
+        }
+    }
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // manages the cli options
-    manage_args(Args::parse());
-    
-    let addr = local_ip().unwrap();
-    println!("local ip address is: {}", addr);
+    let args = Args::parse();
+    let mut lan_addr = "172.0.0.1";
+    if args.lan {
+        lan_addr = "10.150.145.205";
+        println!("local ip address is: {}", lan_addr);
+    }
+    println!("{}", lan_addr);
+    // let addr = local_ip().unwrap();
+
     println!("Server running at port 8080");
     HttpServer::new(|| {
         App::new()
+            .route("/proxy/images/{image_url:.+}", web::get().to(image_proxy))
             .service(index)
             .service(kill_server)
             .service(get_chapter)
@@ -88,30 +123,31 @@ async fn main() -> std::io::Result<()> {
     })
     // the ip addreses used to access the server
     .bind(("127.0.0.1", 8080))?
-    .bind((addr.to_string(), 8080))?
+    .bind((lan_addr, 8080))?
     .run()
     .await
 }
 // manages all of the arguments like creating the correct folders
-fn manage_args(args: Args) {}
 
 /// A web server that uses the mangadex api with a lighweight frontend for potato devices
 #[derive(Parser, Debug)]
 #[command(author = "_alexou_", version, about, long_about = None)]
-struct Args {
+pub struct Args {
     /// Creates all of the necessary files and folders for the program to run
     #[arg(short, long)]
-    install: bool,
+    pub install: bool,
 
     /// Allows other lan devices to connect to the server
     #[arg(short, long)]
-    lan: bool,
+    pub lan: bool,
 
     /// Uses the lower quality images from mangadex instead of the high quality ones
     #[arg(short, long)]
-    saver: bool,
+    pub saver: bool,
 
     /// Restricts download access for other users on the lan
     #[arg(short, long)]
-    restrict: bool,
+    pub restrict: bool,
 }
+
+use actix_web::Result;
