@@ -44,10 +44,10 @@ pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> Stri
                 }
         h1 {(manga_info.manga_name)}
         h3{"authors: "}
-            @for author in manga_info.author.unwrap(){
+            @for author in manga_info.author{
                 p{(author.author_name)": "(author.role)}
             };
-            {(manga_info.description.unwrap())}
+            {(manga_info.description)}
         }
             @for chapter in manga_info.chapters{
                 a href = (format!("/manga/{manga_id}/{chapter}", manga_id = manga_info.manga_id, chapter = chapter.chapter_id )){

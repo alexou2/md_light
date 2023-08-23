@@ -19,6 +19,7 @@ use reqwest::Client;
 
 #[get("/")]
 async fn index(path: HttpRequest) -> HttpResponse {
+    online_md::get_new_chapters().await;
     let is_localhost = utills::check_localhost(path);
     let popular = online_md::get_popular_manga().await.unwrap();
     let html = templates::render_homepage(popular, is_localhost);
