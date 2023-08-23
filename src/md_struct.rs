@@ -49,6 +49,7 @@ pub struct Author {
     pub author_id: String,
     pub role: String,
 }
+// the chapters that are listed in the manga info page
 pub struct Chapters {
     // pub tl_group: String,
     pub chapter_name: String,
@@ -64,4 +65,14 @@ pub struct AuthorInfo {
 pub struct ChapterInfo{
     pub chapter_name:String,
     pub pages:Vec<String>
+}
+
+trait sort {
+    fn sort_by_chapter(&self)-> Vec<Chapters>;
+}
+// sorts the chapters by chapter number and by translated language
+impl sort for Chapters {
+    fn sort_by_chapter(&self)-> Vec<Chapters> {
+        todo!()
+    }
 }
