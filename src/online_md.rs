@@ -55,7 +55,7 @@ pub async fn get_new_chapters() -> Result<Vec<NewChapters>, Box<dyn std::error::
         .await?;
     let json_resp: Value = from_str(&resp)?;
     let data = &json_resp["data"];
-    // write("t.json", resp);
+    write("t.json", resp);
     // getting the required info of each new chapter
     if let Some(new_chapter_list) = data.as_array() {
         for chapter in new_chapter_list {
@@ -65,25 +65,28 @@ pub async fn get_new_chapters() -> Result<Vec<NewChapters>, Box<dyn std::error::
             let chapter_id = &chapter["id"]
                 .remove_quotes()
                 .ok_or("error while removing quotes")?;
-            let chapter_number: i32 = attributes["chapter"]
+            let chapter_number = attributes["chapter"]
                 .remove_quotes()
-                .ok_or("error while removing quotes")?
-                .to_string()
-                .parse::<i32>()?;
+                .unwrap_or("Oneshot".to_string());
+                // .ok_or(format!("error while removing quotes in chapternb {}", chapter_id))?
+            // .parse::<i32>()?;
+            println!("1");
             let chapter_name = &attributes["title"]
                 .remove_quotes()
-                .ok_or("error while removing quotes")?;
+                .unwrap_or(chapter_number.clone());
+                // .ok_or_else(||chapter_number.clone())?;
+                println!("2");
             let language = &attributes["translatedLanguage"]
                 .remove_quotes()
-                .ok_or("error while removing quotes")?;
-            let page_number: i32 = attributes["pages"]
+                .ok_or("error while removing quotes in language")?;
+            let page_number = attributes["pages"]
                 .remove_quotes()
-                .ok_or("error while removing quotes")?
-                .to_string()
-                .parse::<i32>()?;
-            let mut tl_group_id: Value = json!("n/a");
-            let mut tl_group_name: Value = json!("n/a");
-            let mut manga_id: Value = json!("n/a");
+                .ok_or("error while removing quotes in page")?
+                .to_string();
+            // .parse::<i32>()?;
+            let mut tl_group_id: String = String::new();
+            let mut tl_group_name: String = String::new();
+            let mut manga_id: String = String::new();
 
             if let Some(relation) = relationships.as_array() {
                 for rel in relation {
@@ -107,20 +110,14 @@ pub async fn get_new_chapters() -> Result<Vec<NewChapters>, Box<dyn std::error::
             }
 
             let new_chapter_data = NewChapters {
-                chapter_name: chapter_name
-                    .remove_quotes()
-                    .ok_or("error while removing quotes")?,
+                chapter_name: chapter_name.to_owned(),
                 chapter_number: chapter_number,
-                language: language
-                    .remove_quotes()
-                    .ok_or("error while removing quotes")?,
+                language: language.to_owned(),
                 // thumbnail: "N/A".to_string(),
                 manga_id: manga_id,
                 tl_group_id: tl_group_id,
                 tl_group_name: tl_group_name,
-                chapter_id: chapter_id
-                    .remove_quotes()
-                    .ok_or("error while removing quotes")?,
+                chapter_id: chapter_id.to_owned(),
                 page_number: page_number,
             };
             new_chapters.push(new_chapter_data)
@@ -229,7 +226,7 @@ pub async fn search_manga(
 }
 
 // gets the cover from the json
-pub fn get_manga_cover(manga_id: &Value, manga_json: &Value) -> Result<Value, Box<dyn Error>> {
+pub fn get_manga_cover(manga_id: &String, manga_json: &Value) -> Result<String, Box<dyn Error>> {
     let mut thumbnail = String::new();
     if let Some(manga_cover) = manga_json["relationships"].as_array() {
         for i in manga_cover {
@@ -243,7 +240,7 @@ pub fn get_manga_cover(manga_id: &Value, manga_json: &Value) -> Result<Value, Bo
             }
         }
     }
-    Ok(json!(thumbnail))
+    Ok(thumbnail)
 }
 
 // gets the manga info and chapters
@@ -268,7 +265,7 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, Box<dyn Error
     let manga_name = &attributes["title"]["en"]
         .remove_quotes()
         .ok_or("error while removing quotes")?;
-    let thumbnail = get_manga_cover(&json!(manga_id), &data)?;
+    let thumbnail = get_manga_cover(&manga_id, &data)?;
     let status = &attributes["status"]
         .remove_quotes()
         .ok_or("error while removing quotes")?;
@@ -278,7 +275,6 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, Box<dyn Error
     let description = &attributes["description"]["en"]
         .remove_quotes()
         .ok_or("error while removing quotes")?;
-    println!("{}", &attributes["year"]);
     let year = &attributes["year"].as_i64();
     let mut author_list: Vec<Author> = Vec::new();
     let mut tag_list = Vec::new();
@@ -340,7 +336,7 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, Box<dyn Error
     // building the struct
     let manga_info = MangaInfo {
         manga_name: manga_name.clone(),
-        manga_id: json!(manga_id),
+        manga_id: manga_id.clone(),
         author: author_list,
         tags: tag_list,
         thumbnail: thumbnail,
@@ -370,7 +366,7 @@ pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, Box<
             .remove_quotes()
             .ok_or("error while removing quotes")?;
         // let chapter_name = format!("{number} {name}",number = chapter_number, name = &attributes["title"].to_string().replace('"', ""));
-        let chapter_name = json!(format!("Chapter {}", chapter_number.clone()));
+        let chapter_name = format!("Chapter {}", chapter_number.clone());
         let language = &attributes["translatedLanguage"]
             .remove_quotes()
             .ok_or("error while removing quotes")?;
@@ -378,7 +374,7 @@ pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, Box<
             .remove_quotes()
             .ok_or("error while removing quotes")?;
         let chapter_instance = Chapters {
-            chapter_name: chapter_name,
+            chapter_name: chapter_name.clone(),
             chapter_number: chapter_number.clone(),
             language: language.clone(),
             chapter_id: chapter_id,
@@ -400,7 +396,7 @@ pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterInfo, Box<dy
         .as_array()
         .ok_or("there are no pages")?; //transforming the response string into a json object
 
-    let mut page_list: Vec<Value> = Vec::new();
+    let mut page_list: Vec<String> = Vec::new();
     for page in pages_json {
         let mut page_link = page
             .remove_quotes()
@@ -410,10 +406,10 @@ pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterInfo, Box<dy
             "https://uploads.mangadex.org/data/{}/{}",
             chapter_hash, page_link
         );
-        page_list.push(json!(page_link))
+        page_list.push(page_link)
     }
     let chapter = ChapterInfo {
-        chapter_name: json!("ch"),
+        chapter_name: "ch".to_string(),
         pages: page_list,
     };
     Ok(chapter)
@@ -421,13 +417,17 @@ pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterInfo, Box<dy
 
 // adds the ability to remove the quotes from a Value
 trait ValueExtensions {
-    fn remove_quotes(&self) -> Option<Value>;
+    fn remove_quotes(&self) -> Option<String>;
 }
 impl ValueExtensions for Value {
-    fn remove_quotes(&self) -> Option<Value> {
+    fn remove_quotes(&self) -> Option<String> {
         if let Value::String(inner_value) = self {
-            Some(json!(inner_value))
+            Some(inner_value.to_string())
+        } else if self.is_number() {
+            Some(self.to_string())
         } else {
+            println!("{}", self);
+            // Some(self.to_string())
             None
         }
     }

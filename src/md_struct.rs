@@ -4,64 +4,64 @@ pub struct MdHomepageFeed {
     pub new_chapter_releases: Vec<NewChapters>,
 }
 pub struct PopularManga {
-    pub manga_name: Value,
-    // pub description: Value,
-    pub thumbnail: Value,
-    pub manga_id: Value,
+    pub manga_name: String,
+    // pub description: String,
+    pub thumbnail: String,
+    pub manga_id: String,
 }
 pub struct NewChapters {
-    pub chapter_name: Value,
-    pub chapter_number: i32,
-    pub language: Value,
-    pub chapter_id:Value,
-    pub manga_id: Value,
-    // pub thumbnail: Value,
-    pub tl_group_id:Value,
-    pub tl_group_name:Value,
-    pub page_number:i32
+    pub chapter_name: String,
+    pub chapter_number: String,
+    pub language: String,
+    pub chapter_id:String,
+    pub manga_id: String,
+    // pub thumbnail: String,
+    pub tl_group_id:String,
+    pub tl_group_name:String,
+    pub page_number:String
 }
 
 pub struct MangaSearch {
-    pub manga_name: Value,
-    pub manga_id: Value,
-    // pub tags: Vec<Value>,
-    pub thumbnail: Value,
-    pub status: Value,
-    pub original_language: Value,
+    pub manga_name: String,
+    pub manga_id: String,
+    // pub tags: Vec<String>,
+    pub thumbnail: String,
+    pub status: String,
+    pub original_language: String,
     pub translated_languages: Vec<Value>,
 }
 // used in /manga/{id}
 pub struct MangaInfo {
-    pub manga_name: Value,
-    pub manga_id: Value,
+    pub manga_name: String,
+    pub manga_id: String,
     pub author: Vec<Author>,
-    pub tags: Vec<Value>,
-    pub thumbnail: Value,
-    pub status: Value,
-    pub original_language: Value,
-    pub translated_languages: Vec<Value>,
+    pub tags: Vec<String>,
+    pub thumbnail: String,
+    pub status: String,
+    pub original_language: String,
+    pub translated_languages: Vec<String>,
     pub year: Option<i64>,
-    pub description: Value,
+    pub description: String,
     pub chapters: Vec<Chapters>,
 }
 pub struct Author {
-    pub author_name: Value,
-    pub author_id: Value,
-    pub role: Value,
+    pub author_name: String,
+    pub author_id: String,
+    pub role: String,
 }
 pub struct Chapters {
-    // pub tl_group: Value,
-    pub chapter_name: Value,
-    pub chapter_number: Value,
-    pub language: Value,
-    pub chapter_id: Value,
+    // pub tl_group: String,
+    pub chapter_name: String,
+    pub chapter_number: String,
+    pub language: String,
+    pub chapter_id: String,
 }
 pub struct AuthorInfo {
-    name: Value,
-    id: Value,
+    name: String,
+    id: String,
     titles: Vec<MangaInfo>,
 }
 pub struct ChapterInfo{
-    pub chapter_name:Value,
-    pub pages:Vec<Value>
+    pub chapter_name:String,
+    pub pages:Vec<String>
 }

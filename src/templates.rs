@@ -1,13 +1,15 @@
 use crate::md_struct::*;
 use maud::*;
 
-pub fn render_homepage(popular_manga: Vec<PopularManga>, is_localhost: bool) -> String {
+pub fn render_homepage(feed: MdHomepageFeed, is_localhost: bool) -> String {
+    let popular_manga = feed.currently_popular;
+    let new_chapters = feed.new_chapter_releases;
     let template = html!(
             (DOCTYPE)
             link rel="stylesheet" href="/ressources/styles.css";
             body {
             h1 {"HOME"}
-            div.search_list{
+            div.popular{
                 @for i in popular_manga{
                     div.manga_restult{
                         a href = (format!("/manga/{}",i.manga_id)){
@@ -23,6 +25,15 @@ pub fn render_homepage(popular_manga: Vec<PopularManga>, is_localhost: bool) -> 
                         }
                     }
             }
+            }
+            div.new_chapter{
+                @for chapter in new_chapters{
+                    div.new_chapter{
+                a href = (format!("/manga/{manga_id}/{chapter_id}", manga_id = chapter.manga_id, chapter_id = chapter.chapter_id)){
+                    {(chapter.chapter_name) ":" (chapter.language)}
+                };
+            }
+                }
             }
         }
     );
@@ -92,7 +103,7 @@ pub fn render_search_page(search_results: Vec<MangaSearch>, is_localhost: bool) 
                 @for i in search_results{
                     div.manga_restult{
                         a href = (format!("/manga/{}",i.manga_id)){
-                            
+
                             // uses the proxied images if not localhost or links the images directly
                             @if !is_localhost{
                                 img src = { (format!("/proxy/images/{}", i.thumbnail))};
