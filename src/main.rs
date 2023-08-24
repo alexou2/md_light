@@ -1,28 +1,29 @@
-// use router::Router;
-// use serde;
-// use serde_json;
-// use tera::Tera;
+use actix_web::Result;
 mod md_struct;
 mod online_md;
 mod templates;
 mod utills;
-use std::net::{IpAddr, Ipv4Addr};
-
 use actix_files::Files;
 use actix_web::{
-    cookie::time::util, get, http::StatusCode, web, App, HttpRequest, HttpResponse, HttpServer,
-    Responder,
+    get, http::StatusCode, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
 };
 use clap::Parser;
 use local_ip_address::local_ip;
 use reqwest::Client;
+use std::net::{IpAddr, Ipv4Addr};
+use colored::Colorize;
 
 #[get("/")]
 async fn index(path: HttpRequest) -> HttpResponse {
-    let is_localhost = utills::check_localhost(path);
-    let feed = online_md::get_md_homepage_feed().await.unwrap();
-    // let popular = online_md::get_popular_manga().await.unwrap();
-    let html = templates::render_homepage(feed, is_localhost);
+    let is_localhost = utills::check_localhost(&path);
+    let feed = online_md::get_md_homepage_feed().await;
+
+    // handles the errors by sending the error page
+    let mut html = String::new();
+    match feed {
+        Ok(e) => html = templates::render_homepage(e, is_localhost),
+        Err(v) => html = templates::render_error_page(v, "/"),
+    }
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
         .body(html)
@@ -30,12 +31,18 @@ async fn index(path: HttpRequest) -> HttpResponse {
 
 #[get("/manga/{id}")]
 async fn get_manga_info(manga_id: web::Path<String>, path: HttpRequest) -> HttpResponse {
-    let is_localhost = utills::check_localhost(path);
+    let requested_page = path.path();
+    let is_localhost = utills::check_localhost(&path);
 
-    let manga_info = online_md::get_manga_info(manga_id.to_string())
-        .await
-        .unwrap();
-    let html = templates::render_manga_info_page(manga_info, is_localhost);
+    let manga_info = online_md::get_manga_info(manga_id.to_string()).await;
+
+    // handles the errors by sending the error page
+    let mut html = String::new();
+    match manga_info {
+        Ok(e) => html = templates::render_manga_info_page(e, is_localhost),
+        Err(v) => html = templates::render_error_page(v, requested_page),
+    }
+    // let html = templates::render_manga_info_page(manga_info, is_localhost);
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
         .body(html)
@@ -44,11 +51,19 @@ async fn get_manga_info(manga_id: web::Path<String>, path: HttpRequest) -> HttpR
 // returns the chapter's pages
 #[get("/manga/{manga}/{chapter}")]
 async fn get_chapter(chapter: web::Path<(String, String)>, path: HttpRequest) -> HttpResponse {
-    let is_localhost = utills::check_localhost(path);
+    let is_localhost = utills::check_localhost(&path);
 
     let chapter_id: String = chapter.1.to_string();
     let chapter_info = online_md::get_chapter_pages(chapter_id).await;
-    let html = templates::render_chapter(chapter_info.unwrap(), is_localhost);
+
+    // handles the errors by sending the error page
+    let mut html = String::new();
+    match chapter_info {
+        Ok(e) => html = templates::render_chapter(e, is_localhost),
+        Err(v) => html = templates::render_error_page(v, path.path()),
+    }
+
+    // let html = templates::render_chapter(chapter_info.unwrap(), is_localhost);
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
         .body(html)
@@ -57,27 +72,44 @@ async fn get_chapter(chapter: web::Path<(String, String)>, path: HttpRequest) ->
 // searches for a manga
 #[get("/search/{query}")]
 async fn search_for_manga(name: web::Path<String>, path: HttpRequest) -> HttpResponse {
-    let is_localhost = utills::check_localhost(path);
+    let is_localhost = utills::check_localhost(&path);
 
-    let search_results = online_md::search_manga(name.to_string()).await.unwrap();
-    let html = templates::render_search_page(search_results, is_localhost);
+    let search_results = online_md::search_manga(name.to_string()).await;
+
+    // handles the errors by sending the error page
+    let mut html = String::new();
+    match search_results {
+        Ok(e) => html = templates::render_search_page(e, is_localhost),
+        Err(v) => html = templates::render_error_page(v, path.path()),
+    }
+
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
         .body(html)
 }
+
+// pings the mangadex server to test connection
 #[get("/server/ping")]
 async fn ping_md() -> impl Responder {
     match online_md::test_connection().await {
         Ok(e) => return format!("connection established\n{}", e),
         Err(v) => return format!("no connection with the server\n{}", v),
     }
+    use std::io::ErrorKind;
 }
 
+// kills the server
 #[get("/server/kill")]
-async fn kill_server() -> impl Responder {
-    println!("The server was killed with exit code 1");
-    std::process::exit(1);
-    ""
+async fn kill_server(path: HttpRequest) -> impl Responder {
+    if Args::parse().restrict && utills::check_localhost(&path) {
+        println!("The server was killed with exit code 1");
+        std::process::exit(1);
+    } else {
+        // prints a message 
+        println!("Unauthorized access to /server/kill: {}",path.connection_info().peer_addr().expect("unable to get client IP").on_red());
+        return format!("You do not have the permission to kill the server\nIP address: {}", path.connection_info().peer_addr().expect("unabel to get client IP"));
+    }
+    "".to_string()
 }
 
 async fn image_proxy(image_url: web::Path<String>) -> Result<HttpResponse> {
@@ -133,7 +165,7 @@ async fn main() -> std::io::Result<()> {
 
 /// A web server that uses the mangadex api with a lighweight frontend for potato devices
 #[derive(Parser, Debug)]
-#[command(author = "_alexou_", version, about, long_about = None)]
+#[command(author = "_alexou_", version = "0.1", about = "Use your old potato devices on a lightweight manga local site", long_about = None)]
 pub struct Args {
     /// Creates all of the necessary files and folders for the program to run
     #[arg(short, long)]
@@ -150,6 +182,12 @@ pub struct Args {
     /// Restricts download access for other users on the lan
     #[arg(short, long)]
     pub restrict: bool,
-}
 
-use actix_web::Result;
+    /// Uses absolutely no javascript (makes the frontend lighter, but some features WILL be broken)
+    #[arg(short, long)]
+    pub no_js: bool,
+
+    /// Prints messages about the requested pages and errors
+    #[arg(short, long)]
+    pub verbose: bool,
+}

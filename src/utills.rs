@@ -1,6 +1,7 @@
-use crate::md_struct::*;
 use actix_web::HttpRequest;
 use chrono::{Datelike, Timelike};
+
+use crate::md_struct::Chapters;
 
 // returns the local time, offset by a month
 pub fn get_offset_time() -> String {
@@ -24,11 +25,25 @@ pub fn get_offset_time() -> String {
         current_time.second()
     );
 
-    println!("{}", formatted_time);
     formatted_time
 }
-pub fn check_localhost(path: HttpRequest) -> bool {
+pub fn check_localhost(path: &HttpRequest) -> bool {
     let is_localhost = path.connection_info().host() == "172.0.0.1:8080"
         || path.connection_info().host() == "localhost:8080";
     is_localhost
 }
+
+// sorting the chapters by number and places Oneshots at the start of the list
+// pub fn sort_by_chapter(mut chapter_list: Vec<Chapters>) -> Vec<Chapters> {
+//     let list_length = chapter_list.len()-1;
+
+//     for i in 0..list_length {
+//         if chapter_list[i].chapter_number > chapter_list[i + 1].chapter_number {
+//             let small_temp = &chapter_list[i];
+//             chapter_list[i] = chapter_list[i+1];
+//             chapter_list[i+1] = small_temp;
+//         }
+//     }
+
+//     chapter_list
+// }

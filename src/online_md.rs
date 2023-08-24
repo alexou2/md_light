@@ -36,12 +36,13 @@ pub async fn request_with_agent(
 pub async fn get_md_homepage_feed() -> Result<MdHomepageFeed, Box<dyn Error>> {
     let popular_manga = get_popular_manga();
     let new_chapters = get_new_chapters();
-
+    
     // builds the struct for the popular titles+ new chapters
     let homepage_feed = MdHomepageFeed {
         currently_popular: popular_manga.await?,
         new_chapter_releases: new_chapters.await?,
     };
+
     Ok(homepage_feed)
 }
 
@@ -88,7 +89,7 @@ pub async fn get_new_chapters() -> Result<Vec<NewChapters>, Box<dyn std::error::
             // gets the infos about the tl group and the mangaID
             if let Some(relation) = relationships.as_array() {
                 for rel in relation {
-                    // matches the tl group or the mange id and sets the value to the correct variable
+                    // matches the tl group or the manga_id and sets the value to the correct variable
                     match rel["type"].to_string().replace('"', "").as_str() {
                         "scanlation_group" => {
                             tl_group_id = rel["id"]
@@ -103,7 +104,7 @@ pub async fn get_new_chapters() -> Result<Vec<NewChapters>, Box<dyn std::error::
                                 .remove_quotes()
                                 .ok_or("error while removing quotes")?
                         }
-                        _ => (),
+                        _ => continue,
                     }
                 }
             }
@@ -138,7 +139,7 @@ pub async fn get_popular_manga() -> Result<Vec<PopularManga>, Box<dyn std::error
     // doing the get request to the api and transforming it into a json object
     let resp = request_with_agent(url).await?.await?.text().await?;
     let json_resp: Value = serde_json::from_str(&resp)?;
-
+println!("pop");
     // transforming the json into an array in order to get all of the search results
     if let Some(response_data) = json_resp["data"].as_array() {
         for manga in response_data {
@@ -426,8 +427,6 @@ impl ValueExtensions for Value {
         } else if self.is_number() {
             Some(self.to_string())
         } else {
-            println!("{}", self);
-            // Some(self.to_string())
             None
         }
     }

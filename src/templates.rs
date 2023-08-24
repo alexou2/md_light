@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use crate::md_struct::*;
 use maud::*;
 
@@ -118,5 +120,28 @@ pub fn render_search_page(search_results: Vec<MangaSearch>, is_localhost: bool) 
         }
     );
     // println!("{}", template.clone().into_string());
+    template.into_string()
+}
+
+// renders the error page and shows the user the
+pub fn render_error_page(error_code: Box<dyn Error>, requested_page: &str) -> String {
+    // let probable_error_cause = todo!();
+    println!("{}", error_code);
+    let template = html!(
+            (DOCTYPE)
+            body{
+                div.error_log{
+                h1.error_message{"Oops! looks like there is an error"}
+                h3.error_message{"error code: "(error_code)}
+                }
+                div.retry_buttons{
+                    a.go_home href = {"/"}{"Go back to homepage "};
+    div {
+                    a.retry href = (requested_page){"retry"};
+    }
+
+                }
+            }
+        );
     template.into_string()
 }
