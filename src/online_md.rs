@@ -139,14 +139,15 @@ pub async fn get_popular_manga() -> Result<Vec<PopularManga>, Box<dyn std::error
     // doing the get request to the api and transforming it into a json object
     let resp = request_with_agent(url).await?.await?.text().await?;
     let json_resp: Value = serde_json::from_str(&resp)?;
-    
+    write("t.json", resp);
     // transforming the json into an array in order to get all of the search results
     if let Some(response_data) = json_resp["data"].as_array() {
         for manga in response_data {
-            let title = manga["title"]
+            println!("{}", manga);
+            let title = manga["attributes"]["title"]
                 .as_object()
                 .and_then(|obj| obj.values().next())
-                .unwrap()
+                .ok_or("error while getting manga title")?
                 .remove_quotes()
                 .ok_or("error while removing quotes")?;
             let manga_id = &manga["id"]
@@ -202,7 +203,7 @@ pub async fn search_manga(
             let title: String = attributes["title"]
                 .as_object()
                 .and_then(|obj| obj.values().next())
-                .unwrap()
+                .ok_or("error while getting title")?
                 .remove_quotes()
                 .ok_or("error while removing quotes")?;
             let status = &attributes["status"]
@@ -271,7 +272,7 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, Box<dyn Error
     let manga_name = attributes["title"]
                 .as_object()
                 .and_then(|obj| obj.values().next())
-                .unwrap()
+                .ok_or("error while getting title")?
                 .remove_quotes()
                 .ok_or("error while removing quotes")?;
     let thumbnail = get_manga_cover(&manga_id, &data)?;
