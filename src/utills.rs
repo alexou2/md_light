@@ -34,16 +34,19 @@ pub fn check_localhost(path: &HttpRequest) -> bool {
 }
 
 // sorting the chapters by number and places Oneshots at the start of the list
-// pub fn sort_by_chapter(mut chapter_list: Vec<Chapters>) -> Vec<Chapters> {
-//     let list_length = chapter_list.len()-1;
+pub fn sort_by_chapter(mut chapter_list: Vec<Chapters>) -> Vec<Chapters> {
+    let list_length = chapter_list.len();
+    println!("{}", list_length);
+    for j in 0..list_length {
+        for i in 0..list_length - j - 1 {
+            // println!("{}",i);
+            if chapter_list[i].chapter_number > chapter_list[i + 1].chapter_number {
+                let small_temp = chapter_list[i].clone();
+                chapter_list[i] = chapter_list[i + 1].clone();
+                chapter_list[i + 1] = small_temp;
+            }
+        }
+    }
 
-//     for i in 0..list_length {
-//         if chapter_list[i].chapter_number > chapter_list[i + 1].chapter_number {
-//             let small_temp = &chapter_list[i];
-//             chapter_list[i] = chapter_list[i+1];
-//             chapter_list[i+1] = small_temp;
-//         }
-//     }
-
-//     chapter_list
-// }
+    chapter_list
+}

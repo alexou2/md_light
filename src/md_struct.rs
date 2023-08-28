@@ -13,12 +13,12 @@ pub struct NewChapters {
     pub chapter_name: String,
     pub chapter_number: String,
     pub language: String,
-    pub chapter_id:String,
+    pub chapter_id: String,
     pub manga_id: String,
     // pub thumbnail: String,
-    pub tl_group_id:String,
-    pub tl_group_name:String,
-    pub page_number:String
+    pub tl_group_id: String,
+    pub tl_group_name: String,
+    pub page_number: String,
 }
 
 pub struct MangaSearch {
@@ -50,6 +50,7 @@ pub struct Author {
     pub role: String,
 }
 // the chapters that are listed in the manga info page
+#[derive(Clone)]
 pub struct Chapters {
     // pub tl_group: String,
     pub chapter_name: String,
@@ -62,17 +63,33 @@ pub struct AuthorInfo {
     id: String,
     titles: Vec<MangaInfo>,
 }
-pub struct ChapterInfo{
-    pub chapter_name:String,
-    pub pages:Vec<String>
+pub struct ChapterInfo {
+    pub chapter_name: String,
+    pub pages: Vec<String>,
 }
 
 trait sort {
-    fn sort_by_chapter(&self)-> Vec<Chapters>;
+    fn sort_by_chapter(&self) -> Vec<Chapters>;
 }
 // sorts the chapters by chapter number and by translated language
 impl sort for Chapters {
-    fn sort_by_chapter(&self)-> Vec<Chapters> {
+    fn sort_by_chapter(&self) -> Vec<Chapters> {
         todo!()
+    }
+}
+
+pub trait ValueExtensions {
+    fn remove_quotes(&self) -> Option<String>;
+}
+impl ValueExtensions for Value {
+    fn remove_quotes(&self) -> Option<String> {
+        if let Value::String(inner_value) = self {
+            Some(inner_value.to_string())
+        } else if self.is_number() {
+            Some(self.to_string())
+        } else {
+            println!("{}", self);
+            None
+        }
     }
 }
