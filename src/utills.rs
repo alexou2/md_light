@@ -27,9 +27,11 @@ pub fn get_offset_time() -> String {
 
     formatted_time
 }
+// checks if the request comes from the localhost ip or another one
 pub fn check_localhost(path: &HttpRequest) -> bool {
-    let is_localhost = path.connection_info().host() == "172.0.0.1:8080"
-        || path.connection_info().host() == "localhost:8080";
+    let is_localhost = path.connection_info().peer_addr().expect("unable to get client ID") == "127.0.0.1"
+        || path.connection_info().peer_addr().expect("unable to get client ID") == "localhost";
+        println!("{}", is_localhost);
     is_localhost
 }
 

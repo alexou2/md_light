@@ -56,7 +56,7 @@ async fn get_chapter(chapter: web::Path<(String, String)>, path: HttpRequest) ->
     let chapter_id: String = chapter.1.to_string();
     let chapter_info = online_md::get_chapter_pages(chapter_id.clone()).await;
 
-println!("{} {}", chapter.0.to_string(), chapter_id);
+    println!("{} {}", chapter.0.to_string(), chapter_id);
 
     // handles the errors by sending the error page
     let mut html = String::new();
@@ -102,7 +102,9 @@ async fn ping_md() -> impl Responder {
 // kills the server
 #[get("/server/kill")]
 async fn kill_server(path: HttpRequest) -> impl Responder {
-    if Args::parse().restrict && utills::check_localhost(&path) {
+    let restrict = Args::parse().restrict;
+    // allows killing the server only if the restrict option is on and the client is the host or if the  restrict option is false
+    if (restrict && utills::check_localhost(&path)) || (!restrict) {
         println!("The server was killed with exit code 1");
         std::process::exit(1);
     } else {
@@ -175,7 +177,6 @@ async fn main() -> std::io::Result<()> {
     .await
 }
 
-
 /// A web server that uses the mangadex api with a lighweight frontend for potato devices
 #[derive(Parser, Debug)]
 #[command(author = "_alexou_", version = "0.1", about , long_about = None)]
@@ -208,7 +209,7 @@ pub struct Args {
     #[arg(long = "PORT", default_value_t = 8080)]
     pub port: u16,
 
-   /// use the tor network for viewing chapters online
-   #[arg(short, long)]
-   pub tor: bool, 
+    /// use the tor network for viewing chapters online
+    #[arg(short, long)]
+    pub tor: bool,
 }
