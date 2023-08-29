@@ -179,7 +179,7 @@ async fn main() -> std::io::Result<()> {
 
 /// A web server that uses the mangadex api with a lighweight frontend for potato devices
 #[derive(Parser, Debug)]
-#[command(author = "_alexou_", version = "0.1", about , long_about = None)]
+#[command(author = "_alexou_", version = "0.1.1", about , long_about = None)]
 pub struct Args {
     /// Creates all of the necessary files and folders for the program to run
     #[arg(short, long)]

@@ -132,7 +132,7 @@ pub fn render_error_page(error_code: Box<dyn Error>, requested_page: &str) -> St
             body{
                 div.error_log{
                 h1.error_message{"Oops! looks like there is an error"}
-                h3.error_message{"error code: "(error_code)}
+                h3.error_message{(error_code)}
                 }
                 div.retry_buttons{
                     a.go_home href = {"/"}{"Go back to homepage "};

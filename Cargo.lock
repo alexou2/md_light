@@ -1053,7 +1053,7 @@ dependencies = [
 
 [[package]]
 name = "md_light"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "actix-files",
  "actix-web",

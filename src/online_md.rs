@@ -139,7 +139,7 @@ pub async fn get_popular_manga() -> Result<Vec<PopularManga>, Box<dyn std::error
     // doing the get request to the api and transforming it into a json object
     let resp = request_with_agent(url).await?.await?.text().await?;
     let json_resp: Value = serde_json::from_str(&resp)?;
-    write("t.json", resp);
+
     // transforming the json into an array in order to get all of the search results
     if let Some(response_data) = json_resp["data"].as_array() {
         for manga in response_data {
