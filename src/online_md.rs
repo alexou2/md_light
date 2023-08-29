@@ -199,7 +199,6 @@ pub async fn search_manga(
                 .remove_quotes()
                 .ok_or("error while removing quotes")?;
 
-            
             let title: String = attributes["title"]
                 .as_object()
                 .and_then(|obj| obj.values().next())
@@ -270,21 +269,22 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, Box<dyn Error
 
     // gets all of the infos about manga
     let manga_name = attributes["title"]
-                .as_object()
-                .and_then(|obj| obj.values().next())
-                .ok_or("error while getting title")?
-                .remove_quotes()
-                .ok_or("error while removing quotes")?;
+        .as_object()
+        .and_then(|obj| obj.values().next())
+        .ok_or("error while getting title")?
+        .remove_quotes()
+        .ok_or("error while removing quotes in the manga name")?;
     let thumbnail = get_manga_cover(&manga_id, &data)?;
     let status = &attributes["status"]
         .remove_quotes()
-        .ok_or("error while removing quotes")?;
+        .ok_or("error while removing quotes in the status")?;
     let original_language = &attributes["originalLanguage"]
         .remove_quotes()
-        .ok_or("error while removing quotes")?;
+        .ok_or("error while removing quotes in the og language")?;
+    println!("{}", &attributes["description"]);
     let description = &attributes["description"]["en"]
         .remove_quotes()
-        .ok_or("error while removing quotes")?;
+        .unwrap_or("N/a".to_string());
     let year = &attributes["year"].as_i64();
 
     let mut author_list: Vec<Author> = Vec::new();
@@ -303,13 +303,13 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, Box<dyn Error
             "author" | "artist" => {
                 let author_name = &author["attributes"]["name"]
                     .remove_quotes()
-                    .ok_or("error while removing quotes")?;
+                    .ok_or("error while removing quotes in the author name")?;
                 let author_id = &author["id"]
                     .remove_quotes()
-                    .ok_or("error while removing quotes")?;
+                    .ok_or("error while removing quotes for the author ID")?;
                 let role = &author["type"]
                     .remove_quotes()
-                    .ok_or("error while removing quotes")?;
+                    .ok_or("error while removing quotes in the author role")?;
 
                 // the author/artist instance
                 let author_instance = Author {
@@ -330,7 +330,7 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, Box<dyn Error
     for tag in tag_json {
         let tag_name = &tag["attributes"]["name"]["en"]
             .remove_quotes()
-            .ok_or("error while removing quotes")?;
+            .ok_or("error while removing quotes in the tags")?;
         tag_list.push(tag_name.clone());
     }
 
@@ -342,7 +342,7 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, Box<dyn Error
         translated_language_list.push(
             language
                 .remove_quotes()
-                .ok_or("error while removing quotes")?,
+                .ok_or("error while removing quotes in the language options")?,
         );
     }
 
@@ -377,15 +377,15 @@ pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, Box<
         // let tl_group = &manga["relationships"][""]
         let chapter_number = &attributes["chapter"]
             .remove_quotes()
-            .ok_or("error while removing quotes")?;
+            .ok_or("error while removing quotes in the chapter number")?;
         // let chapter_name = format!("{number} {name}",number = chapter_number, name = &attributes["title"].to_string().replace('"', ""));
         let chapter_name = format!("Chapter {}", chapter_number.clone());
         let language = &attributes["translatedLanguage"]
             .remove_quotes()
-            .ok_or("error while removing quotes")?;
+            .ok_or("error while removing quotes in the chapter language")?;
         let chapter_id = chapter["id"]
             .remove_quotes()
-            .ok_or("error while removing quotes")?;
+            .ok_or("error while removing quotes in the chapter ID")?;
         let chapter_instance = Chapters {
             chapter_name: chapter_name.clone(),
             chapter_number: chapter_number.clone(),

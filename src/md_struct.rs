@@ -68,15 +68,6 @@ pub struct ChapterInfo {
     pub pages: Vec<String>,
 }
 
-trait sort {
-    fn sort_by_chapter(&self) -> Vec<Chapters>;
-}
-// sorts the chapters by chapter number and by translated language
-impl sort for Chapters {
-    fn sort_by_chapter(&self) -> Vec<Chapters> {
-        todo!()
-    }
-}
 
 pub trait ValueExtensions {
     fn remove_quotes(&self) -> Option<String>;
