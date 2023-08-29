@@ -377,7 +377,8 @@ pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, Box<
         // let tl_group = &manga["relationships"][""]
         let chapter_number = &attributes["chapter"]
             .remove_quotes()
-            .ok_or("error while removing quotes in the chapter number")?;
+            .unwrap_or("Oneshot".to_string());
+        // .ok_or("error while removing quotes in the chapter number")?;
         // let chapter_name = format!("{number} {name}",number = chapter_number, name = &attributes["title"].to_string().replace('"', ""));
         let chapter_name = format!("Chapter {}", chapter_number.clone());
         let language = &attributes["translatedLanguage"]
@@ -386,6 +387,7 @@ pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, Box<
         let chapter_id = chapter["id"]
             .remove_quotes()
             .ok_or("error while removing quotes in the chapter ID")?;
+
         let chapter_instance = Chapters {
             chapter_name: chapter_name.clone(),
             chapter_number: chapter_number.clone(),
