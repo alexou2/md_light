@@ -31,6 +31,49 @@ pub async fn request_with_agent(
 
     Ok(response)
 }
+// sends multiple requests to get all of the manga's chapters in order to get bast the rate limits
+async fn request_manga_chapters(url: String) -> Result<Vec<Value>, Box<dyn Error>> {
+    let mut chapter_list = Vec::new();
+    let mut i = 0;
+    let limit = [("limit", 100)];
+    let client: Client = reqwest::Client::new();
+    loop {
+        let offset = [("offset", 100 * i)];
+        println!("\n\n\n\n sending request #{}", i);
+        // sending the request to the api with the limit and the offset
+        let response = client
+            .get(&url)
+            .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .query(&limit)
+            .query(&offset)
+            .send()
+            .await?
+            ;
+        println!("{}", response.url());
+            if response.status() !=200 {
+                break;
+            }
+        println!(" status{}", response.status());
+        let json_res: Value = from_str(&response.text()
+        .await?)?;
+        // transforms the json into a vector
+        let response_chapters = json_res["data"]
+            .as_array()
+            .ok_or("error while adding chapters to the list")?;
+        // iterating in the response chapters list to push each chapter to the chapter list
+        response_chapters
+            .iter()
+            .for_each(|chapter| chapter_list.push(chapter.clone()));
+
+       
+        i += 1;
+
+        let duration = std::time::Duration::from_millis(100);
+        std::thread::sleep(duration);
+    }
+
+    Ok(chapter_list)
+}
 
 // gets the informations for the homepage
 pub async fn get_md_homepage_feed() -> Result<MdHomepageFeed, Box<dyn Error>> {
@@ -259,8 +302,7 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, Box<dyn Error
         BASE_URL, &manga_id
     );
     // calling the function to make the request to the api
-    let resp = request_with_agent(url).await?.await?.text().await?;
-
+    let resp = request_with_agent(url.clone()).await?.await?.text().await?;
     // parsing the api response into a json
     let json_resp: Value = from_str(&resp)?;
     // separating the json response to make it easier to access items
@@ -363,15 +405,18 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, Box<dyn Error
     Ok(manga_info)
 }
 
+// gets all of the manga's chapters for the manga info page
 pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, Box<dyn Error>> {
     let url = format!("{}/manga/{}/feed", BASE_URL, manga_id);
     // let resp = reqwest::get(&url).await?.text().await?;
-    let resp = request_with_agent(url).await?.await?.text().await?;
+    // let resp = request_with_agent(url.clone()).await?.await?.text().await?;
 
-    let json_resp: Value = from_str(&resp)?;
-    let data = &json_resp["data"]; //transforming the response string into a json object
+    let chapter_json = request_manga_chapters(url).await?;
+    println!("\n\n\n\n\n\n chapter length{}", chapter_json.len());
+    // let json_resp: Value = from_str(&resp)?;
+    // let data = &json_resp["data"]; //transforming the response string into a json object
     let mut chapter_list: Vec<Chapters> = Vec::new();
-    let chapter_json = data.as_array().ok_or("there are no chapters")?; // transforming the json into an array
+    // let chapter_json = data.as_array().ok_or("there are no chapters")?; // transforming the json into an array
     for chapter in chapter_json {
         let attributes = &chapter["attributes"];
         // let tl_group = &manga["relationships"][""]
