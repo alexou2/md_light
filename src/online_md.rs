@@ -32,13 +32,19 @@ pub async fn request_with_agent(
     Ok(response)
 }
 // sends multiple requests to get all of the manga's chapters in order to get bast the rate limits
-async fn request_manga_chapters(url: String) -> Result<Vec<Value>, Box<dyn Error>> {
+async fn request_manga_chapters(
+    url: String,
+    base_offset: i32,
+) -> Result<Vec<Value>, Box<dyn Error>> {
+
     let mut chapter_list = Vec::new();
     let mut i = 0;
     let limit = [("limit", 100)];
+    let chapter_ordering = [("order[chapter]", "asc")];
     let client: Client = reqwest::Client::new();
+
     loop {
-        let offset = [("offset", 100 * i)];
+        let offset = [("offset", 100 * i + base_offset)];
         println!("\n\n\n\n sending request #{}", i);
         // sending the request to the api with the limit and the offset
         let response = client
@@ -46,16 +52,15 @@ async fn request_manga_chapters(url: String) -> Result<Vec<Value>, Box<dyn Error
             .header(reqwest::header::USER_AGENT, USER_AGENT)
             .query(&limit)
             .query(&offset)
+            .query(&chapter_ordering)
             .send()
             .await?
-            ;
-        println!("{}", response.url());
-            if response.status() !=200 {
-                break;
-            }
-        println!(" status{}", response.status());
-        let json_res: Value = from_str(&response.text()
-        .await?)?;
+            .text()
+            .await?;
+        // println!("{}", response.url());
+
+        let json_res: Value = from_str(&response)?;
+println!("{}", response);
         // transforms the json into a vector
         let response_chapters = json_res["data"]
             .as_array()
@@ -65,13 +70,27 @@ async fn request_manga_chapters(url: String) -> Result<Vec<Value>, Box<dyn Error
             .iter()
             .for_each(|chapter| chapter_list.push(chapter.clone()));
 
-       
+        // let duration = std::time::Duration::from_millis(100);
+        // std::thread::sleep(duration);
+
+        // the total number of chapters
+        let total = &json_res["total"].to_string().parse::<i32>()?;
+
+        // checks if the request returned all of the chapters
+        let got_all_chapters: bool = total
+            <= &(&json_res["limit"].to_string().parse::<i32>()?
+                + (&json_res["offset"].to_string().parse::<i32>()?));
+
+        if json_res["data"].to_string() == "[]" || got_all_chapters {
+            println!(
+                "got chapters: {} of {} total",
+                got_all_chapters, &json_res["total"]
+            );
+            break;
+        }
+        // raises the offset
         i += 1;
-
-        let duration = std::time::Duration::from_millis(100);
-        std::thread::sleep(duration);
     }
-
     Ok(chapter_list)
 }
 
@@ -400,7 +419,8 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, Box<dyn Error
         translated_languages: translated_language_list,
         year: year.clone(),
         description: description.clone(),
-        chapters: sort_by_chapter(manga_chapters_promise.await?), // waits until the request to get the chapters is done
+        // chapters: sort_by_chapter(manga_chapters_promise.await?), // waits until the request to get the chapters is done
+        chapters:manga_chapters_promise.await?
     };
     Ok(manga_info)
 }
@@ -411,7 +431,7 @@ pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, Box<
     // let resp = reqwest::get(&url).await?.text().await?;
     // let resp = request_with_agent(url.clone()).await?.await?.text().await?;
 
-    let chapter_json = request_manga_chapters(url).await?;
+    let chapter_json = request_manga_chapters(url, 0).await?;
     println!("\n\n\n\n\n\n chapter length{}", chapter_json.len());
     // let json_resp: Value = from_str(&resp)?;
     // let data = &json_resp["data"]; //transforming the response string into a json object
