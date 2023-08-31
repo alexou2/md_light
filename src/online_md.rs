@@ -36,7 +36,6 @@ async fn request_manga_chapters(
     url: String,
     base_offset: i32,
 ) -> Result<Vec<Value>, Box<dyn Error>> {
-
     let mut chapter_list = Vec::new();
     let mut i = 0;
     let limit = [("limit", 100)];
@@ -45,7 +44,6 @@ async fn request_manga_chapters(
 
     loop {
         let offset = [("offset", 100 * i + base_offset)];
-        println!("\n\n\n\n sending request #{}", i);
         // sending the request to the api with the limit and the offset
         let response = client
             .get(&url)
@@ -57,10 +55,8 @@ async fn request_manga_chapters(
             .await?
             .text()
             .await?;
-        // println!("{}", response.url());
 
         let json_res: Value = from_str(&response)?;
-println!("{}", response);
         // transforms the json into a vector
         let response_chapters = json_res["data"]
             .as_array()
@@ -205,7 +201,6 @@ pub async fn get_popular_manga() -> Result<Vec<PopularManga>, Box<dyn std::error
     // transforming the json into an array in order to get all of the search results
     if let Some(response_data) = json_resp["data"].as_array() {
         for manga in response_data {
-            println!("{}", manga);
             let title = manga["attributes"]["title"]
                 .as_object()
                 .and_then(|obj| obj.values().next())
@@ -342,7 +337,6 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, Box<dyn Error
     let original_language = &attributes["originalLanguage"]
         .remove_quotes()
         .ok_or("error while removing quotes in the og language")?;
-    println!("{}", &attributes["description"]);
     let description = &attributes["description"]["en"]
         .remove_quotes()
         .unwrap_or("N/a".to_string());
@@ -420,7 +414,7 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, Box<dyn Error
         year: year.clone(),
         description: description.clone(),
         // chapters: sort_by_chapter(manga_chapters_promise.await?), // waits until the request to get the chapters is done
-        chapters:manga_chapters_promise.await?
+        chapters: manga_chapters_promise.await?,
     };
     Ok(manga_info)
 }
@@ -432,7 +426,6 @@ pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, Box<
     // let resp = request_with_agent(url.clone()).await?.await?.text().await?;
 
     let chapter_json = request_manga_chapters(url, 0).await?;
-    println!("\n\n\n\n\n\n chapter length{}", chapter_json.len());
     // let json_resp: Value = from_str(&resp)?;
     // let data = &json_resp["data"]; //transforming the response string into a json object
     let mut chapter_list: Vec<Chapters> = Vec::new();
@@ -493,4 +486,80 @@ pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterInfo, Box<dy
         pages: page_list,
     };
     Ok(chapter)
+}
+
+pub async fn get_author_infos(author_id: String) -> Result<AuthorInfo, Box<dyn Error>> {
+    let url = format!("{}/author/{}", BASE_URL, author_id);
+    let resp = request_with_agent(url).await?.await?.text().await?;
+    let json_resp: Value = from_str(&resp)?;
+    let data = &json_resp["data"];
+
+    let name = &data["attributes"]["name"]
+        .remove_quotes()
+        .ok_or("error in author name")?;
+    let titles_json = data["relationships"]
+        .as_array()
+        .ok_or("error in author's manga list")?;
+
+    let mut titles_promise = Vec::new();
+
+    for id in titles_json {
+        println!("id: {}", id.to_string());
+        let id_string = id["id"]
+            .remove_quotes()
+            .ok_or("error while converting manga id to a string")?;
+        let promise = get_author_manga(id_string);
+        titles_promise.push(promise)
+    }
+
+    let mut manga_list: Vec<ShortMangaInfo> = Vec::new();
+    for promise in titles_promise {
+        manga_list.push(promise.await?)
+    }
+
+    let author_info = AuthorInfo {
+        name: name.clone(),
+        id: author_id,
+        titles: manga_list,
+    };
+
+    Ok(author_info)
+}
+async fn get_author_manga(manga_id: String) -> Result<ShortMangaInfo, Box<dyn Error>> {
+    let url = format!("{}/manga/{}", BASE_URL, manga_id);
+    let resp = request_with_agent(url).await?.await?.text().await?;
+
+    let json_resp: Value = from_str(&resp)?;
+    // separating the json response to make it easier to access items
+    let data = &json_resp["data"];
+    let attributes = &data["attributes"];
+    // gets all of the infos about manga
+    let manga_name = attributes["title"]
+        .as_object()
+        .and_then(|obj| obj.values().next())
+        .ok_or("error while getting title")?
+        .remove_quotes()
+        .ok_or("error while removing quotes in the manga name")?;
+    let thumbnail = get_manga_cover(&manga_id, &data)?;
+    let status = &attributes["status"]
+        .remove_quotes()
+        .ok_or("error while removing quotes in the status")?;
+    let original_language = &attributes["originalLanguage"]
+        .remove_quotes()
+        .ok_or("error while removing quotes in the og language")?;
+    let description = &attributes["description"]["en"]
+        .remove_quotes()
+        .unwrap_or("N/a".to_string());
+    let year = &attributes["year"].as_i64();
+
+    let short_info = ShortMangaInfo {
+        name: manga_name.clone(),
+        id: manga_id,
+        original_language: original_language.clone(),
+        description: description.clone(),
+        cover_link: thumbnail,
+        status: status.clone(),
+    };
+
+    Ok(short_info)
 }

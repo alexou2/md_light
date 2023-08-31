@@ -59,15 +59,25 @@ pub struct Chapters {
     pub chapter_id: String,
 }
 pub struct AuthorInfo {
-    name: String,
-    id: String,
-    titles: Vec<MangaInfo>,
+    pub name: String,
+    pub id: String,
+    pub titles: Vec<ShortMangaInfo>,
 }
+
+pub struct ShortMangaInfo {
+    pub name: String,
+    pub id: String,
+    pub original_language: String,
+    pub cover_link: String,
+    pub description: String,
+    pub status: String,
+    // pub tags: Vec<String>,
+}
+
 pub struct ChapterInfo {
     pub chapter_name: String,
     pub pages: Vec<String>,
 }
-
 
 pub trait ValueExtensions {
     fn remove_quotes(&self) -> Option<String>;

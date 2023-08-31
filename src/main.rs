@@ -1,5 +1,7 @@
 use actix_web::Result;
+mod database;
 mod md_struct;
+mod offline_reader;
 mod online_md;
 mod templates;
 mod utills;
@@ -12,8 +14,6 @@ use colored::Colorize;
 use local_ip_address::local_ip;
 use reqwest::Client;
 use std::net::{IpAddr, Ipv4Addr};
-mod offline_reader;
-mod database;
 
 #[get("/")]
 async fn index(path: HttpRequest) -> HttpResponse {
@@ -87,6 +87,25 @@ async fn search_for_manga(name: web::Path<String>, path: HttpRequest) -> HttpRes
         Err(v) => html = templates::render_error_page(v, path.path()),
     }
 
+    HttpResponse::build(StatusCode::OK)
+        .content_type("text/html; charset=utf-8")
+        .body(html)
+}
+
+// searches for a manga
+#[get("/author/{author_id}")]
+async fn get_author(author_id: web::Path<String>, path: HttpRequest) -> HttpResponse {
+    let is_localhost = utills::check_localhost(&path);
+println!("\n\n\n\nn\n");
+    let author_data = online_md::get_author_infos(author_id.to_string()).await.unwrap();
+    // handles the errors by sending the error page
+    let mut html = String::new();
+
+    // match author_data {
+    //     Ok(e) => (),//html = templates::render_search_page(e, is_localhost),
+    //     Err(v) => ()//html = templates::render_error_page(v, path.path()),
+    // }
+println!("{}", author_data.name);
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
         .body(html)
@@ -170,6 +189,7 @@ async fn main() -> std::io::Result<()> {
             .service(get_manga_info)
             .service(search_for_manga)
             .service(ping_md)
+            .service(get_author)
             .service(Files::new("/", "/ressources"))
     })
     // the ip addreses used to access the server
