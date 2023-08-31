@@ -12,6 +12,8 @@ use colored::Colorize;
 use local_ip_address::local_ip;
 use reqwest::Client;
 use std::net::{IpAddr, Ipv4Addr};
+// mod offline_reader;
+// mod database;
 
 #[get("/")]
 async fn index(path: HttpRequest) -> HttpResponse {
