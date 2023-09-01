@@ -16,7 +16,7 @@ pub fn render_homepage(feed: MdHomepageFeed, is_localhost: bool) -> String {
     let new_chapters = feed.new_chapter_releases;
     let template = html!(
             (DOCTYPE)
-            link rel="stylesheet" href="/ressources/styles.css";
+            link rel="stylesheet" href="ressources/styles.css";
             body {
             h1 {"HOME"}
             div.popular{
@@ -40,7 +40,7 @@ pub fn render_homepage(feed: MdHomepageFeed, is_localhost: bool) -> String {
             div.new_chapter{
                 @for chapter in new_chapters{
                     div.new_chapter{
-                a href = (format!("/manga/{manga_id}/{chapter_id}", manga_id = chapter.manga_id, chapter_id = chapter.chapter_id)){
+                a.chapter href = (format!("/manga/{manga_id}/{chapter_id}", manga_id = chapter.manga_id, chapter_id = chapter.chapter_id)){
                     {(chapter.chapter_name) ":" (chapter.language)}
                 };
             }
@@ -74,7 +74,7 @@ pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> Stri
             {(manga_info.description)}
         }
             @for chapter in manga_info.chapters{
-                a href = (format!("/manga/{manga_id}/{chapter}", manga_id = manga_info.manga_id, chapter = chapter.chapter_id )){
+                a.chapter href = (format!("/manga/{manga_id}/{chapter}", manga_id = manga_info.manga_id, chapter = chapter.chapter_id )){
                     p{(chapter.chapter_name)": "(chapter.language)}
                 }
             };
@@ -99,7 +99,7 @@ pub fn render_chapter(chapter_info: ChapterInfo, is_localhost: bool) -> String {
                     // }@else{
                     //     img.chapter_page src = (i);
                     // }
-                    img src = (get_correct_image(is_localhost, i));
+                    img.chapter_page src = (get_correct_image(is_localhost, i));
                 }
             }
         }

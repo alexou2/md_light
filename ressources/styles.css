@@ -4,3 +4,14 @@ img.chapter_page{
     margin-right: auto;
     max-width: 100%;
 }
+body{
+    background-color: black;
+}
+a.chapter:link {
+    color: orange;
+  }
+  
+  /* visited link */
+  a.chapter:visited {
+    color: grey;
+  }
