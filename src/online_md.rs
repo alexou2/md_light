@@ -14,12 +14,13 @@ const BASE_URL: &'static str = "https://api.mangadex.org";
 pub enum MDError {
     Reqwest(reqwest::Error),
     Json(serde_json::Error),
-    ApiError
+    ApiError,
 }
-enum ApiError{
+enum ApiError {
     InvalidId,
     NoSearchResults,
-    ParsingError
+    ParsingError,
+    AnotherFuckingError,
 }
 
 // sends a get request to the /ping endpoint of the api

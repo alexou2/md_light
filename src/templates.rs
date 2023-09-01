@@ -142,6 +142,7 @@ pub fn render_error_page(error_code: Box<dyn Error>, requested_page: &str) -> St
     println!("{}", error_code);
     let template = html!(
             (DOCTYPE)
+            link rel="stylesheet" href="/ressources/styles.css";
             body{
                 div.error_log{
                 h1.error_message{"Oops! looks like there is an error"}
@@ -161,6 +162,7 @@ pub fn render_error_page(error_code: Box<dyn Error>, requested_page: &str) -> St
 pub fn render_author_page(author: AuthorInfo, is_localhost: bool) -> String {
     let template = html!(
         (DOCTYPE)
+        link rel="stylesheet" href="/ressources/styles.css";
         body{
             div.author_name {(author.name)}
             div.author_manga{
