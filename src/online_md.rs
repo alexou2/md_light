@@ -526,9 +526,10 @@ pub async fn get_author_infos(author_id: String) -> Result<AuthorInfo, Box<dyn E
     Ok(author_info)
 }
 async fn get_author_manga(manga_id: String) -> Result<ShortMangaInfo, Box<dyn Error>> {
-    let url = format!("{}/manga/{}", BASE_URL, manga_id);
+    let url = format!("{}/manga/{}?includes[]=cover_art", BASE_URL, manga_id);
+    println!("call");
     let resp = request_with_agent(url).await?.await?.text().await?;
-
+println!("fini");
     let json_resp: Value = from_str(&resp)?;
     // separating the json response to make it easier to access items
     let data = &json_resp["data"];

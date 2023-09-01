@@ -97,15 +97,14 @@ async fn search_for_manga(name: web::Path<String>, path: HttpRequest) -> HttpRes
 async fn get_author(author_id: web::Path<String>, path: HttpRequest) -> HttpResponse {
     let is_localhost = utills::check_localhost(&path);
 println!("\n\n\n\nn\n");
-    let author_data = online_md::get_author_infos(author_id.to_string()).await.unwrap();
+    let author_data = online_md::get_author_infos(author_id.to_string()).await;
     // handles the errors by sending the error page
     let mut html = String::new();
 
-    // match author_data {
-    //     Ok(e) => (),//html = templates::render_search_page(e, is_localhost),
-    //     Err(v) => ()//html = templates::render_error_page(v, path.path()),
-    // }
-println!("{}", author_data.name);
+    match author_data {
+        Ok(e) => html = templates::render_author_page(e),
+        Err(v) => html = templates::render_error_page(v, path.path()),
+    }
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
         .body(html)

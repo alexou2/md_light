@@ -58,7 +58,8 @@ pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> Stri
         h1 {(manga_info.manga_name)}
         h3{"authors: "}
             @for author in manga_info.author{
-                p{(author.author_name)": "(author.role)}
+                a href = {"/author/"(author.author_id)}{
+                    p{(author.author_name)": "(author.role)}}
             };
             {(manga_info.description)}
         }
@@ -143,5 +144,22 @@ pub fn render_error_page(error_code: Box<dyn Error>, requested_page: &str) -> St
                 }
             }
         );
+    template.into_string()
+}
+pub fn render_author_page(author: AuthorInfo) -> String {
+    let template = html!(
+        (DOCTYPE)
+        body{
+            div.author_name {(author.name)}
+            div.author_manga{
+                @for manga in author.titles{
+                    a.title href = {"/manga/"(manga.id)}{
+                        img src = (manga.cover_link);
+                        (manga.name)
+                    }
+                }
+            }
+        }
+    );
     template.into_string()
 }
