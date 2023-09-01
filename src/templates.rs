@@ -3,6 +3,14 @@ use std::error::Error;
 use crate::md_struct::*;
 use maud::*;
 
+fn get_correct_image(is_localhost: bool, mut image_thumbnail: String) -> String {
+    if !is_localhost {
+        return format!("/proxy/images/{}", image_thumbnail);
+    } else {
+        return image_thumbnail;
+    }
+}
+
 pub fn render_homepage(feed: MdHomepageFeed, is_localhost: bool) -> String {
     let popular_manga = feed.currently_popular;
     let new_chapters = feed.new_chapter_releases;
@@ -17,11 +25,12 @@ pub fn render_homepage(feed: MdHomepageFeed, is_localhost: bool) -> String {
                         a href = (format!("/manga/{}",i.manga_id)){
 
                             // uses the proxied images if not localhost or links the images directly
-                            @if !is_localhost{
-                                img src = { (format!("/proxy/images/{}", i.thumbnail))};
-                            }@else{
-                                img src = (i.thumbnail);
-                            }
+                            // @if !is_localhost{
+                            //     img src = { (format!("/proxy/images/{}", i.thumbnail))};
+                            // }@else{
+                            //     img src = (i.thumbnail);
+                            // }
+                            img src = (get_correct_image(is_localhost, i.thumbnail));
 
                             {(i.manga_name)}
                         }
@@ -50,11 +59,12 @@ pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> Stri
             div.manga_info{
 
                 // uses the proxied images if not localhost or links the images directly
-                @if !is_localhost{
-                    img src = { (format!("/proxy/images/{}", manga_info.thumbnail))};
-                }@else{
-                    img src = (manga_info.thumbnail);
-                }
+                // @if !is_localhost{
+                //     img src = { (format!("/proxy/images/{}", manga_info.thumbnail))};
+                // }@else{
+                //     img src = (manga_info.thumbnail);
+                // }
+                img src = (get_correct_image(is_localhost, manga_info.thumbnail));
         h1 {(manga_info.manga_name)}
         h3{"authors: "}
             @for author in manga_info.author{
@@ -84,11 +94,12 @@ pub fn render_chapter(chapter_info: ChapterInfo, is_localhost: bool) -> String {
                 @for i in chapter_info.pages{
 
                     // uses the proxied images if not localhost or links the images directly
-                    @if !is_localhost{
-                        img.chapter_page src = { (format!("/proxy/images/{}", i))};
-                    }@else{
-                        img.chapter_page src = (i);
-                    }
+                    // @if !is_localhost{
+                    //     img.chapter_page src = { (format!("/proxy/images/{}", i))};
+                    // }@else{
+                    //     img.chapter_page src = (i);
+                    // }
+                    img src = (get_correct_image(is_localhost, i));
                 }
             }
         }
@@ -108,11 +119,12 @@ pub fn render_search_page(search_results: Vec<MangaSearch>, is_localhost: bool) 
                         a href = (format!("/manga/{}",i.manga_id)){
 
                             // uses the proxied images if not localhost or links the images directly
-                            @if !is_localhost{
-                                img src = { (format!("/proxy/images/{}", i.thumbnail))};
-                            }@else{
-                                img src = (i.thumbnail);
-                            }
+                            // @if !is_localhost{
+                            //     img src = { (format!("/proxy/images/{}", i.thumbnail))};
+                            // }@else{
+                            //     img src = (i.thumbnail);
+                            // }
+                            img src = (get_correct_image(is_localhost, i.thumbnail));
                         {(i.manga_name)}
                         }
                     }
@@ -146,7 +158,7 @@ pub fn render_error_page(error_code: Box<dyn Error>, requested_page: &str) -> St
         );
     template.into_string()
 }
-pub fn render_author_page(author: AuthorInfo) -> String {
+pub fn render_author_page(author: AuthorInfo, is_localhost: bool) -> String {
     let template = html!(
         (DOCTYPE)
         body{
@@ -154,7 +166,8 @@ pub fn render_author_page(author: AuthorInfo) -> String {
             div.author_manga{
                 @for manga in author.titles{
                     a.title href = {"/manga/"(manga.id)}{
-                        img src = (manga.cover_link);
+                        // img src = (manga.cover_link);
+                        img src = (get_correct_image(is_localhost, manga.cover_link));
                         (manga.name)
                     }
                 }

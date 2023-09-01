@@ -103,7 +103,7 @@ async fn get_author(author_id: web::Path<String>, path: HttpRequest) -> HttpResp
     let mut html = String::new();
 
     match author_data {
-        Ok(e) => html = templates::render_author_page(e),
+        Ok(e) => html = templates::render_author_page(e, is_localhost),
         Err(v) => html = templates::render_error_page(v, path.path()),
     }
     HttpResponse::build(StatusCode::OK)
