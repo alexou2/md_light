@@ -3,7 +3,7 @@ use std::error::Error;
 use crate::md_struct::*;
 use maud::*;
 
-fn get_correct_image(is_localhost: bool, mut image_thumbnail: String) -> String {
+fn get_correct_image(is_localhost: bool, image_thumbnail: String) -> String {
     if !is_localhost {
         return format!("/proxy/images/{}", image_thumbnail);
     } else {
