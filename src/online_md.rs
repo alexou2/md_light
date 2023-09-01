@@ -11,6 +11,13 @@ use std::{error::Error, fs::write};
 
 const BASE_URL: &'static str = "https://api.mangadex.org";
 
+pub enum MDError {
+    Reqwest(reqwest::Error),
+    Json(serde_json::Error),
+    NoSearchResult()
+}
+// enum !
+
 // sends a get request to the /ping endpoint of the api
 pub async fn test_connection() -> Result<String, reqwest::Error> {
     Ok(reqwest::get(format!("{}/ping", BASE_URL))
@@ -529,7 +536,7 @@ async fn get_author_manga(manga_id: String) -> Result<ShortMangaInfo, Box<dyn Er
     let url = format!("{}/manga/{}?includes[]=cover_art", BASE_URL, manga_id);
     println!("call");
     let resp = request_with_agent(url).await?.await?.text().await?;
-println!("fini");
+    println!("fini");
     let json_resp: Value = from_str(&resp)?;
     // separating the json response to make it easier to access items
     let data = &json_resp["data"];

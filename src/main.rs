@@ -7,7 +7,8 @@ mod templates;
 mod utills;
 use actix_files::Files;
 use actix_web::{
-    get, http::StatusCode, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
+    get, http::StatusCode, web, web::Redirect, App, HttpRequest, HttpResponse, HttpServer,
+    Responder,
 };
 use clap::Parser;
 use colored::Colorize;
@@ -61,11 +62,11 @@ async fn get_chapter(chapter: web::Path<(String, String)>, path: HttpRequest) ->
     println!("{} {}", chapter.0.to_string(), chapter_id);
 
     // handles the errors by sending the error page
-    let mut html = String::new();
-    match chapter_info {
-        Ok(e) => html = templates::render_chapter(e, is_localhost),
-        Err(v) => html = templates::render_error_page(v, path.path()),
-    }
+    // let mut html = String::new();
+    let html = match chapter_info {
+        Ok(e) => templates::render_chapter(e, is_localhost),
+        Err(v) => templates::render_error_page(v, path.path()),
+    };
 
     // let html = templates::render_chapter(chapter_info.unwrap(), is_localhost);
     HttpResponse::build(StatusCode::OK)
@@ -96,7 +97,7 @@ async fn search_for_manga(name: web::Path<String>, path: HttpRequest) -> HttpRes
 #[get("/author/{author_id}")]
 async fn get_author(author_id: web::Path<String>, path: HttpRequest) -> HttpResponse {
     let is_localhost = utills::check_localhost(&path);
-println!("\n\n\n\nn\n");
+    println!("\n\n\n\nn\n");
     let author_data = online_md::get_author_infos(author_id.to_string()).await;
     // handles the errors by sending the error page
     let mut html = String::new();
