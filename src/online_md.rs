@@ -20,6 +20,8 @@ enum ApiError {
     InvalidId,
     NoSearchResults,
     ParsingError,
+    MangaNotFound,
+    ExternalChapter,
     AnotherFuckingError,
 }
 
