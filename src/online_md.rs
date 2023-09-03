@@ -6,16 +6,33 @@ use reqwest;
 use reqwest::header::USER_AGENT;
 use reqwest::Client;
 use serde_json::{from_str, json, Value};
+use std::fmt;
 use std::future::Future;
 use std::{error::Error, fs::write};
-
 const BASE_URL: &'static str = "https://api.mangadex.org";
 
+#[derive(Debug)]
 pub enum MDError {
     Reqwest(reqwest::Error),
     Json(serde_json::Error),
-    ApiError,
+    ApiError(ApiError),
+    Other(String),
 }
+
+impl std::error::Error for MDError {}
+impl fmt::Display for MDError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            MDError::Reqwest(_) => write!(f, "Error Variant 1 occurred"),
+            MDError::Json(_) => write!(f, "Error Variant 2 occurred"),
+            MDError::ApiError(_) => write!(f, "Error Variant 2 occurred"),
+            MDError::Other(_) => write!(f, "Error Variant 2 occurred"),
+            // Handle more error variants here
+        }
+    }
+}
+
+#[derive(Debug)]
 enum ApiError {
     InvalidId,
     NoSearchResults,
@@ -24,6 +41,21 @@ enum ApiError {
     ExternalChapter,
     AnotherFuckingError,
 }
+impl std::error::Error for ApiError {}
+impl fmt::Display for ApiError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            ApiError::InvalidId => write!(f, "Error Variant 1 occurred"),
+            ApiError::NoSearchResults => write!(f, "Error Variant 2 occurred"),
+            ApiError::AnotherFuckingError => write!(f, "Error Variant 2 occurred"),
+            ApiError::ExternalChapter => write!(f, "Error Variant 2 occurred"),
+            ApiError::MangaNotFound => write!(f, "Error Variant 2 occurred"),
+            ApiError::ParsingError => write!(f, "Error Variant 2 occurred"),
+            // Handle more error variants here
+        }
+    }
+}
+
 
 // sends a get request to the /ping endpoint of the api
 pub async fn test_connection() -> Result<String, reqwest::Error> {
