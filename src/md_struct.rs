@@ -61,7 +61,8 @@ pub struct Chapters {
 pub struct AuthorInfo {
     pub name: String,
     pub id: String,
-    pub titles: Vec<ShortMangaInfo>,
+    // pub titles: Vec<ShortMangaInfo>,
+    pub titles_id:Vec<String>
 }
 
 pub struct ShortMangaInfo {

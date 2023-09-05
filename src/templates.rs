@@ -163,16 +163,34 @@ pub fn render_author_page(author: AuthorInfo, is_localhost: bool) -> String {
     let template = html!(
         (DOCTYPE)
         link rel="stylesheet" href="/ressources/styles.css";
+        script src = {"/ressources/index.js"}{}
         body{
+            title {(author.name)}
             div.author_name {(author.name)}
+            // script {"console.log(`kj`)"}
             div.author_manga{
-                @for manga in author.titles{
-                    a.title href = {"/manga/"(manga.id)}{
-                        // img src = (manga.cover_link);
-                        img src = (get_correct_image(is_localhost, manga.cover_link));
-                        (manga.name)
-                    }
+                // @for manga in author.titles{
+                //     a.title href = {"/manga/"(manga.id)}{
+                //         // img src = (manga.cover_link);
+                //         img src = (get_correct_image(is_localhost, manga.cover_link));
+                //         (manga.name)
+                //     }
+                // }
+                {(author.titles_id.join(","))}
+                // script {r"`getAuhorChapters('"(author.titles_id.join("', '"))"')`"}{}
+                button onclick = {"getAuhorChapters(['"(author.titles_id.join("', '"))"'])"};
                 }
+        }
+    );
+    template.into_string()
+}
+pub fn render_author_manga(titles:Vec<ShortMangaInfo>, is_localhost: bool)->String{
+    let template = html!(
+        @for manga in titles{
+            a.title href = {"/manga/"(manga.id)}{
+                // img src = (manga.cover_link);
+                img src = (get_correct_image(is_localhost, manga.cover_link));
+                (manga.name)
             }
         }
     );

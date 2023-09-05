@@ -17,3 +17,9 @@ a.chapter:link {
 a.chapter:visited {
   color: grey;
 }
+a{
+  color: aqua;
+}
+body{
+  color: aqua;
+}

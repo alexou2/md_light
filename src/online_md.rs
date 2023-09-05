@@ -56,7 +56,6 @@ impl fmt::Display for ApiError {
     }
 }
 
-
 // sends a get request to the /ping endpoint of the api
 pub async fn test_connection() -> Result<String, reqwest::Error> {
     Ok(reqwest::get(format!("{}/ping", BASE_URL))
@@ -68,9 +67,16 @@ pub async fn test_connection() -> Result<String, reqwest::Error> {
 // makes the request to the url with custom user agents, since MD requires them now
 pub async fn request_with_agent(
     url: String,
+    mut client: Option<Client>,
 ) -> Result<impl Future<Output = Result<reqwest::Response, reqwest::Error>>, Box<dyn Error>> {
-    let client: Client = reqwest::Client::new();
+    // let client: Client = reqwest::Client::new();
+    // initializes a new client if none is passed as argument
+    match client {
+        Some(_) => (),
+        None => client = Some(reqwest::Client::new()),
+    }
     let response = client
+        .ok_or("there is no client in function request_with_agent()")?
         .get(url)
         .header(reqwest::header::USER_AGENT, USER_AGENT)
         .send();
@@ -154,7 +160,7 @@ pub async fn get_md_homepage_feed() -> Result<MdHomepageFeed, Box<dyn Error>> {
 pub async fn get_new_chapters() -> Result<Vec<NewChapters>, Box<dyn std::error::Error>> {
     let mut new_chapters = Vec::new();
     let url = "https://api.mangadex.org/chapter?includes[]=scanlation_group&translatedLanguage[]=en&translatedLanguage[]=de&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&order[readableAt]=desc&limit=64&includes[]=cover_art";
-    let resp = request_with_agent(url.to_string())
+    let resp = request_with_agent(url.to_string(), None)
         .await?
         .await?
         .text()
@@ -241,7 +247,7 @@ pub async fn get_popular_manga() -> Result<Vec<PopularManga>, Box<dyn std::error
         formatted_time
     );
     // doing the get request to the api and transforming it into a json object
-    let resp = request_with_agent(url).await?.await?.text().await?;
+    let resp = request_with_agent(url, None).await?.await?.text().await?;
     let json_resp: Value = serde_json::from_str(&resp)?;
 
     // transforming the json into an array in order to get all of the search results
@@ -362,7 +368,11 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, Box<dyn Error
         BASE_URL, &manga_id
     );
     // calling the function to make the request to the api
-    let resp = request_with_agent(url.clone()).await?.await?.text().await?;
+    let resp = request_with_agent(url.clone(), None)
+        .await?
+        .await?
+        .text()
+        .await?;
     // parsing the api response into a json
     let json_resp: Value = from_str(&resp)?;
     // separating the json response to make it easier to access items
@@ -506,7 +516,7 @@ pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, Box<
 pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterInfo, Box<dyn Error>> {
     let url = format!("{}/at-home/server/{}", BASE_URL, chapter_id);
     // let resp = reqwest::get(&url).await?.text().await?;
-    let resp = request_with_agent(url).await?.await?.text().await?;
+    let resp = request_with_agent(url, None).await?.await?.text().await?;
 
     let json_resp: Value = from_str(&resp)?;
     // write("l.json", resp);
@@ -536,7 +546,7 @@ pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterInfo, Box<dy
 
 pub async fn get_author_infos(author_id: String) -> Result<AuthorInfo, Box<dyn Error>> {
     let url = format!("{}/author/{}", BASE_URL, author_id);
-    let resp = request_with_agent(url).await?.await?.text().await?;
+    let resp = request_with_agent(url, None).await?.await?.text().await?;
     let json_resp: Value = from_str(&resp)?;
     let data = &json_resp["data"];
 
@@ -547,35 +557,47 @@ pub async fn get_author_infos(author_id: String) -> Result<AuthorInfo, Box<dyn E
         .as_array()
         .ok_or("error in author's manga list")?;
 
-    let mut titles_promise = Vec::new();
-
+    let mut titles_id = Vec::<String>::new();
     for id in titles_json {
-        println!("id: {}", id.to_string());
-        let id_string = id["id"]
-            .remove_quotes()
-            .ok_or("error while converting manga id to a string")?;
-        let promise = get_author_manga(id_string);
-        titles_promise.push(promise)
+        titles_id.push(
+            id["id"].remove_quotes()
+                .ok_or("unable to remove quotes from title id")?,
+        );
     }
+    // let mut titles_promise = Vec::new();
+    //
+    // for id in titles_json {
+    //     println!("id: {}", id.to_string());
+    //     let id_string = id["id"]
+    //         .remove_quotes()
+    //         .ok_or("error while converting manga id to a string")?;
+    //     let promise = get_author_manga(id_string);
+    //     titles_promise.push(promise)
+    // }
 
-    let mut manga_list: Vec<ShortMangaInfo> = Vec::new();
-    for promise in titles_promise {
-        manga_list.push(promise.await?)
-    }
+    // let mut manga_list: Vec<ShortMangaInfo> = Vec::new();
+    // for promise in titles_promise {
+    //     manga_list.push(promise.await?)
+    // }
 
     let author_info = AuthorInfo {
         name: name.clone(),
         id: author_id,
-        titles: manga_list,
+        titles_id:titles_id
+        // titles: manga_list,
     };
 
     Ok(author_info)
 }
-async fn get_author_manga(manga_id: String) -> Result<ShortMangaInfo, Box<dyn Error>> {
+pub async fn get_author_manga(manga_id: String) -> Result<Vec<ShortMangaInfo>, Box<dyn Error>> {
+    let client = reqwest::Client::new();
     let url = format!("{}/manga/{}?includes[]=cover_art", BASE_URL, manga_id);
-    println!("call");
-    let resp = request_with_agent(url).await?.await?.text().await?;
-    println!("fini");
+    let resp = request_with_agent(url, Some(client))
+        .await?
+        .await?
+        .text()
+        .await?;
+
     let json_resp: Value = from_str(&resp)?;
     // separating the json response to make it easier to access items
     let data = &json_resp["data"];
@@ -608,5 +630,6 @@ async fn get_author_manga(manga_id: String) -> Result<ShortMangaInfo, Box<dyn Er
         status: status.clone(),
     };
 
-    Ok(short_info)
+    // Ok(short_info)
+    todo!()
 }
