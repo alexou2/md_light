@@ -17,7 +17,8 @@ use reqwest::Client;
 use serde_json::value::Serializer;
 use std::{
     error::Error,
-    net::{IpAddr, Ipv4Addr}, fs::write,
+    fs::write,
+    net::{IpAddr, Ipv4Addr},
 };
 
 #[get("/")]
@@ -105,9 +106,8 @@ async fn get_author(author_id: web::Path<String>, path: HttpRequest) -> HttpResp
     let author_data = online_md::get_author_infos(author_id.to_string()).await;
     // handles the errors by sending the error page
     let mut html = String::new();
-online_md::test(author_id.to_string()).await;
     match author_data {
-        Ok(e) => html = templates::render_author_page(e, is_localhost),
+        Ok(e) => html = templates::render_author_page(e),
         Err(v) => html = templates::render_error_page(v, path.path()),
     }
     HttpResponse::build(StatusCode::OK)
@@ -115,27 +115,20 @@ online_md::test(author_id.to_string()).await;
         .body(html)
 }
 
-#[get("/test/{author_id}/feed")]
-async fn test(author_id:web::Path<String>) -> String {
-let manga_list = online_md::search_manga(None,Some([("authorOrArtist", author_id.to_string())])).await.unwrap();
-// println!("{}", manga_list[0].manga_name)
-manga_list.iter().for_each(|f| println!("name: {} author: {}", f.manga_name, f.manga_id));
-"asd".to_string()
-}
-
 #[get("/author/{author_id}/feed")]
-async fn get_author_feed(author_id:web::Path<String>,path: HttpRequest) -> HttpResponse {
+async fn get_author_feed(author_id: web::Path<String>, path: HttpRequest) -> HttpResponse {
     let is_localhost = utills::check_localhost(&path);
     // println!("path {}", path.query_string().split(",").collect());
-// write("t.txt", path.query_string());
-let manga_list = online_md::search_manga(None,Some([("authorOrArtist", author_id.to_string())])).await;
-    
+    // write("t.txt", path.query_string());
+    let manga_list =
+        online_md::search_manga(None, Some([("authorOrArtist", author_id.to_string())])).await;
+
     // let manga_id_list: Vec<&str> = path.query_string().split(",").collect();
 
     // let t = path.query_string();
     // let y = t.split(",");
     // let manga_id_list: Vec<&str> = y.collect();
-// println!("{}", &manga_id_list.join("\n"));
+    // println!("{}", &manga_id_list.join("\n"));
     // let author_data = online_md::get_author_manga(&manga_id_list).await;
     // handles the errors by sending the error page
     let mut html = String::new();
@@ -229,7 +222,6 @@ async fn main() -> std::io::Result<()> {
             .service(ping_md)
             .service(get_author_feed)
             .service(get_author)
-            .service(test)
             .service(Files::new("/", "/ressources"))
     })
     // the ip addreses used to access the server

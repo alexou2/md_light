@@ -107,7 +107,7 @@ pub fn render_chapter(chapter_info: ChapterInfo, is_localhost: bool) -> String {
     template.into_string()
 }
 
-pub fn render_search_page(search_results: Vec<MangaSearch>, is_localhost: bool) -> String {
+pub fn render_search_page(search_results: Vec<ShortMangaInfo>, is_localhost: bool) -> String {
     let template = html!(
             (DOCTYPE)
             link rel="stylesheet" href="/ressources/styles.css";
@@ -159,7 +159,7 @@ pub fn render_error_page(error_code: Box<dyn Error>, requested_page: &str) -> St
         );
     template.into_string()
 }
-pub fn render_author_page(author: AuthorInfo, is_localhost: bool) -> String {
+pub fn render_author_page(author: AuthorInfo) -> String {
     let template = html!(
         (DOCTYPE)
         link rel="stylesheet" href="/ressources/styles.css";
@@ -188,7 +188,7 @@ pub fn render_author_page(author: AuthorInfo, is_localhost: bool) -> String {
     );
     template.into_string()
 }
-pub fn render_author_manga(titles:Vec<MangaSearch>, is_localhost: bool)->String{
+pub fn render_author_manga(titles:Vec<ShortMangaInfo>, is_localhost: bool)->String{
     let template = html!(
         @for manga in titles{
             a.title href = {"/manga/"(manga.manga_name)}{

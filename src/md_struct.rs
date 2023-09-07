@@ -21,7 +21,7 @@ pub struct NewChapters {
     pub page_number: String,
 }
 
-pub struct MangaSearch {
+pub struct ShortMangaInfo {
     pub manga_name: String,
     pub manga_id: String,
     // pub tags: Vec<String>,
@@ -29,6 +29,7 @@ pub struct MangaSearch {
     pub status: String,
     pub original_language: String,
     pub translated_languages: Vec<Value>,
+    pub description:String,
 }
 // used in /manga/{id}
 pub struct MangaInfo {
@@ -65,15 +66,7 @@ pub struct AuthorInfo {
     pub titles_id:Vec<String>
 }
 
-pub struct ShortMangaInfo {
-    pub name: String,
-    pub id: String,
-    pub original_language: String,
-    pub cover_link: String,
-    pub description: String,
-    pub status: String,
-    // pub tags: Vec<String>,
-}
+
 
 pub struct ChapterInfo {
     pub chapter_name: String,
