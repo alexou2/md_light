@@ -15,7 +15,10 @@ use colored::Colorize;
 use local_ip_address::local_ip;
 use reqwest::Client;
 use serde_json::value::Serializer;
-use std::{net::{IpAddr, Ipv4Addr}, error::Error};
+use std::{
+    error::Error,
+    net::{IpAddr, Ipv4Addr}, fs::write,
+};
 
 #[get("/")]
 async fn index(path: HttpRequest) -> HttpResponse {
@@ -80,7 +83,7 @@ async fn get_chapter(chapter: web::Path<(String, String)>, path: HttpRequest) ->
 async fn search_for_manga(name: web::Path<String>, path: HttpRequest) -> HttpResponse {
     let is_localhost = utills::check_localhost(&path);
 
-    let search_results = online_md::search_manga(name.to_string()).await;
+    let search_results = online_md::search_manga(Some(name.to_string()), None).await;
 
     // handles the errors by sending the error page
     let mut html = String::new();
@@ -102,7 +105,7 @@ async fn get_author(author_id: web::Path<String>, path: HttpRequest) -> HttpResp
     let author_data = online_md::get_author_infos(author_id.to_string()).await;
     // handles the errors by sending the error page
     let mut html = String::new();
-
+online_md::test(author_id.to_string()).await;
     match author_data {
         Ok(e) => html = templates::render_author_page(e, is_localhost),
         Err(v) => html = templates::render_error_page(v, path.path()),
@@ -112,16 +115,32 @@ async fn get_author(author_id: web::Path<String>, path: HttpRequest) -> HttpResp
         .body(html)
 }
 
+#[get("/test/{author_id}/feed")]
+async fn test(author_id:web::Path<String>) -> String {
+let manga_list = online_md::search_manga(None,Some([("authorOrArtist", author_id.to_string())])).await.unwrap();
+// println!("{}", manga_list[0].manga_name)
+manga_list.iter().for_each(|f| println!("name: {} author: {}", f.manga_name, f.manga_id));
+"asd".to_string()
+}
 
 #[get("/author/{author_id}/feed")]
-async fn get_author_feed(author_id: web::Path<String>, path: HttpRequest) -> HttpResponse {
+async fn get_author_feed(author_id:web::Path<String>,path: HttpRequest) -> HttpResponse {
     let is_localhost = utills::check_localhost(&path);
-    println!("\n\n\n\nn\n");
-    let author_data = online_md::get_author_manga(author_id.to_string()).await;
+    // println!("path {}", path.query_string().split(",").collect());
+// write("t.txt", path.query_string());
+let manga_list = online_md::search_manga(None,Some([("authorOrArtist", author_id.to_string())])).await;
+    
+    // let manga_id_list: Vec<&str> = path.query_string().split(",").collect();
+
+    // let t = path.query_string();
+    // let y = t.split(",");
+    // let manga_id_list: Vec<&str> = y.collect();
+// println!("{}", &manga_id_list.join("\n"));
+    // let author_data = online_md::get_author_manga(&manga_id_list).await;
     // handles the errors by sending the error page
     let mut html = String::new();
 
-    match author_data {
+    match manga_list {
         Ok(e) => html = templates::render_author_manga(e, is_localhost),
         Err(v) => html = templates::render_error_page(v, path.path()),
     }
@@ -208,7 +227,9 @@ async fn main() -> std::io::Result<()> {
             .service(get_manga_info)
             .service(search_for_manga)
             .service(ping_md)
+            .service(get_author_feed)
             .service(get_author)
+            .service(test)
             .service(Files::new("/", "/ressources"))
     })
     // the ip addreses used to access the server
@@ -217,8 +238,6 @@ async fn main() -> std::io::Result<()> {
     .run()
     .await
 }
-
-
 
 /// A web server that uses the mangadex api with a lighweight frontend for potato devices
 #[derive(Parser, Debug)]

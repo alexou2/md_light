@@ -7,6 +7,7 @@ use reqwest::header::USER_AGENT;
 use reqwest::Client;
 use serde_json::{from_str, json, Value};
 use std::fmt;
+use std::fmt::format;
 use std::future::Future;
 use std::{error::Error, fs::write};
 const BASE_URL: &'static str = "https://api.mangadex.org";
@@ -279,25 +280,29 @@ pub async fn get_popular_manga() -> Result<Vec<PopularManga>, Box<dyn std::error
 
 // searches for a manga
 pub async fn search_manga(
-    search_query: String,
+    title: Option<String>,
+    params:Option<[(&str, String);1]>
+
 ) -> Result<Vec<MangaSearch>, Box<dyn std::error::Error>> {
     let mut search_results: Vec<MangaSearch> = Vec::new();
     // sending the get request for the search
-    let url = format!("{}/manga?includes[]=cover_art", BASE_URL); // formatting the correct url for the api endpoint
-    let params = [("title", search_query)]; // setting the parameters of the search
+    let url = format!("{}/manga?includes[]=cover_art&includes[]=author&includes[]=artist", BASE_URL); // formatting the correct url for the api endpoint
+    
+    let title_param = [("title", title)]; // setting the parameters of the search
+    println!("asd");
     let client: reqwest::Client = reqwest::Client::new();
     let resp = client
         .get(url)
+        // .query(&title_param)
         .query(&params)
         .header(reqwest::header::USER_AGENT, USER_AGENT)
         .send()
         .await?
         .text()
         .await?;
-
     // converting the response string into a json object
     let json_resp: Value = serde_json::from_str(&resp)?;
-    // write("t.json", resp);
+
     // if the api response is an array, add every manga to the search_results vector
     if let Some(response_data) = json_resp["data"].as_array() {
         for manga in response_data {
@@ -519,7 +524,6 @@ pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterInfo, Box<dy
     let resp = request_with_agent(url, None).await?.await?.text().await?;
 
     let json_resp: Value = from_str(&resp)?;
-    // write("l.json", resp);
     let chapter_hash = json_resp["chapter"]["hash"].to_string().replace('"', "");
     let pages_json = json_resp["chapter"]["data"]
         .as_array()
@@ -560,7 +564,8 @@ pub async fn get_author_infos(author_id: String) -> Result<AuthorInfo, Box<dyn E
     let mut titles_id = Vec::<String>::new();
     for id in titles_json {
         titles_id.push(
-            id["id"].remove_quotes()
+            id["id"]
+                .remove_quotes()
                 .ok_or("unable to remove quotes from title id")?,
         );
     }
@@ -583,53 +588,73 @@ pub async fn get_author_infos(author_id: String) -> Result<AuthorInfo, Box<dyn E
     let author_info = AuthorInfo {
         name: name.clone(),
         id: author_id,
-        titles_id:titles_id
-        // titles: manga_list,
+        titles_id: titles_id, // titles: manga_list,
     };
 
     Ok(author_info)
 }
-pub async fn get_author_manga(manga_id: String) -> Result<Vec<ShortMangaInfo>, Box<dyn Error>> {
+pub async fn get_author_manga(
+    author_feed: &Vec<&str>,
+) -> Result<Vec<ShortMangaInfo>, Box<dyn Error>> {
     let client = reqwest::Client::new();
-    let url = format!("{}/manga/{}?includes[]=cover_art", BASE_URL, manga_id);
-    let resp = request_with_agent(url, Some(client))
+    let mut manga_list = Vec::new();
+
+    // loop to get the info about every manga in the author feed
+    for manga_id in author_feed {
+        let url = format!("{}/manga/{}?includes[]=cover_art", BASE_URL, manga_id);
+        let resp = request_with_agent(url, Some(client.clone()))
+            .await?
+            .await?
+            .text()
+            .await?;
+
+        let json_resp: Value = from_str(&resp)?;
+        // separating the json response to make it easier to access items
+        let data = &json_resp["data"];
+        let attributes = &data["attributes"];
+        // gets all of the infos about manga
+        let manga_name = attributes["title"]
+            .as_object()
+            .and_then(|obj| obj.values().next())
+            .ok_or("error while getting title")?
+            .remove_quotes()
+            .ok_or("error while removing quotes in the manga name")?;
+        let thumbnail = get_manga_cover(&manga_id.to_string(), &data)?;
+        let status = &attributes["status"]
+            .remove_quotes()
+            .ok_or("error while removing quotes in the status")?;
+        let original_language = &attributes["originalLanguage"]
+            .remove_quotes()
+            .ok_or("error while removing quotes in the og language")?;
+        let description = &attributes["description"]["en"]
+            .remove_quotes()
+            .unwrap_or("N/a".to_string());
+        let year = &attributes["year"].as_i64();
+
+        let short_info = ShortMangaInfo {
+            name: manga_name.clone(),
+            id: manga_id.to_string(),
+            original_language: original_language.clone(),
+            description: description.clone(),
+            cover_link: thumbnail,
+            status: status.clone(),
+        };
+        manga_list.push(short_info)
+    }
+    Ok(manga_list)
+    // todo!()
+}
+
+pub async fn test(author: String) -> Result<(), Box<dyn Error>> {
+    let feed_url = format!("{}/manga?authorOrArtist={}", BASE_URL, author);
+    println!("{}", &feed_url);
+    let manga_js = request_with_agent(feed_url, None)
         .await?
         .await?
         .text()
         .await?;
+    let json: Value = from_str(&manga_js).unwrap();
+    write("t.json", manga_js);
 
-    let json_resp: Value = from_str(&resp)?;
-    // separating the json response to make it easier to access items
-    let data = &json_resp["data"];
-    let attributes = &data["attributes"];
-    // gets all of the infos about manga
-    let manga_name = attributes["title"]
-        .as_object()
-        .and_then(|obj| obj.values().next())
-        .ok_or("error while getting title")?
-        .remove_quotes()
-        .ok_or("error while removing quotes in the manga name")?;
-    let thumbnail = get_manga_cover(&manga_id, &data)?;
-    let status = &attributes["status"]
-        .remove_quotes()
-        .ok_or("error while removing quotes in the status")?;
-    let original_language = &attributes["originalLanguage"]
-        .remove_quotes()
-        .ok_or("error while removing quotes in the og language")?;
-    let description = &attributes["description"]["en"]
-        .remove_quotes()
-        .unwrap_or("N/a".to_string());
-    let year = &attributes["year"].as_i64();
-
-    let short_info = ShortMangaInfo {
-        name: manga_name.clone(),
-        id: manga_id,
-        original_language: original_language.clone(),
-        description: description.clone(),
-        cover_link: thumbnail,
-        status: status.clone(),
-    };
-
-    // Ok(short_info)
-    todo!()
+    Ok(())
 }

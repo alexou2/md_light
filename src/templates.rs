@@ -168,7 +168,8 @@ pub fn render_author_page(author: AuthorInfo, is_localhost: bool) -> String {
             title {(author.name)}
             div.author_name {(author.name)}
             // script {"console.log(`kj`)"}
-            div.author_manga{
+            div.title_number {(author.titles_id.len())" titles"}
+            div #author_manga{
                 // @for manga in author.titles{
                 //     a.title href = {"/manga/"(manga.id)}{
                 //         // img src = (manga.cover_link);
@@ -177,20 +178,23 @@ pub fn render_author_page(author: AuthorInfo, is_localhost: bool) -> String {
                 //     }
                 // }
                 {(author.titles_id.join(","))}
-                // script {r"`getAuhorChapters('"(author.titles_id.join("', '"))"')`"}{}
-                button onclick = {"getAuhorChapters(['"(author.titles_id.join("', '"))"'])"};
+                
+                // button onclick = {"getAuhorChapters(['"(author.titles_id.join("', '"))"'])"}{}
                 }
+                script {"getAuhorChapters('"(author.id)"')"};
+                // script {"getAuhorChapters(['"(author.titles_id.join("', '"))"'])"};
+
         }
     );
     template.into_string()
 }
-pub fn render_author_manga(titles:Vec<ShortMangaInfo>, is_localhost: bool)->String{
+pub fn render_author_manga(titles:Vec<MangaSearch>, is_localhost: bool)->String{
     let template = html!(
         @for manga in titles{
-            a.title href = {"/manga/"(manga.id)}{
+            a.title href = {"/manga/"(manga.manga_name)}{
                 // img src = (manga.cover_link);
-                img src = (get_correct_image(is_localhost, manga.cover_link));
-                (manga.name)
+                img src = (get_correct_image(is_localhost, manga.thumbnail));
+                (manga.manga_name)
             }
         }
     );
