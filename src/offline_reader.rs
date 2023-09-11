@@ -19,11 +19,35 @@ use std::path::PathBuf;
 pub async fn download_manga(manga_id: String) {
     let manga_data = online_md::get_manga_info(manga_id).await;
 }
-pub async fn write_json(manga_data: MangaInfo) {
-    // let manga_id = manga_data.manga_id;
-    let data = json!({
+pub async fn write_json(
+    manga_data: MangaInfo,
+    cover_path: String,
+    manga_directory: String,
+    downloaded_language: String,
+    chapter_list: Vec<String>,
+) {
+    let chapters_json = json!({
+    "path":format!("{}/{}", manga_directory, chapter_list[1]),
+    "bookmarked":false,
+    "read":false,
+    "name":manga_data.chapters[1].chapter_name,
+    "language":manga_data.chapters[1].language,
+    "chapter_id":manga_data.chapters[1].chapter_id
+    });
+
+    let mut data = json!({
         "manga_id":manga_data.manga_id,
         "name":manga_data.manga_name,
+        "thumbnail":cover_path,
+        "status":manga_data.status,
+        "original_language":manga_data.original_language,
+        "description":manga_data.description,
+        "year":manga_data.year,
+        "downloaded_language":downloaded_language,
+        "chapters":[
+            chapters_json
+        ]
     });
+    // writing the file to the filesystem
     write(format!("{}.json", manga_data.manga_name), data.to_string());
 }
