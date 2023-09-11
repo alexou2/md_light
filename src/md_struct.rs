@@ -68,7 +68,7 @@ pub struct AuthorInfo {
 
 
 
-pub struct ChapterInfo {
+pub struct ChapterPages {
     pub chapter_name: String,
     pub pages: Vec<String>,
 }

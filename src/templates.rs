@@ -84,7 +84,7 @@ pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> Stri
     template.into_string()
 }
 
-pub fn render_chapter(chapter_info: ChapterInfo, is_localhost: bool) -> String {
+pub fn render_chapter(chapter_info: ChapterPages, is_localhost: bool) -> String {
     let template = html!(
             (DOCTYPE)
             link rel="stylesheet" href="/ressources/styles.css";

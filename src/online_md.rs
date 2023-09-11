@@ -527,7 +527,7 @@ pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, Box<
     Ok(chapter_list)
 }
 
-pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterInfo, Box<dyn Error>> {
+pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterPages, Box<dyn Error>> {
     let url = format!("{}/at-home/server/{}", BASE_URL, chapter_id);
     // let resp = reqwest::get(&url).await?.text().await?;
     let resp = request_with_agent(url, None).await?.await?.text().await?;
@@ -550,7 +550,7 @@ pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterInfo, Box<dy
         );
         page_list.push(page_link)
     }
-    let chapter = ChapterInfo {
+    let chapter = ChapterPages {
         chapter_name: "ch".to_string(),
         pages: page_list,
     };
