@@ -1,4 +1,4 @@
-use serde_json::Value;
+use serde_json::{value::Serializer, Value};
 pub struct MdHomepageFeed {
     pub currently_popular: Vec<PopularManga>,
     pub new_chapter_releases: Vec<NewChapters>,
@@ -29,7 +29,7 @@ pub struct ShortMangaInfo {
     pub status: String,
     pub original_language: String,
     pub translated_languages: Vec<Value>,
-    pub description:String,
+    pub description: String,
 }
 // used in /manga/{id}
 pub struct MangaInfo {
@@ -53,7 +53,7 @@ pub struct Author {
 // the chapters that are listed in the manga info page
 #[derive(Clone)]
 pub struct Chapters {
-    // pub tl_group: String,
+    pub tl_group: Vec<TlGroup>,
     pub chapter_name: String,
     pub chapter_number: String,
     pub language: String,
@@ -63,10 +63,14 @@ pub struct AuthorInfo {
     pub name: String,
     pub id: String,
     // pub titles: Vec<ShortMangaInfo>,
-    pub titles_id:Vec<String>
+    pub titles_id: Vec<String>,
 }
 
-
+#[derive(Clone)]
+pub struct TlGroup {
+    pub id: String,
+    pub name: String,
+}
 
 pub struct ChapterPages {
     pub chapter_name: String,

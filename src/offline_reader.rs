@@ -6,7 +6,7 @@ use serde_json::Value;
 use std::fs::{create_dir, read_dir, write};
 use std::path;
 use std::path::PathBuf;
-
+use crate::utills;
 // fn save_page(image_data: Vec<&str>, path: PathBuf) -> Result<(), std::fs::> {
 //     create_dir(path);
 //     for i in 0..image_data.len() {
@@ -27,12 +27,13 @@ pub async fn write_json(
     chapter_list: Vec<String>,
 ) {
     let chapters_json = json!({
-    "path":format!("{}/{}", manga_directory, chapter_list[1]),
-    "bookmarked":false,
-    "read":false,
+    "path":format!("{}/{}", manga_directory, manga_data.chapters[1].chapter_name),
+    "number":manga_data.chapters[1].chapter_number,
     "name":manga_data.chapters[1].chapter_name,
     "language":manga_data.chapters[1].language,
-    "chapter_id":manga_data.chapters[1].chapter_id
+    "chapter_id":manga_data.chapters[1].chapter_id,
+    "bookmarked":false,
+    "read":false,
     });
 
     let mut data = json!({
@@ -44,6 +45,7 @@ pub async fn write_json(
         "description":manga_data.description,
         "year":manga_data.year,
         "downloaded_language":downloaded_language,
+        "downloaded_at":utills::get_current_time(),
         "chapters":[
             chapters_json
         ]

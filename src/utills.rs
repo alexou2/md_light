@@ -5,9 +5,9 @@ use chrono::{Datelike, Timelike};
 pub fn get_offset_time() -> String {
     let current_time = chrono::Local::now();
 
-    let mut year = current_time.year();
-    let mut month = current_time.month();
-    let mut day = current_time.day();
+    // let mut year = current_time.year();
+    // let mut month = current_time.month();
+    // let mut day = current_time.day();
     // set the month to devaber of previous year if the current month is january
 
     // offsets the time to get the same feed as mangadex's popular titles
@@ -24,10 +24,9 @@ pub fn get_offset_time() -> String {
         offset_time.day(),
         offset_time.hour(),
         offset_time.minute(),
-        offset_time.second()
-        // 0,
-        // 0,
-        // 0
+        offset_time.second() // 0,
+                             // 0,
+                             // 0
     );
     println!("date-1month = {}", formatted_time);
     formatted_time
@@ -47,4 +46,16 @@ pub fn check_localhost(path: &HttpRequest) -> bool {
     println!("{}", is_localhost);
     is_localhost
 }
-fn offset_day_if_necessary(day: u32, month: u32) {}
+pub fn get_current_time() -> String {
+    let current_time = chrono::Local::now();
+    let formatted_time = format!(
+        "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}",
+        current_time.year(),
+        current_time.month(),
+        current_time.day(),
+        current_time.hour(),
+        current_time.minute(),
+        current_time.second()
+    );
+    formatted_time
+}
