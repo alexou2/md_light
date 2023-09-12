@@ -508,10 +508,16 @@ pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, Box<
         // let tl_group = &manga["relationships"][""]
         let chapter_number = &attributes["chapter"]
             .remove_quotes()
-            .unwrap_or("Oneshot".to_string());
-        // .ok_or("error while removing quotes in the chapter number")?;
-        // let chapter_name = format!("{number} {name}",number = chapter_number, name = &attributes["title"].to_string().replace('"', ""));
-        let chapter_name = format!("Chapter {}", chapter_number.clone());
+            .unwrap_or("Oneshot".to_string()); // if theer is no number, sets the chapter as a Oneshot
+                                               // let chapter_name = format!(
+                                               //     "Chapter {number} {name}",
+                                               //     number = chapter_number,
+                                               //     name = &attributes["title"].remove_quotes().unwrap_or("\u{8}".to_string())
+                                               // );
+        let chapter_name = &attributes["title"]
+            .remove_quotes()
+            .unwrap_or("".to_string());
+        // let chapter_name = format!("Chapter {}", chapter_number.clone());
         let language = &attributes["translatedLanguage"]
             .remove_quotes()
             .ok_or("error while removing quotes in the chapter language")?;
@@ -532,7 +538,7 @@ pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, Box<
                 let group_id = relation["id"]
                     .remove_quotes()
                     .ok_or("unable to remove quotes in tl_group id")?;
-                
+
                 let group = TlGroup {
                     name: group_name.clone(),
                     id: group_id.clone(),
