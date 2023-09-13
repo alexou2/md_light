@@ -27,7 +27,7 @@ pub async fn write_json(
     let mut chapter_json = Vec::new();
     for chapter in manga_data.chapters {
         let json = json!({
-        "path":format!("{}/{}", manga_directory, chapter.chapter_name),
+        "path":format!("{}/{}", manga_directory, chapter.chapter_name.clone().ok_or(&chapter.chapter_number).expect("unable to write the chapter name to the json file (the chapter name is null)")),
         "number":chapter.chapter_number,
         "name":chapter.chapter_name,
         "language":chapter.language,

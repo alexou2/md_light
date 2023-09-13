@@ -54,7 +54,7 @@ pub struct Author {
 #[derive(Clone)]
 pub struct Chapters {
     pub tl_group: Vec<TlGroup>,
-    pub chapter_name: String,
+    pub chapter_name: Option<String>,
     pub chapter_number: String,
     pub language: String,
     pub chapter_id: String,

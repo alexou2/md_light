@@ -1,5 +1,6 @@
 use actix_web::Result;
 mod database;
+mod flags;
 mod md_struct;
 mod offline_reader;
 mod online_md;
@@ -10,6 +11,7 @@ use actix_web::{
     get, http::StatusCode, web, web::Redirect, App, HttpRequest, HttpResponse, HttpServer,
     Responder,
 };
+
 use clap::Parser;
 use colored::Colorize;
 use local_ip_address::local_ip;
@@ -184,10 +186,17 @@ async fn image_proxy(image_url: web::Path<String>) -> Result<HttpResponse> {
 
     match response {
         Ok(resp) => {
-            let bytes = resp.bytes().await.unwrap();
-            Ok(HttpResponse::Ok()
-                // .content_type(resp.headers().get("content-type").unwrap())
-                .body(bytes))
+            let bytes = resp.bytes().await;
+            match bytes {
+                Ok(image_byte) => Ok(HttpResponse::Ok()
+                    // .content_type(resp.headers().get("content-type").unwrap())
+                    .body(image_byte)),
+                    // returns an empty image in case of an error
+                Err(e) => {
+                    utills::log_error(e);
+                    Ok(HttpResponse::NotFound().finish())
+                }
+            }
         }
         Err(_) => {
             // Return an error response or a placeholder image

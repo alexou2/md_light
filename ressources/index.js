@@ -8,7 +8,7 @@ async function getAuhorChapters(authorID) {
     //     // params: chapterID[0], // *GET, POST, PUT, DELETE, etc.
     //     body: JSON.stringify(chapterID)
     // })
-    let mangaList = await fetch(`/author/${authorID}/feed`, )
+    let mangaList = await fetch(`/author/${authorID}/feed`,)
     let manga = await mangaList.text();
     console.log(await mangaList)
     changeAuthorManga(manga)
@@ -21,8 +21,21 @@ function changeAuthorManga(content) {
     manga_div.innerHTML = content
 }
 
-async function get_feed(author){
-    let mangaList = await fetch(`/author/feed?${author}`, )
+async function get_feed(author) {
+    let mangaList = await fetch(`/author/feed?${author}`,)
     let manga = await mangaList.text();
     changeAuthorManga(manga)
+}
+// changes the page link to seatch for a manga
+function search() {
+    let input = document.getElementById("search_box").value;
+
+    if (input != "") {
+        input = `/search/${input}`
+        console.log(input)
+        window.location.href = input
+
+    } else {
+        alert("empty search query")
+    }
 }

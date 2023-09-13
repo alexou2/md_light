@@ -9,17 +9,41 @@ body {
   background-color: black;
 }
 
-a.chapter:link {
+a.chapter_link:link {
   color: orange;
 }
 
 /* visited link */
-a.chapter:visited {
+a.chapter_link:visited {
   color: grey;
 }
-a{
+
+a {
   color: aqua;
 }
-body{
+
+body {
   color: aqua;
+}
+
+.chapter_item {
+  display: flex;
+  /* align-content: basseline; */
+  justify-content: space-between;
+}
+
+.top_bar{
+  display: flex;
+  flex-wrap: wrap;
+  width:100%;
+  justify-content:space-between;
+  align-items: baseline;
+}
+.search_bar{
+/* align-self: stretch; */
+}
+#search_box{
+  height: 2em;
+  font-size: 1.5em;
+  border-radius: 5em;
 }
