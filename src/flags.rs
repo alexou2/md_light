@@ -5,7 +5,7 @@ const it: &'static str = "🇮🇹"; //italian
 const zh: &'static str = "🇨🇳"; //simplified chinese
 const es: &'static str = "🇲🇽"; //spanish
 const br: &'static str = "🇧🇷"; //brasilian
-const po: &'static str = "🇵🇱"; //polish
+const pl: &'static str = "🇵🇱"; //polish
 const uk: &'static str = "🇺🇦"; //ukranian
 const ko: &'static str = "🇰🇷"; //korean
 const ar: &'static str = "🇸🇦"; //arabic
@@ -15,8 +15,11 @@ const de: &'static str = "🇩🇪"; //german
 const hi: &'static str = "🇮🇳"; //india
 const pt: &'static str = "🇵🇹"; //portugal
 const id: &'static str = "🇮🇩"; //indonesia
-const ru: &'static str = "🇷🇺"; //indonesia
-const th: &'static str = "🇹🇭"; //indonesia
+const ru: &'static str = "🇷🇺"; //russian
+const th: &'static str = "🇹🇭"; //thailand
+
+const tr: &'static str = "🇹🇷"; //turkish
+const ro: &'static str = "🇷🇴"; //romanian
 
 pub fn get_flag_offline(language: &str) -> &'static str {
     let flag = match language {
@@ -28,7 +31,7 @@ pub fn get_flag_offline(language: &str) -> &'static str {
         "es" => es,
         "es-la" => es,
         "br" => br,
-        "po" => po,
+        "pl" => pl,
         "uk" => uk,
         "ko" => ko,
         "ar" => ar,
@@ -40,6 +43,8 @@ pub fn get_flag_offline(language: &str) -> &'static str {
         "id" => id,
         "ru" => ru,
         "th" => th,
+        "ro"=>ro,
+        "tr"=>tr,
         // _=>format!("{}: {}", unknown, language).as_str().clone(),
         _ => {
             println!("unknown language: {language}");

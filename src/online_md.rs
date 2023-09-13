@@ -164,7 +164,8 @@ pub async fn get_md_homepage_feed() -> Result<MdHomepageFeed, Box<dyn Error>> {
 // gets the new chapter releases for the homepage
 pub async fn get_new_chapters() -> Result<Vec<NewChapters>, Box<dyn std::error::Error>> {
     let mut new_chapters = Vec::new();
-    let url = "https://api.mangadex.org/chapter?includes[]=scanlation_group&translatedLanguage[]=en&translatedLanguage[]=de&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&order[readableAt]=desc&limit=64&includes[]=cover_art";
+    // let url = "https://api.mangadex.org/chapter?includes[]=scanlation_group&translatedLanguage[]=en&translatedLanguage[]=de&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&order[readableAt]=desc&limit=64&includes[]=cover_art";
+    let url = "https://api.mangadex.org/chapter?includes[]=scanlation_group&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&order[readableAt]=desc&limit=64&includes[]=cover_art";
     let resp = request_with_agent(url.to_string(), None)
         .await?
         .await?

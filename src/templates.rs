@@ -1,7 +1,8 @@
 use std::{error::Error, fmt::format};
 
-use crate::flags;
+use crate::flags::*;
 use crate::md_struct::*;
+use crate::utills;
 use maud::*;
 
 fn get_top_bar() -> PreEscaped<String> {
@@ -63,7 +64,6 @@ pub fn render_homepage(feed: MdHomepageFeed, is_localhost: bool) -> String {
                             //     img src = (i.thumbnail);
                             // }
                             img src = (get_correct_image(is_localhost, i.thumbnail));
-
                             {(i.manga_name)}
                         }
                     }
@@ -73,7 +73,7 @@ pub fn render_homepage(feed: MdHomepageFeed, is_localhost: bool) -> String {
                 @for chapter in new_chapters{
                     div.new_chapter{
                 a.chapter href = (format!("/manga/{manga_id}/{chapter_id}", manga_id = chapter.manga_id, chapter_id = chapter.chapter_id)){
-                    {(chapter.chapter_name) ":" (chapter.language)}
+                    {(chapter.chapter_name) (get_flag_offline(chapter.language.as_str()))}
                 };
             }
                 }
@@ -109,7 +109,7 @@ pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> Stri
             div.chapter_item{
                     // link to the chapter
                 div.chapter{
-                    div.language{(flags::get_flag_offline(&chapter.language))}
+                    div.language{(get_flag_offline(&chapter.language))}
                     a.chapter_link href = (format!("/manga/{manga_id}/{chapter}", manga_id = manga_info.manga_id, chapter = chapter.chapter_id )){
                        div.chapter_name{(chapter.chapter_name.unwrap_or(format!("Chapter {}", chapter.chapter_number)))}
                         div.chapter_number{(format!("Chapter {}", chapter.chapter_number))}
