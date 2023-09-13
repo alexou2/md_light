@@ -116,7 +116,7 @@ pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> Stri
                     }
                 }
                 div.tl_group{
-                    {(chapter.tl_group[0].name)}
+                    // {(chapter.tl_group[0].name)}
                 }
             }
             };

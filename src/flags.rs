@@ -13,6 +13,10 @@ const unknown: &'static str = "🚩"; //unknown flag
 const jp: &'static str = "🇯🇵"; //japanese
 const de: &'static str = "🇩🇪"; //german
 const hi: &'static str = "🇮🇳"; //india
+const pt: &'static str = "🇵🇹"; //portugal
+const id: &'static str = "🇮🇩"; //indonesia
+const ru: &'static str = "🇷🇺"; //indonesia
+const th: &'static str = "🇹🇭"; //indonesia
 
 pub fn get_flag_offline(language: &str) -> &'static str {
     let flag = match language {
@@ -22,6 +26,7 @@ pub fn get_flag_offline(language: &str) -> &'static str {
         "it" => it,
         "zh" => zh,
         "es" => es,
+        "es-la" => es,
         "br" => br,
         "po" => po,
         "uk" => uk,
@@ -30,8 +35,16 @@ pub fn get_flag_offline(language: &str) -> &'static str {
         "jp" => jp,
         "de" => de,
         "hi" => hi,
+        "pt-br" => pt,
+        "pt" => pt,
+        "id" => id,
+        "ru" => ru,
+        "th" => th,
         // _=>format!("{}: {}", unknown, language).as_str().clone(),
-        _ => unknown,
+        _ => {
+            println!("unknown language: {language}");
+            unknown
+        }
     };
     return flag;
 }
