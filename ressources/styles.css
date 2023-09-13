@@ -32,18 +32,33 @@ body {
   justify-content: space-between;
 }
 
-.top_bar{
+.top_bar {
   display: flex;
   flex-wrap: wrap;
-  width:100%;
-  justify-content:space-between;
+  width: 100%;
+  justify-content: space-between;
   align-items: baseline;
 }
-.search_bar{
-/* align-self: stretch; */
+
+.search_bar {
+  /* align-self: stretch; */
 }
-#search_box{
+
+#search_box {
   height: 2em;
   font-size: 1.5em;
   border-radius: 5em;
+}
+
+/* .manga_info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.author_list {
+  align-self: flex-end;
+} */
+.description{
+  max-width: 50%;
 }

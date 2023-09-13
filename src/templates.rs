@@ -92,17 +92,18 @@ pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> Stri
             (get_top_bar())
             div.manga_info{
                 img src = (get_correct_image(is_localhost, manga_info.thumbnail));
-        h1 {(manga_info.manga_name)}
 
-        h3{"authors: "}
-           div.authors_list{
-            @for author in manga_info.author{
-                a href = {"/author/"(author.author_id)}{
+                h1 {(manga_info.manga_name)}
+                div.description{(manga_info.description)}
+                div.author_list{
+                    h3{"authors: "}
+                    @for author in manga_info.author{
+                    a href = {"/author/"(author.author_id)}{
                     div.author{(author.author_name)": "(author.role)}
                 }
             };
         }
-            div.description{(manga_info.description)}
+            
         }
         div.chapter_list{
             @for chapter in manga_info.chapters{
