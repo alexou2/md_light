@@ -97,7 +97,7 @@ async fn request_manga_chapters(
     let client: Client = reqwest::Client::new();
 
     loop {
-        println!("made request");
+        println!("made chapter request");
         let offset = [("offset", 100 * i + base_offset)];
         // sending the request to the api with the limit and the offset
         let response = client
@@ -136,7 +136,7 @@ async fn request_manga_chapters(
         // breaks the loop when all of the chapters are returned
         if json_res["data"].to_string() == "[]" || got_all_chapters {
             println!(
-                "got chapters: {} of {} total",
+                "got all chapters: {}, total: {}",
                 got_all_chapters, &json_res["total"]
             );
             break;
@@ -257,7 +257,7 @@ pub async fn get_popular_manga() -> Result<Vec<PopularManga>, Box<dyn std::error
     //         formatted_time
     //     );
 
-    println!("url {}", url);
+    println!("url: {}", url);
 
     // doing the get request to the api and transforming it into a json object
     let resp = request_with_agent(url, None).await?.await?.text().await?;
@@ -302,7 +302,6 @@ pub async fn search_manga(
         BASE_URL
     ); // formatting the correct url for the api endpoint
     let title_param = [("title", title)]; // setting the parameters of the search
-    println!("asd");
     let client: reqwest::Client = reqwest::Client::new();
     let resp = client
         .get(url)

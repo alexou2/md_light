@@ -35,6 +35,7 @@ pub fn get_offset_time() -> String {
     println!("date-1month = {}", formatted_time);
     formatted_time
 }
+
 // checks if the request comes from the localhost ip or another one
 pub fn check_localhost(path: &HttpRequest) -> bool {
     let is_localhost = path
@@ -47,9 +48,9 @@ pub fn check_localhost(path: &HttpRequest) -> bool {
             .peer_addr()
             .expect("unable to get client ID")
             == "localhost";
-    println!("{}", is_localhost);
     is_localhost
 }
+
 pub fn get_current_time() -> String {
     let current_time = chrono::Local::now();
     let formatted_time = format!(

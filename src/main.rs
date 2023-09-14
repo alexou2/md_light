@@ -102,7 +102,6 @@ async fn search_for_manga(name: web::Path<String>, path: HttpRequest) -> HttpRes
 #[get("/author/{author_id}")]
 async fn get_author(author_id: web::Path<String>, path: HttpRequest) -> HttpResponse {
     let is_localhost = utills::check_localhost(&path);
-    println!("\n\n\n\nn\n");
     let author_data = online_md::get_author_infos(author_id.to_string()).await;
     // handles the errors by sending the error page
     let mut html = String::new();

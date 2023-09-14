@@ -1,3 +1,5 @@
+use colored::Colorize;
+
 const en: &'static str = "🇬🇧"; //english
 const fr: &'static str = "🇲🇫"; //french
 const vi: &'static str = "🇻🇳"; //vietnamese
@@ -43,11 +45,11 @@ pub fn get_flag_offline(language: &str) -> &'static str {
         "id" => id,
         "ru" => ru,
         "th" => th,
-        "ro"=>ro,
-        "tr"=>tr,
+        "ro" => ro,
+        "tr" => tr,
         // _=>format!("{}: {}", unknown, language).as_str().clone(),
         _ => {
-            println!("unknown language: {language}");
+            println!("unknown language: {}", language.on_red());
             unknown
         }
     };

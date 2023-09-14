@@ -108,12 +108,13 @@ pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> Stri
         div.chapter_list{
             @for chapter in manga_info.chapters{
             div.chapter_item{
+                a.chapter_link href = (format!("/manga/{manga_id}/{chapter}", manga_id = manga_info.manga_id, chapter = chapter.chapter_id )){
                     // link to the chapter
                 div.chapter{
-                    div.language{(get_flag_offline(&chapter.language))}
-                    a.chapter_link href = (format!("/manga/{manga_id}/{chapter}", manga_id = manga_info.manga_id, chapter = chapter.chapter_id )){
+                    div.language{(get_flag_offline(&chapter.language))" Ch."(chapter.chapter_number)}
+                    
                        div.chapter_name{(chapter.chapter_name.unwrap_or(format!("Chapter {}", chapter.chapter_number)))}
-                        div.chapter_number{(format!("Chapter {}", chapter.chapter_number))}
+                    //     div.chapter_number{(format!("Chapter {}", chapter.chapter_number))}
                     }
                 }
                 div.tl_group{
@@ -179,7 +180,6 @@ pub fn render_search_page(search_results: Vec<ShortMangaInfo>, is_localhost: boo
             }
         }
     );
-    // println!("{}", template.clone().into_string());
     template.into_string()
 }
 

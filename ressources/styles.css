@@ -10,7 +10,7 @@ body {
 }
 
 a.chapter_link:link {
-  color: orange;
+  color: rgb(255, 182, 0);
 }
 
 /* visited link */
@@ -30,6 +30,7 @@ body {
   display: flex;
   /* align-content: basseline; */
   justify-content: space-between;
+  margin: 1em;
 }
 
 .top_bar {
@@ -40,9 +41,6 @@ body {
   align-items: baseline;
 }
 
-.search_bar {
-  /* align-self: stretch; */
-}
 
 #search_box {
   height: 2em;
@@ -61,4 +59,7 @@ body {
 } */
 .description{
   max-width: 50%;
+}
+.author_list{
+  color: rgb(255, 183, 0);
 }
