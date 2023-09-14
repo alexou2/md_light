@@ -135,7 +135,7 @@ pub fn render_chapter(chapter_info: ChapterPages, is_localhost: bool) -> String 
             body {
                 (get_top_bar())
             h1 {(chapter_info.chapter_name)}
-            div.page_list{
+            div.page_list ondblclick = "goFullscreen()";{
                 @for i in chapter_info.pages{
 
                     // uses the proxied images if not localhost or links the images directly
