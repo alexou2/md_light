@@ -1,8 +1,7 @@
-use std::{error::Error, fmt::format};
+use std::error::Error;
 
 use crate::flags::*;
 use crate::md_struct::*;
-use crate::utills;
 use maud::*;
 
 fn get_top_bar() -> PreEscaped<String> {

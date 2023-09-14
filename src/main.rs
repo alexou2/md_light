@@ -1,6 +1,6 @@
-use actix_web::Result;
 mod database;
 mod flags;
+mod md_account;
 mod md_struct;
 mod offline_reader;
 mod online_md;
@@ -8,20 +8,13 @@ mod templates;
 mod utills;
 use actix_files::Files;
 use actix_web::{
-    get, http::StatusCode, web, web::Redirect, App, HttpRequest, HttpResponse, HttpServer,
-    Responder,
+    get, http::StatusCode, web, App, HttpRequest, HttpResponse, HttpServer, Responder, Result,
 };
-
 use clap::Parser;
 use colored::Colorize;
 use local_ip_address::local_ip;
 use reqwest::Client;
-use serde_json::value::Serializer;
-use std::{
-    error::Error,
-    fs::write,
-    net::{IpAddr, Ipv4Addr},
-};
+use std::net::{IpAddr, Ipv4Addr};
 
 #[get("/")]
 async fn index(path: HttpRequest) -> HttpResponse {
@@ -29,11 +22,10 @@ async fn index(path: HttpRequest) -> HttpResponse {
     let feed = online_md::get_md_homepage_feed().await;
 
     // handles the errors by sending the error page
-    let mut html = String::new();
-    match feed {
-        Ok(e) => html = templates::render_homepage(e, is_localhost),
-        Err(v) => html = templates::render_error_page(v, "/"),
-    }
+    let html = match feed {
+        Ok(e) => templates::render_homepage(e, is_localhost),
+        Err(v) => templates::render_error_page(v, "/"),
+    };
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
         .body(html)
@@ -45,12 +37,12 @@ async fn get_manga_info(manga_id: web::Path<String>, path: HttpRequest) -> HttpR
     let is_localhost = utills::check_localhost(&path);
 
     let manga_info = online_md::get_manga_info(manga_id.to_string()).await;
+
     // handles the errors by sending the error page
-    let mut html = String::new();
-    match manga_info {
-        Ok(e) => html = templates::render_manga_info_page(e, is_localhost),
-        Err(v) => html = templates::render_error_page(v, requested_page),
-    }
+    let html = match manga_info {
+        Ok(e) => templates::render_manga_info_page(e, is_localhost),
+        Err(v) => templates::render_error_page(v, requested_page),
+    };
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
         .body(html)
@@ -60,8 +52,8 @@ async fn get_manga_info(manga_id: web::Path<String>, path: HttpRequest) -> HttpR
 #[get("/manga/{manga}/{chapter}")]
 async fn get_chapter(chapter: web::Path<(String, String)>, path: HttpRequest) -> HttpResponse {
     let is_localhost = utills::check_localhost(&path);
-let manga_id = chapter.0.to_string();
-// let manga_id = "as".to_string();
+    let manga_id = chapter.0.to_string();
+    // let manga_id = "as".to_string();
     let chapter_id = chapter.1.to_string();
     let chapter_info = online_md::get_chapter_pages(chapter_id.clone()).await;
 
@@ -88,11 +80,10 @@ async fn search_for_manga(name: web::Path<String>, path: HttpRequest) -> HttpRes
     let search_results = online_md::search_manga(Some(name.to_string()), None).await;
 
     // handles the errors by sending the error page
-    let mut html = String::new();
-    match search_results {
-        Ok(e) => html = templates::render_search_page(e, is_localhost),
-        Err(v) => html = templates::render_error_page(v, path.path()),
-    }
+    let html = match search_results {
+        Ok(e) => templates::render_search_page(e, is_localhost),
+        Err(v) => templates::render_error_page(v, path.path()),
+    };
 
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
@@ -102,14 +93,12 @@ async fn search_for_manga(name: web::Path<String>, path: HttpRequest) -> HttpRes
 // searches for a manga
 #[get("/author/{author_id}")]
 async fn get_author(author_id: web::Path<String>, path: HttpRequest) -> HttpResponse {
-    let is_localhost = utills::check_localhost(&path);
     let author_data = online_md::get_author_infos(author_id.to_string()).await;
     // handles the errors by sending the error page
-    let mut html = String::new();
-    match author_data {
-        Ok(e) => html = templates::render_author_page(e),
-        Err(v) => html = templates::render_error_page(v, path.path()),
-    }
+    let html = match author_data {
+        Ok(e) => templates::render_author_page(e),
+        Err(v) => templates::render_error_page(v, path.path()),
+    };
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
         .body(html)
@@ -123,20 +112,11 @@ async fn get_author_feed(author_id: web::Path<String>, path: HttpRequest) -> Htt
     let manga_list =
         online_md::search_manga(None, Some([("authorOrArtist", author_id.to_string())])).await;
 
-    // let manga_id_list: Vec<&str> = path.query_string().split(",").collect();
-
-    // let t = path.query_string();
-    // let y = t.split(",");
-    // let manga_id_list: Vec<&str> = y.collect();
-    // println!("{}", &manga_id_list.join("\n"));
-    // let author_data = online_md::get_author_manga(&manga_id_list).await;
     // handles the errors by sending the error page
-    let mut html = String::new();
-
-    match manga_list {
-        Ok(e) => html = templates::render_author_manga(e, is_localhost),
-        Err(v) => html = templates::render_error_page(v, path.path()),
-    }
+    let html = match manga_list {
+        Ok(e) => templates::render_author_manga(e, is_localhost),
+        Err(v) => templates::render_error_page(v, path.path()),
+    };
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
         .body(html)
@@ -175,7 +155,7 @@ async fn kill_server(path: HttpRequest) -> impl Responder {
                 .expect("unabel to get client IP")
         );
     }
-    "".to_string()
+    // "".to_string()
 }
 
 async fn image_proxy(image_url: web::Path<String>) -> Result<HttpResponse> {
@@ -191,7 +171,7 @@ async fn image_proxy(image_url: web::Path<String>) -> Result<HttpResponse> {
                 Ok(image_byte) => Ok(HttpResponse::Ok()
                     // .content_type(resp.headers().get("content-type").unwrap())
                     .body(image_byte)),
-                    // returns an empty image in case of an error
+                // returns an empty image in case of an error
                 Err(e) => {
                     utills::log_error(e);
                     Ok(HttpResponse::NotFound().finish())

@@ -1,56 +1,56 @@
 use colored::Colorize;
 
-const en: &'static str = "🇬🇧"; //english
-const fr: &'static str = "🇲🇫"; //french
-const vi: &'static str = "🇻🇳"; //vietnamese
-const it: &'static str = "🇮🇹"; //italian
-const zh: &'static str = "🇨🇳"; //simplified chinese
-const es: &'static str = "🇲🇽"; //spanish
-const br: &'static str = "🇧🇷"; //brasilian
-const pl: &'static str = "🇵🇱"; //polish
-const uk: &'static str = "🇺🇦"; //ukranian
-const ko: &'static str = "🇰🇷"; //korean
-const ar: &'static str = "🇸🇦"; //arabic
-const unknown: &'static str = "🚩"; //unknown flag
-const jp: &'static str = "🇯🇵"; //japanese
-const de: &'static str = "🇩🇪"; //german
-const hi: &'static str = "🇮🇳"; //india
-const pt: &'static str = "🇵🇹"; //portugal
-const id: &'static str = "🇮🇩"; //indonesia
-const ru: &'static str = "🇷🇺"; //russian
-const th: &'static str = "🇹🇭"; //thailand
+const EN: &'static str = "🇬🇧"; //english
+const FR: &'static str = "🇲🇫"; //french
+const VI: &'static str = "🇻🇳"; //vietnamese
+const IT: &'static str = "🇮🇹"; //italian
+const ZH: &'static str = "🇨🇳"; //simplified chinese
+const ES: &'static str = "🇲🇽"; //spanish
+const BR: &'static str = "🇧🇷"; //brasilian
+const PL: &'static str = "🇵🇱"; //polish
+const UK: &'static str = "🇺🇦"; //ukranian
+const KO: &'static str = "🇰🇷"; //korean
+const AR: &'static str = "🇸🇦"; //arabic
+const UNKNOWN: &'static str = "🚩"; //unknown flag
+const JP: &'static str = "🇯🇵"; //japanese
+const DE: &'static str = "🇩🇪"; //german
+const HI: &'static str = "🇮🇳"; //india
+const PT: &'static str = "🇵🇹"; //portugal
+const ID: &'static str = "🇮🇩"; //indonesia
+const RU: &'static str = "🇷🇺"; //russian
+const TH: &'static str = "🇹🇭"; //thailand
 
-const tr: &'static str = "🇹🇷"; //turkish
-const ro: &'static str = "🇷🇴"; //romanian
+const TR: &'static str = "🇹🇷"; //turkish
+const RO: &'static str = "🇷🇴"; //romanian
 
 pub fn get_flag_offline(language: &str) -> &'static str {
     let flag = match language {
-        "en" => en,
-        "fr" => fr,
-        "vi" => vi,
-        "it" => it,
-        "zh" => zh,
-        "es" => es,
-        "es-la" => es,
-        "br" => br,
-        "pl" => pl,
-        "uk" => uk,
-        "ko" => ko,
-        "ar" => ar,
-        "jp" => jp,
-        "de" => de,
-        "hi" => hi,
-        "pt-br" => pt,
-        "pt" => pt,
-        "id" => id,
-        "ru" => ru,
-        "th" => th,
-        "ro" => ro,
-        "tr" => tr,
+        "en" => EN,
+        "fr" => FR,
+        "vi" => VI,
+        "it" => IT,
+        "zh" => ZH,
+        "es" => ES,
+        "es-la" => ES,
+        "br" => BR,
+        "pl" => PL,
+        "uk" => UK,
+        "ko" => KO,
+        "ar" => AR,
+        "jp" => JP,
+        "de" => DE,
+        "hi" => HI,
+        "pt-br" => PT,
+        "pt" => PT,
+        "id" => ID,
+        "ru" => RU,
+        "th" => TH,
+        "ro" => RO,
+        "tr" => TR,
         // _=>format!("{}: {}", unknown, language).as_str().clone(),
         _ => {
             println!("unknown language: {}", language.on_red());
-            unknown
+            UNKNOWN
         }
     };
     return flag;

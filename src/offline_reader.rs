@@ -5,8 +5,6 @@ use reqwest;
 use serde_json::json;
 use serde_json::Value;
 use std::fs::{create_dir, read_dir, write};
-use std::path;
-use std::path::PathBuf;
 // fn save_page(image_data: Vec<&str>, path: PathBuf) -> Result<(), std::fs::> {
 //     create_dir(path);
 //     for i in 0..image_data.len() {

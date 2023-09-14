@@ -1,8 +1,7 @@
-use actix_web::{cookie::time::formatting, HttpRequest};
+use actix_web::HttpRequest;
 use chrono::{Datelike, Timelike};
 use colored::*;
 use std::fs::*;
-use std::io::Write;
 use std::path::Path;
 
 // returns the local time, offset by a month
@@ -67,21 +66,21 @@ pub fn get_current_time() -> String {
 
 pub fn log_error(err: reqwest::Error) {
     let date = get_current_time().red();
-const path:&'static str = "logs.log";
+    const PATH: &'static str = "logs.log";
     //    create the log file if it doesn't exist
-    if !Path::new(path).exists() {
-        File::create(path).expect("Unable to create file: logs.log");
+    if !Path::new(PATH).exists() {
+        File::create(PATH).expect("Unable to create file: logs.log");
     }
     // prints the error message
     println!(
         r"[{date}] An error occured: {err}
         Appending to error file..."
     );
-    let written_error = format!(r"{date} -- error {err}");
+    // let written_error = format!(r"{date} -- error {err}");
 
-    let file = File::open(path);
-    match (file) {
-        Ok(content) => (),
-        Err(e) => println!("{}", "unable to append error to log file".red()),
+    let file = File::open(PATH);
+    match file {
+        Ok(_) => (),
+        Err(_) => println!("{}", "unable to append error to log file".red()),
     }
 }
