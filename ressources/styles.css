@@ -43,10 +43,28 @@ body {
 
 
 #search_box {
-  height: 2em;
+  /* height: 2em;
   font-size: 1.5em;
   border-radius: 5em;
+  height: 100%; */
+  /* width: 100%; */
+    padding: 10px;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+    border: none;
+    outline: none;
+    border: 1px solid grey;
+    font-size: 15px;
+    border-radius: 5px;
 }
+.search_bar{
+  /* height: 1.7em;
+  font-size: 1.5em;
+  border-radius: 5em;
+  background-color: blue; */
+
+}
+
 
 /* .manga_info {
   display: flex;

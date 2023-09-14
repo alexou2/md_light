@@ -9,6 +9,8 @@ use serde_json::{from_str, json, Value};
 use std::fmt;
 use std::fmt::format;
 use std::future::Future;
+use std::thread;
+use std::time::Duration;
 use std::{error::Error, fs::write};
 const BASE_URL: &'static str = "https://api.mangadex.org";
 
@@ -97,7 +99,7 @@ async fn request_manga_chapters(
     let client: Client = reqwest::Client::new();
 
     loop {
-        println!("made chapter request");
+        println!("made chapter request #{i}");
         let offset = [("offset", 100 * i + base_offset)];
         // sending the request to the api with the limit and the offset
         let response = client
@@ -112,7 +114,21 @@ async fn request_manga_chapters(
             .text()
             .await?;
         // converting the text response into a json value
-        let json_res: Value = from_str(&response)?;
+        let json_res_result: Result<Value, serde_json::Error> = from_str(&response);
+
+        let mut json_res: Value;
+
+        match json_res_result {
+            Ok(json) => json_res = json,
+            Err(_) => {
+                println!(
+                    "Dindn't get every chapters, only got {}",
+                    chapter_list.len()
+                );
+                break;
+            }
+        }
+
         // transforms the json into a vector
         let response_chapters = json_res["data"]
             .as_array()
@@ -141,6 +157,7 @@ async fn request_manga_chapters(
             );
             break;
         }
+        println!("finished request #{i}");
         // raises the offset
         i += 1;
     }

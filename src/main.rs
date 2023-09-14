@@ -60,8 +60,9 @@ async fn get_manga_info(manga_id: web::Path<String>, path: HttpRequest) -> HttpR
 #[get("/manga/{manga}/{chapter}")]
 async fn get_chapter(chapter: web::Path<(String, String)>, path: HttpRequest) -> HttpResponse {
     let is_localhost = utills::check_localhost(&path);
-
-    let chapter_id: String = chapter.1.to_string();
+let manga_id = chapter.0.to_string();
+// let manga_id = "as".to_string();
+    let chapter_id = chapter.1.to_string();
     let chapter_info = online_md::get_chapter_pages(chapter_id.clone()).await;
 
     // println!("{} {}", chapter.0.to_string(), chapter_id);
@@ -69,7 +70,7 @@ async fn get_chapter(chapter: web::Path<(String, String)>, path: HttpRequest) ->
     // handles the errors by sending the error page
     // let mut html = String::new();
     let html = match chapter_info {
-        Ok(e) => templates::render_chapter(e, is_localhost),
+        Ok(e) => templates::render_chapter(e, is_localhost, manga_id),
         Err(v) => templates::render_error_page(v, path.path()),
     };
 

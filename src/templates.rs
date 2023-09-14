@@ -13,7 +13,7 @@ fn get_top_bar() -> PreEscaped<String> {
                 a.go_home href = "/"{ h1 {"HOME"}}
             }
             div.search_bar{
-                input #search_box type = "text" title = "search" required;
+                input #search_box action = "search()" type = "text" title = "search" required;
                 button type="button" onclick = "search()" {"Search"}
 
                             }
@@ -21,8 +21,8 @@ fn get_top_bar() -> PreEscaped<String> {
     );
     top_bar
 }
-fn get_return_to_manga(path: String) -> PreEscaped<String> {
-    let manga_id = path.split("/").collect::<Vec<&str>>()[2];
+fn get_return_to_manga(manga_id: String) -> PreEscaped<String> {
+    // let manga_id = path.split("/").collect::<Vec<&str>>()[2];
     let home = html!(
 
         div.top_bar{
@@ -103,7 +103,7 @@ pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> Stri
                 }
             };
         }
-            
+
         }
         div.chapter_list{
             @for chapter in manga_info.chapters{
@@ -112,7 +112,7 @@ pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> Stri
                     // link to the chapter
                 div.chapter{
                     div.language{(get_flag_offline(&chapter.language))" Ch."(chapter.chapter_number)}
-                    
+
                        div.chapter_name{(chapter.chapter_name.unwrap_or(format!("Chapter {}", chapter.chapter_number)))}
                     //     div.chapter_number{(format!("Chapter {}", chapter.chapter_number))}
                     }
@@ -128,7 +128,7 @@ pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> Stri
     template.into_string()
 }
 
-pub fn render_chapter(chapter_info: ChapterPages, is_localhost: bool) -> String {
+pub fn render_chapter(chapter_info: ChapterPages, is_localhost: bool, manga_id: String) -> String {
     let template = html!(
             (DOCTYPE)
             link rel="stylesheet" href="/ressources/styles.css";
@@ -148,6 +148,7 @@ pub fn render_chapter(chapter_info: ChapterPages, is_localhost: bool) -> String 
                     img.chapter_page src = (get_correct_image(is_localhost, i));
                 }
             }
+            (get_return_to_manga(manga_id))
         }
     );
     template.into_string()
