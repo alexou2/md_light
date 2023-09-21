@@ -1,10 +1,6 @@
-// use std::{fmt::format, intrinsics::mir::BasicBlock};
-
 use crate::md_struct::*;
 use crate::utills::*;
-use reqwest;
-use reqwest::header::USER_AGENT;
-use reqwest::Client;
+use reqwest::{Client, header::USER_AGENT};
 use serde_json::{from_str, Value};
 use std::future::Future;
 use std::error::Error;
@@ -71,7 +67,7 @@ pub async fn request_with_agent(
     // let client: Client = reqwest::Client::new();
     // initializes a new client if none is passed as argument
     match client {
-        Some(_) => (),
+        Some(_) => println!("a request client was suppied"),
         None => client = Some(reqwest::Client::new()),
     }
     let response = client
@@ -89,9 +85,9 @@ async fn request_manga_chapters(
 ) -> Result<Vec<Value>, Box<dyn Error>> {
     let mut chapter_list = Vec::new();
     let mut i = 0;
-    let limit = [("limit", 100)];
-    let chapter_ordering = [("order[chapter]", "asc")];
-    let include_tl_group = [("includes[]", "scanlation_group")];
+    const LIMIT:[(&str, i32);1] = [("limit", 100)];
+    const CHAPTER_ORDERING:[(&str, &str);1] = [("order[chapter]", "asc")];
+    const INCLUDE_TL_GROUP:[(&str, &str);1] = [("includes[]", "scanlation_group")];
     let client: Client = reqwest::Client::new();
 
     loop {
@@ -101,10 +97,10 @@ async fn request_manga_chapters(
         let response = client
             .get(&url)
             .header(reqwest::header::USER_AGENT, USER_AGENT)
-            .query(&limit)
+            .query(&LIMIT)
             .query(&offset)
-            .query(&chapter_ordering)
-            .query(&include_tl_group)
+            .query(&CHAPTER_ORDERING)
+            .query(&INCLUDE_TL_GROUP)
             .send()
             .await?
             .text()
