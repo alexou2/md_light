@@ -159,13 +159,23 @@ pub async fn get_md_homepage_feed() -> Result<MdHomepageFeed, Box<dyn Error>> {
     // let popular_manga = get_popular_manga();
     // let new_chapters = get_new_chapters();
 
-    let popular_manga = get_popular_manga();
-    let new_chapters = get_new_chapters();
+    // let popular_manga = get_popular_manga();
+    // let new_chapters = get_new_chapters();
+let popular_manga;
+let new_chapters;
+    tokio::spawn(move {
+        popular_manga = get_popular_manga().await.unwrap();
+        // println!("Ping result: {}", result);
+    });
+    tokio::spawn(move {
+        new_chapters = get_new_chapters().await.unwrap();
+        // println!("Ping result: {}", result);
+    });
 
     // builds the struct for the popular titles+ new chapters
     let homepage_feed = MdHomepageFeed {
-        currently_popular: popular_manga.await?,
-        new_chapter_releases: new_chapters.await?,
+        currently_popular: popular_manga,
+        new_chapter_releases: new_chapters,
     };
 
     Ok(homepage_feed)
