@@ -6,6 +6,7 @@ mod offline_reader;
 mod online_md;
 mod templates;
 mod utills;
+mod api_error;
 use actix_files::Files;
 use actix_web::{
     get, http::StatusCode, web, App, HttpRequest, HttpResponse, HttpServer, Responder, Result,
@@ -41,7 +42,7 @@ async fn get_manga_info(manga_id: web::Path<String>, path: HttpRequest) -> HttpR
     // handles the errors by sending the error page
     let html = match manga_info {
         Ok(e) => templates::render_manga_info_page(e, is_localhost),
-        Err(v) => templates::render_error_page(v, requested_page),
+        Err(v) => templates::render_error_page(v.into(), requested_page),
     };
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
@@ -63,7 +64,7 @@ async fn get_chapter(chapter: web::Path<(String, String)>, path: HttpRequest) ->
     // let mut html = String::new();
     let html = match chapter_info {
         Ok(e) => templates::render_chapter(e, is_localhost, manga_id),
-        Err(v) => templates::render_error_page(v, path.path()),
+        Err(v) => templates::render_error_page(v.into(), path.path()),
     };
 
     // let html = templates::render_chapter(chapter_info.unwrap(), is_localhost);
