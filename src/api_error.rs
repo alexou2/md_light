@@ -1,6 +1,5 @@
 use std::num::ParseIntError;
 use std::fmt;
-use tokio::join;
 use tokio::task::JoinError;
 
 #[derive(Debug)]
@@ -8,7 +7,6 @@ pub enum ApiError {
     REQWEST(reqwest::Error),
     JSON(serde_json::Error),
 }
-impl std::error::Error for ApiError {}
 impl fmt::Display for ApiError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
