@@ -1,15 +1,55 @@
-use crate::api_error;
-use crate::api_error::ApiError;
 use crate::md_struct::*;
 use crate::utills::*;
-use reqwest::{header::USER_AGENT, Client};
+use reqwest::{Client, header::USER_AGENT};
 use serde_json::{from_str, Value};
-use std::error::Error;
 use std::future::Future;
-use std::thread::JoinHandle;
-use std::time::Duration;
-
+use std::error::Error;
 const BASE_URL: &'static str = "https://api.mangadex.org";
+
+// #[derive(Debug)]
+// pub enum MDError {
+//     Reqwest(reqwest::Error),
+//     Json(serde_json::Error),
+//     ApiError(ApiError),
+//     Other(String),
+// }
+
+// impl std::error::Error for MDError {}
+// impl fmt::Display for MDError {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         match *self {
+//             MDError::Reqwest(_) => write!(f, "Error Variant 1 occurred"),
+//             MDError::Json(_) => write!(f, "Error Variant 2 occurred"),
+//             MDError::ApiError(_) => write!(f, "Error Variant 2 occurred"),
+//             MDError::Other(_) => write!(f, "Error Variant 2 occurred"),
+//             // Handle more error variants here
+//         }
+//     }
+// }
+
+// #[derive(Debug)]
+// enum ApiError {
+//     InvalidId,
+//     NoSearchResults,
+//     ParsingError,
+//     MangaNotFound,
+//     ExternalChapter,
+//     AnotherFuckingError,
+// }
+// impl std::error::Error for ApiError {}
+// impl fmt::Display for ApiError {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         match *self {
+//             ApiError::InvalidId => write!(f, "Error Variant 1 occurred"),
+//             ApiError::NoSearchResults => write!(f, "Error Variant 2 occurred"),
+//             ApiError::AnotherFuckingError => write!(f, "Error Variant 2 occurred"),
+//             ApiError::ExternalChapter => write!(f, "Error Variant 2 occurred"),
+//             ApiError::MangaNotFound => write!(f, "Error Variant 2 occurred"),
+//             ApiError::ParsingError => write!(f, "Error Variant 2 occurred"),
+//             // Handle more error variants here
+//         }
+//     }
+// }
 
 // sends a get request to the /ping endpoint of the api
 pub async fn test_connection() -> Result<String, reqwest::Error> {
@@ -23,7 +63,7 @@ pub async fn test_connection() -> Result<String, reqwest::Error> {
 pub async fn request_with_agent(
     url: String,
     mut client: Option<Client>,
-) -> Result<impl Future<Output = Result<reqwest::Response, reqwest::Error>>, ApiError> {
+) -> Result<impl Future<Output = Result<reqwest::Response, reqwest::Error>>, Box<dyn Error>> {
     // let client: Client = reqwest::Client::new();
     // initializes a new client if none is passed as argument
     match client {
@@ -39,12 +79,15 @@ pub async fn request_with_agent(
     Ok(response)
 }
 // sends multiple requests to get all of the manga's chapters in order to get bast the rate limits
-async fn request_manga_chapters(url: String, base_offset: i32) -> Result<Vec<Value>, ApiError> {
+async fn request_manga_chapters(
+    url: String,
+    base_offset: i32,
+) -> Result<Vec<Value>, Box<dyn Error>> {
     let mut chapter_list = Vec::new();
     let mut i = 0;
-    const LIMIT: [(&str, i32); 1] = [("limit", 100)];
-    const CHAPTER_ORDERING: [(&str, &str); 1] = [("order[chapter]", "asc")];
-    const INCLUDE_TL_GROUP: [(&str, &str); 1] = [("includes[]", "scanlation_group")];
+    const LIMIT:[(&str, i32);1] = [("limit", 100)];
+    const CHAPTER_ORDERING:[(&str, &str);1] = [("order[chapter]", "asc")];
+    const INCLUDE_TL_GROUP:[(&str, &str);1] = [("includes[]", "scanlation_group")];
     let client: Client = reqwest::Client::new();
 
     loop {
@@ -85,6 +128,9 @@ async fn request_manga_chapters(url: String, base_offset: i32) -> Result<Vec<Val
             .iter()
             .for_each(|chapter| chapter_list.push(chapter.clone()));
 
+        // let duration = std::time::Duration::from_millis(100);
+        // std::thread::sleep(duration);
+
         // the total number of chapters
         let total = &json_res["total"].to_string().parse::<i32>()?;
 
@@ -109,22 +155,24 @@ async fn request_manga_chapters(url: String, base_offset: i32) -> Result<Vec<Val
 }
 
 // gets the informations for the homepage
-pub async fn get_md_homepage_feed() -> Result<MdHomepageFeed, ApiError> {
-    let pop_handle = tokio::spawn(get_popular_manga());
-    let new_handle = tokio::spawn(get_new_chapters());
+pub async fn get_md_homepage_feed() -> Result<MdHomepageFeed, Box<dyn Error>> {
+    // let popular_manga = get_popular_manga();
+    // let new_chapters = get_new_chapters();
+
+    let popular_manga = get_popular_manga();
+    let new_chapters = get_new_chapters();
 
     // builds the struct for the popular titles+ new chapters
     let homepage_feed = MdHomepageFeed {
-        currently_popular: pop_handle.await??,
-        new_chapter_releases: new_handle.await??,
+        currently_popular: popular_manga.await?,
+        new_chapter_releases: new_chapters.await?,
     };
 
     Ok(homepage_feed)
 }
 
 // gets the new chapter releases for the homepage
-pub async fn get_new_chapters() -> Result<Vec<NewChapters>, ApiError> {
-    println!("new chap started");
+pub async fn get_new_chapters() -> Result<Vec<NewChapters>, Box<dyn std::error::Error>> {
     let mut new_chapters = Vec::new();
     // let url = "https://api.mangadex.org/chapter?includes[]=scanlation_group&translatedLanguage[]=en&translatedLanguage[]=de&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&order[readableAt]=desc&limit=64&includes[]=cover_art";
     let url = "https://api.mangadex.org/chapter?includes[]=scanlation_group&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&order[readableAt]=desc&limit=64&includes[]=cover_art";
@@ -206,9 +254,7 @@ pub async fn get_new_chapters() -> Result<Vec<NewChapters>, ApiError> {
 }
 
 // gets the most popular mangas from the last month that are displayed at the top of the md homepage
-pub async fn get_popular_manga() -> Result<Vec<PopularManga>, ApiError> {
-    // std::thread::sleep(Duration::from_millis(10000));
-    println!("pop manga started");
+pub async fn get_popular_manga() -> Result<Vec<PopularManga>, Box<dyn std::error::Error>> {
     let mut popular_manga: Vec<PopularManga> = Vec::new();
     let formatted_time = get_offset_time();
     // formatting the request url to include the atrists/authores and the cover fileName
@@ -220,6 +266,7 @@ pub async fn get_popular_manga() -> Result<Vec<PopularManga>, ApiError> {
     //         r"https://api.mangadex.org/manga?includes[]=cover_art&includes[]=artist&includes[]=author&order[followedCount]=desc&hasAvailableChapters=true&createdAtSince={}",
     //         formatted_time
     //     );
+
     println!("url: {}", url);
 
     // doing the get request to the api and transforming it into a json object
@@ -250,7 +297,6 @@ pub async fn get_popular_manga() -> Result<Vec<PopularManga>, ApiError> {
             popular_manga.push(manga_instance);
         }
     }
-
     Ok(popular_manga)
 }
 
@@ -258,7 +304,7 @@ pub async fn get_popular_manga() -> Result<Vec<PopularManga>, ApiError> {
 pub async fn search_manga(
     title: Option<String>,
     params: Option<[(&str, String); 1]>,
-) -> Result<Vec<ShortMangaInfo>, ApiError> {
+) -> Result<Vec<ShortMangaInfo>, Box<dyn std::error::Error>> {
     let mut search_results: Vec<ShortMangaInfo> = Vec::new();
     // sending the get request for the search
     let url = format!(
@@ -325,7 +371,7 @@ pub async fn search_manga(
 }
 
 // gets the cover from the json the request url needs to have includes[]=cover_art for this function to work
-pub fn get_manga_cover(manga_id: &String, manga_json: &Value) -> Result<String, ApiError> {
+pub fn get_manga_cover(manga_id: &String, manga_json: &Value) -> Result<String, Box<dyn Error>> {
     let mut thumbnail = String::new();
     if let Some(manga_cover) = manga_json["relationships"].as_array() {
         for i in manga_cover {
@@ -343,7 +389,7 @@ pub fn get_manga_cover(manga_id: &String, manga_json: &Value) -> Result<String, 
 }
 
 // gets the manga info and chapters
-pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
+pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, Box<dyn Error>> {
     // calls the function to get chapters for a faster page loading
     let manga_chapters_promise = get_manga_chapters(&manga_id);
 
@@ -425,10 +471,7 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
     for tag in tag_json {
         let tag_name = &tag["attributes"]["name"]["en"]
             .remove_quotes()
-            .ok_or(format!(
-                "error while removing quotes in the tags: {}",
-                tag["attributes"]["name"]["en"]
-            ))?;
+            .ok_or("error while removing quotes in the tags")?;
         tag_list.push(tag_name.clone());
     }
 
@@ -437,11 +480,11 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
         .as_array()
         .ok_or("translated_languages is not an array")?;
     for language in translation_options_json {
-        println!("{}", language);
-        translated_language_list.push(language.remove_quotes().ok_or(format!(
-            "error while removing quotes in the language options: {}",
+        translated_language_list.push(
             language
-        ))?);
+                .remove_quotes()
+                .ok_or("error while removing quotes in the language options")?,
+        );
     }
 
     // building the struct with all of the manga's informations+ chapters
@@ -463,7 +506,7 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
 }
 
 // gets all of the manga's chapters for the manga info page
-pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, ApiError> {
+pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, Box<dyn Error>> {
     let url = format!("{}/manga/{}/feed", BASE_URL, manga_id);
 
     let chapter_json = request_manga_chapters(url, 0).await?;
@@ -475,9 +518,14 @@ pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, ApiE
         // let tl_group = &manga["relationships"][""]
         let chapter_number = &attributes["chapter"]
             .remove_quotes()
-            .unwrap_or("Oneshot".to_string()); // if there is no chapter number, set the chapter as a Oneshot
-
+            .unwrap_or("Oneshot".to_string()); // if theer is no number, sets the chapter as a Oneshot
+                                               // let chapter_name = format!(
+                                               //     "Chapter {number} {name}",
+                                               //     number = chapter_number,
+                                               //     name = &attributes["title"].remove_quotes().unwrap_or("\u{8}".to_string())
+                                               // );
         let chapter_name = attributes["title"].remove_quotes();
+        // let chapter_name = format!("Chapter {}", chapter_number.clone());
         let language = &attributes["translatedLanguage"]
             .remove_quotes()
             .ok_or("error while removing quotes in the chapter language")?;
@@ -519,7 +567,7 @@ pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, ApiE
     Ok(chapter_list)
 }
 
-pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterPages, ApiError> {
+pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterPages, Box<dyn Error>> {
     let url = format!("{}/at-home/server/{}", BASE_URL, chapter_id);
     // let resp = reqwest::get(&url).await?.text().await?;
     let resp = request_with_agent(url, None).await?.await?.text().await?;
@@ -549,7 +597,7 @@ pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterPages, ApiEr
     Ok(chapter)
 }
 
-pub async fn get_author_infos(author_id: String) -> Result<AuthorInfo, ApiError> {
+pub async fn get_author_infos(author_id: String) -> Result<AuthorInfo, Box<dyn Error>> {
     let url = format!("{}/author/{}", BASE_URL, author_id);
     let resp = request_with_agent(url, None).await?.await?.text().await?;
     let json_resp: Value = from_str(&resp)?;

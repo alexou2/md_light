@@ -4,7 +4,6 @@ use crate::md_struct::*;
 use crate::utills::*;
 use reqwest::{header::USER_AGENT, Client};
 use serde_json::{from_str, Value};
-use std::error::Error;
 use std::future::Future;
 use std::thread::JoinHandle;
 use std::time::Duration;
@@ -425,10 +424,7 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
     for tag in tag_json {
         let tag_name = &tag["attributes"]["name"]["en"]
             .remove_quotes()
-            .ok_or(format!(
-                "error while removing quotes in the tags: {}",
-                tag["attributes"]["name"]["en"]
-            ))?;
+            .ok_or("error while removing quotes in the tags")?;
         tag_list.push(tag_name.clone());
     }
 
@@ -437,11 +433,11 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
         .as_array()
         .ok_or("translated_languages is not an array")?;
     for language in translation_options_json {
-        println!("{}", language);
-        translated_language_list.push(language.remove_quotes().ok_or(format!(
-            "error while removing quotes in the language options: {}",
+        translated_language_list.push(
             language
-        ))?);
+                .remove_quotes()
+                .ok_or("error while removing quotes in the language options")?,
+        );
     }
 
     // building the struct with all of the manga's informations+ chapters
@@ -475,9 +471,14 @@ pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, ApiE
         // let tl_group = &manga["relationships"][""]
         let chapter_number = &attributes["chapter"]
             .remove_quotes()
-            .unwrap_or("Oneshot".to_string()); // if there is no chapter number, set the chapter as a Oneshot
-
+            .unwrap_or("Oneshot".to_string()); // if theer is no number, sets the chapter as a Oneshot
+                                               // let chapter_name = format!(
+                                               //     "Chapter {number} {name}",
+                                               //     number = chapter_number,
+                                               //     name = &attributes["title"].remove_quotes().unwrap_or("\u{8}".to_string())
+                                               // );
         let chapter_name = attributes["title"].remove_quotes();
+        // let chapter_name = format!("Chapter {}", chapter_number.clone());
         let language = &attributes["translatedLanguage"]
             .remove_quotes()
             .ok_or("error while removing quotes in the chapter language")?;

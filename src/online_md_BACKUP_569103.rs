@@ -4,11 +4,15 @@ use crate::md_struct::*;
 use crate::utills::*;
 use reqwest::{header::USER_AGENT, Client};
 use serde_json::{from_str, Value};
+<<<<<<< HEAD
 use std::error::Error;
+use std::future::Future;
+=======
 use std::future::Future;
 use std::thread::JoinHandle;
 use std::time::Duration;
 
+>>>>>>> tokio-integration
 const BASE_URL: &'static str = "https://api.mangadex.org";
 
 // sends a get request to the /ping endpoint of the api

@@ -1,8 +1,7 @@
-use std::error::Error;
-
 use crate::flags::*;
 use crate::md_struct::*;
 use maud::*;
+use crate::api_error::ApiError;
 
 fn get_top_bar() -> PreEscaped<String> {
     let top_bar = html!(
@@ -184,7 +183,7 @@ pub fn render_search_page(search_results: Vec<ShortMangaInfo>, is_localhost: boo
 }
 
 // renders the error page and shows the user the
-pub fn render_error_page(error_code: Box<dyn Error>, requested_page: &str) -> String {
+pub fn render_error_page(error_code: ApiError, requested_page: &str) -> String {
     // let probable_error_cause = todo!();
     println!("{}", error_code);
     let template = html!(
