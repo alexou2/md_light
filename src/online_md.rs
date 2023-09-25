@@ -1,9 +1,9 @@
 use crate::md_struct::*;
 use crate::utills::*;
-use reqwest::{Client, header::USER_AGENT};
+use reqwest::{header::USER_AGENT, Client};
 use serde_json::{from_str, Value};
-use std::future::Future;
 use std::error::Error;
+use std::future::Future;
 const BASE_URL: &'static str = "https://api.mangadex.org";
 
 // #[derive(Debug)]
@@ -85,9 +85,9 @@ async fn request_manga_chapters(
 ) -> Result<Vec<Value>, Box<dyn Error>> {
     let mut chapter_list = Vec::new();
     let mut i = 0;
-    const LIMIT:[(&str, i32);1] = [("limit", 100)];
-    const CHAPTER_ORDERING:[(&str, &str);1] = [("order[chapter]", "asc")];
-    const INCLUDE_TL_GROUP:[(&str, &str);1] = [("includes[]", "scanlation_group")];
+    const LIMIT: [(&str, i32); 1] = [("limit", 100)];
+    const CHAPTER_ORDERING: [(&str, &str); 1] = [("order[chapter]", "asc")];
+    const INCLUDE_TL_GROUP: [(&str, &str); 1] = [("includes[]", "scanlation_group")];
     let client: Client = reqwest::Client::new();
 
     loop {
@@ -471,7 +471,10 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, Box<dyn Error
     for tag in tag_json {
         let tag_name = &tag["attributes"]["name"]["en"]
             .remove_quotes()
-            .ok_or("error while removing quotes in the tags")?;
+            .ok_or(format!(
+                "error while removing quotes in the tags: {}",
+                tag["attributes"]["name"]["en"]
+            ))?;
         tag_list.push(tag_name.clone());
     }
 
@@ -480,11 +483,11 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, Box<dyn Error
         .as_array()
         .ok_or("translated_languages is not an array")?;
     for language in translation_options_json {
-        translated_language_list.push(
+        println!("{}", language);
+        translated_language_list.push(language.remove_quotes().ok_or(format!(
+            "error while removing quotes in the language options: {}",
             language
-                .remove_quotes()
-                .ok_or("error while removing quotes in the language options")?,
-        );
+        ))?);
     }
 
     // building the struct with all of the manga's informations+ chapters
@@ -518,14 +521,9 @@ pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, Box<
         // let tl_group = &manga["relationships"][""]
         let chapter_number = &attributes["chapter"]
             .remove_quotes()
-            .unwrap_or("Oneshot".to_string()); // if theer is no number, sets the chapter as a Oneshot
-                                               // let chapter_name = format!(
-                                               //     "Chapter {number} {name}",
-                                               //     number = chapter_number,
-                                               //     name = &attributes["title"].remove_quotes().unwrap_or("\u{8}".to_string())
-                                               // );
+            .unwrap_or("Oneshot".to_string()); // if there is no chapter number, set the chapter as a Oneshot
+
         let chapter_name = attributes["title"].remove_quotes();
-        // let chapter_name = format!("Chapter {}", chapter_number.clone());
         let language = &attributes["translatedLanguage"]
             .remove_quotes()
             .ok_or("error while removing quotes in the chapter language")?;
