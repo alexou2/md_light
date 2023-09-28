@@ -10,6 +10,9 @@ use std::thread::JoinHandle;
 use std::time::Duration;
 
 const BASE_URL: &'static str = "https://api.mangadex.org";
+const LIMIT: [(&str, i32); 1] = [("limit", 100)];
+const CHAPTER_ORDERING: [(&str, &str); 1] = [("order[chapter]", "asc")];
+const INCLUDE_TL_GROUP: [(&str, &str); 1] = [("includes[]", "scanlation_group")];
 
 // sends a get request to the /ping endpoint of the api
 pub async fn test_connection() -> Result<String, reqwest::Error> {
@@ -38,6 +41,64 @@ pub async fn request_with_agent(
 
     Ok(response)
 }
+
+pub async fn get_chapters(url: String) -> Result<Vec<Value>, ApiError> {
+    let client: Client = reqwest::Client::new();
+    let mut handles = vec![];
+    let mut result = vec![];
+
+    for i in 0..3 {
+        let offset = [("offset", 100 * i)];
+        println!("starting #{i}");
+        handles.push(tokio::spawn(async_chap(
+            url.clone(),
+            offset,
+            client.clone(),
+        )));
+    }
+
+    for t in handles {
+        println!("awaiting");
+        result.push(t.await.unwrap().unwrap())
+    }
+    Ok(result)
+}
+async fn async_chap(
+    url: String,
+    offset: [(&str, i32); 1],
+    client: Client,
+) -> Result<Value, ApiError> {
+    let response = client
+        .get(url)
+        .header(reqwest::header::USER_AGENT, USER_AGENT)
+        .query(&LIMIT)
+        .query(&offset)
+        .query(&CHAPTER_ORDERING)
+        .query(&INCLUDE_TL_GROUP)
+        .send()
+        .await?
+        .text()
+        .await?;
+    // converting the text response into a json value
+    let json_res_result = from_str(&response);
+
+    let json_res: Value = match json_res_result {
+        Ok(json) => json,
+        Err(_) => todo!(),
+    };
+
+    // transforms the json into a vector
+    // let response_chapters = json_res["data"]
+    //     .as_array()
+    //     .ok_or("error while adding chapters to the list")
+    //     .unwrap();
+    // iterating in the response chapters list to push each chapter to the chapter list
+    // response_chapters
+    //     .iter()
+    //     .for_each(|chapter| chapter_list.push(chapter.clone()));
+    Ok(json_res)
+}
+
 // sends multiple requests to get all of the manga's chapters in order to get bast the rate limits
 async fn request_manga_chapters(url: String, base_offset: i32) -> Result<Vec<Value>, ApiError> {
     let mut chapter_list = Vec::new();
@@ -466,13 +527,15 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
 pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, ApiError> {
     let url = format!("{}/manga/{}/feed", BASE_URL, manga_id);
 
-    let chapter_json = request_manga_chapters(url, 0).await?;
-
+    // let chapter_json = request_manga_chapters(url, 0).await?;
+    let chapter_json = get_chapters(url).await.unwrap();
+println!("{}, ", chapter_json[0]["attributes"]);
     let mut chapter_list: Vec<Chapters> = Vec::new();
     // let chapter_json = data.as_array().ok_or("there are no chapters")?; // transforming the json into an array
     for chapter in chapter_json {
         let attributes = &chapter["attributes"];
         // let tl_group = &manga["relationships"][""]
+
         let chapter_number = &attributes["chapter"]
             .remove_quotes()
             .unwrap_or("Oneshot".to_string()); // if there is no chapter number, set the chapter as a Oneshot
@@ -480,10 +543,10 @@ pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, ApiE
         let chapter_name = attributes["title"].remove_quotes();
         let language = &attributes["translatedLanguage"]
             .remove_quotes()
-            .ok_or("error while removing quotes in the chapter language")?;
+            .ok_or("error while removing quotes in the chapter language").unwrap();
         let chapter_id = chapter["id"]
             .remove_quotes()
-            .ok_or("error while removing quotes in the chapter ID")?;
+            .ok_or("error while removing quotes in the chapter ID").unwrap();
 
         // getting the translator groups
         let mut tl_group: Vec<TlGroup> = Vec::new();

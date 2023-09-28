@@ -6,21 +6,21 @@ use tokio::task::JoinError;
 pub enum ApiError {
     REQWEST(reqwest::Error),
     JSON(serde_json::Error),
-    STR_ERROR(String),
+    StrError(String),
 }
 impl fmt::Display for ApiError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             ApiError::REQWEST(_) => write!(f, "request error"),
             ApiError::JSON(_) => write!(f, "json conversion error"),
-            ApiError::STR_ERROR(_) => write!(f, "error while processing strings"),
+            ApiError::StrError(_) => write!(f, "error while processing strings"),
         }
     }
 }
 impl std::convert::From<&str> for ApiError {
     fn from(err: &str) -> Self {
         // todo!()
-        ApiError::STR_ERROR(err.to_string())
+        ApiError::StrError(err.to_string())
     }
 }
 impl std::convert::From<reqwest::Error> for ApiError {
@@ -51,6 +51,6 @@ impl std::convert::From<JoinError> for ApiError {
 }
 impl std::convert::From<std::string::String> for ApiError {
     fn from(err: String) -> Self {
-        ApiError::STR_ERROR(err)
+        ApiError::StrError(err)
     }
 }

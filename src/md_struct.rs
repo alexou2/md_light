@@ -1,4 +1,4 @@
-use serde_json:: Value;
+use serde_json::Value;
 pub struct MdHomepageFeed {
     pub currently_popular: Vec<PopularManga>,
     pub new_chapter_releases: Vec<NewChapters>,
