@@ -3,6 +3,7 @@ use crate::api_error::ApiError;
 use crate::md_struct::*;
 use crate::utills::*;
 use reqwest::{header::USER_AGENT, Client};
+use serde_json::json;
 use serde_json::{from_str, Value};
 use std::error::Error;
 use std::future::Future;
@@ -42,31 +43,31 @@ pub async fn request_with_agent(
     Ok(response)
 }
 
-pub async fn get_chapters(url: String) -> Result<Vec<Value>, ApiError> {
-    let client: Client = reqwest::Client::new();
-    let mut handles = vec![];
+fn get_chapters(url: String) -> Result<Vec<Value>, ApiError> {
+    let client = reqwest::blocking::Client::new();
+    let mut handles:Vec<JoinHandle<Result<Value, ApiError>>> = vec![];
     let mut result = vec![];
-
-    for i in 0..3 {
-        let offset = [("offset", 100 * i)];
+    println!("123\n\n\n\n");
+    let i = 0;
+    // for i in 0..1 {
         println!("starting #{i}");
-        handles.push(tokio::spawn(async_chap(
-            url.clone(),
-            offset,
-            client.clone(),
-        )));
-    }
+        let uri = url.clone();
+        let offset = [("offset", 100 * i.clone())];
+        let cli = client.clone();
+        handles.push(std::thread::spawn(move || sync_chap(uri, offset, cli)));
+    // }
 
     for t in handles {
         println!("awaiting");
-        result.push(t.await.unwrap().unwrap())
+        result.push(t.join()??)
     }
+    // result.push(json!("123"));
     Ok(result)
 }
-async fn async_chap(
+fn sync_chap(
     url: String,
     offset: [(&str, i32); 1],
-    client: Client,
+    client: reqwest::blocking::Client,
 ) -> Result<Value, ApiError> {
     let response = client
         .get(url)
@@ -75,10 +76,8 @@ async fn async_chap(
         .query(&offset)
         .query(&CHAPTER_ORDERING)
         .query(&INCLUDE_TL_GROUP)
-        .send()
-        .await?
-        .text()
-        .await?;
+        .send()?
+        .text()?;
     // converting the text response into a json value
     let json_res_result = from_str(&response);
 
@@ -406,7 +405,8 @@ pub fn get_manga_cover(manga_id: &String, manga_json: &Value) -> Result<String, 
 // gets the manga info and chapters
 pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
     // calls the function to get chapters for a faster page loading
-    let manga_chapters_promise = get_manga_chapters(&manga_id);
+    let id_clone = manga_id.clone();
+    let manga_chapters_promise = std::thread::spawn(move ||{get_manga_chapters(&id_clone)});
 
     let url = format!(
         "{}/manga/{}?includes[]=author&includes[]=artist&includes[]=cover_art",
@@ -518,24 +518,25 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
         year: year.clone(),
         description: description.clone(),
         // chapters: sort_by_chapter(manga_chapters_promise.await?), // waits until the request to get the chapters is done
-        chapters: manga_chapters_promise.await?,
+        chapters: manga_chapters_promise.join()??,
     };
     Ok(manga_info)
 }
 
 // gets all of the manga's chapters for the manga info page
-pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, ApiError> {
+pub  fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, ApiError> {
     let url = format!("{}/manga/{}/feed", BASE_URL, manga_id);
 
     // let chapter_json = request_manga_chapters(url, 0).await?;
-    let chapter_json = get_chapters(url).await.unwrap();
-println!("{}, ", chapter_json[0]["attributes"]);
+    let chapter_json = get_chapters(url).unwrap();
+    
+    let json_list = chapter_json[0]["data"].as_array().unwrap();
     let mut chapter_list: Vec<Chapters> = Vec::new();
     // let chapter_json = data.as_array().ok_or("there are no chapters")?; // transforming the json into an array
-    for chapter in chapter_json {
+
+    for chapter in json_list.clone() {
         let attributes = &chapter["attributes"];
         // let tl_group = &manga["relationships"][""]
-
         let chapter_number = &attributes["chapter"]
             .remove_quotes()
             .unwrap_or("Oneshot".to_string()); // if there is no chapter number, set the chapter as a Oneshot
@@ -543,10 +544,12 @@ println!("{}, ", chapter_json[0]["attributes"]);
         let chapter_name = attributes["title"].remove_quotes();
         let language = &attributes["translatedLanguage"]
             .remove_quotes()
-            .ok_or("error while removing quotes in the chapter language").unwrap();
+            .ok_or(format!("error while removing quotes in the chapter language {}", attributes["translatedLanguage"]))
+            .unwrap();
         let chapter_id = chapter["id"]
             .remove_quotes()
-            .ok_or("error while removing quotes in the chapter ID").unwrap();
+            .ok_or("error while removing quotes in the chapter ID")
+            .unwrap();
 
         // getting the translator groups
         let mut tl_group: Vec<TlGroup> = Vec::new();
