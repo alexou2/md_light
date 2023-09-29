@@ -19,7 +19,6 @@ const PT: &'static str = "🇵🇹"; //portugal
 const ID: &'static str = "🇮🇩"; //indonesia
 const RU: &'static str = "🇷🇺"; //russian
 const TH: &'static str = "🇹🇭"; //thailand
-
 const TR: &'static str = "🇹🇷"; //turkish
 const RO: &'static str = "🇷🇴"; //romanian
 

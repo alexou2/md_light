@@ -68,7 +68,7 @@ function goFullscreen() {
     } else if (document.msExitFullscreen) { /* IE11 */
       document.msExitFullscreen();
     }
-  }";
+  }"#;
 
 const CSS_FILE:&'static str = r#"img.chapter_page {
     display: block;

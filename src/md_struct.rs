@@ -1,4 +1,9 @@
-use serde_json:: Value;
+use chrono::DateTime;
+use chrono::Local;
+use serde_json::Value;
+use serde_derive::Deserialize;
+use serde_derive::Serialize;
+
 pub struct MdHomepageFeed {
     pub currently_popular: Vec<PopularManga>,
     pub new_chapter_releases: Vec<NewChapters>,
@@ -45,6 +50,7 @@ pub struct MangaInfo {
     pub description: String,
     pub chapters: Vec<Chapters>,
 }
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Author {
     pub author_name: String,
     pub author_id: String,
@@ -91,4 +97,19 @@ impl ValueExtensions for Value {
             None
         }
     }
+}
+
+/// structs that will be used to write the files when downloading the manga
+#[derive(Debug, Serialize, Deserialize)]
+pub struct OfflineData {
+    pub name: String,
+    pub manga_id: String,
+    pub downloaded_lang: String,
+    pub downloaded_at: String, // the date at which the manga was last downloaded
+    pub tags: Vec<String>,
+    pub authors: Vec<Author>,
+    pub original_lang:String,
+    pub status:String,
+    pub description:String,
+    pub downloaded_chap:i32, // the number of downloaded chapters
 }
