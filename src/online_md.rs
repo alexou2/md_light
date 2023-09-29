@@ -6,6 +6,7 @@ use reqwest::{header::USER_AGENT, Client};
 use serde_json::json;
 use serde_json::{from_str, Value};
 use std::error::Error;
+use std::fs;
 use std::future::Future;
 use std::thread::JoinHandle;
 use std::time::Duration;
@@ -45,23 +46,24 @@ pub async fn request_with_agent(
 
 fn get_chapters(url: String) -> Result<Vec<Value>, ApiError> {
     let client = reqwest::blocking::Client::new();
-    let mut handles:Vec<JoinHandle<Result<Value, ApiError>>> = vec![];
+    let mut handles: Vec<JoinHandle<Result<Value, ApiError>>> = vec![];
     let mut result = vec![];
-    println!("123\n\n\n\n");
-    let i = 0;
-    // for i in 0..1 {
-        println!("starting #{i}");
-        let uri = url.clone();
-        let offset = [("offset", 100 * i.clone())];
-        let cli = client.clone();
-        handles.push(std::thread::spawn(move || sync_chap(uri, offset, cli)));
-    // }
+    for i in 0..20 {
+    println!("starting #{i}");
+    let uri = url.clone();
+    let offset = [("offset", (100 * i.clone()))];
+    println!("{:?}", offset[0]);
+    let cli = client.clone();
+    handles.push(std::thread::spawn(move || sync_chap(uri, offset, cli)));
+    }
 
     for t in handles {
         println!("awaiting");
-        result.push(t.join()??)
+        let response = t.join()??;
+        // println!("{response}");
+        result.push(response);
+        
     }
-    // result.push(json!("123"));
     Ok(result)
 }
 fn sync_chap(
@@ -406,7 +408,7 @@ pub fn get_manga_cover(manga_id: &String, manga_json: &Value) -> Result<String, 
 pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
     // calls the function to get chapters for a faster page loading
     let id_clone = manga_id.clone();
-    let manga_chapters_promise = std::thread::spawn(move ||{get_manga_chapters(&id_clone)});
+    let manga_chapters_promise = std::thread::spawn(move || get_manga_chapters(&id_clone));
 
     let url = format!(
         "{}/manga/{}?includes[]=author&includes[]=artist&includes[]=cover_art",
@@ -524,13 +526,25 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
 }
 
 // gets all of the manga's chapters for the manga info page
-pub  fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, ApiError> {
+pub fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, ApiError> {
     let url = format!("{}/manga/{}/feed", BASE_URL, manga_id);
 
     // let chapter_json = request_manga_chapters(url, 0).await?;
     let chapter_json = get_chapters(url).unwrap();
+    let mut json_list:Vec<Value> = vec![];
+    for chap in chapter_json{
+        println!("loop");
+        // let chapter_list = chap.clone().as_array().ok_or("unable to convert chapters to array")?.clone().iter().for_each(|ch| json_list.push(ch));
+        // chapter_list.clone().iter().for_each(|ch| json_list.push(ch) )
+        // fs::write("t.json", chap.to_string());
+        let list = chap["data"].as_array().ok_or("unable to convert chapters to array").unwrap();
+        for i in list{
+            json_list.push(i.clone());
+        }
+
+    }
     
-    let json_list = chapter_json[0]["data"].as_array().unwrap();
+
     let mut chapter_list: Vec<Chapters> = Vec::new();
     // let chapter_json = data.as_array().ok_or("there are no chapters")?; // transforming the json into an array
 
@@ -544,7 +558,10 @@ pub  fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, ApiError>
         let chapter_name = attributes["title"].remove_quotes();
         let language = &attributes["translatedLanguage"]
             .remove_quotes()
-            .ok_or(format!("error while removing quotes in the chapter language {}", attributes["translatedLanguage"]))
+            .ok_or(format!(
+                "error while removing quotes in the chapter language {}",
+                attributes["translatedLanguage"]
+            ))
             .unwrap();
         let chapter_id = chapter["id"]
             .remove_quotes()
