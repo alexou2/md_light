@@ -45,6 +45,7 @@ pub async fn request_with_agent(
 }
 
 fn get_chapters(url: String) -> Result<Vec<Value>, ApiError> {
+    let start = std::time::Instant::now();
     let client = reqwest::blocking::Client::new();
     let mut handles: Vec<JoinHandle<Result<Value, ApiError>>> = vec![];
     let mut result = vec![];
@@ -64,6 +65,7 @@ fn get_chapters(url: String) -> Result<Vec<Value>, ApiError> {
         result.push(response);
         
     }
+    println!("took {:?} time to make requests", start.elapsed());
     Ok(result)
 }
 fn sync_chap(
