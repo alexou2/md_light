@@ -43,36 +43,47 @@ pub async fn request_with_agent(
 
     Ok(response)
 }
-
 fn get_chapters(url: String) -> Result<Vec<Value>, ApiError> {
     let start = std::time::Instant::now();
     let client = reqwest::blocking::Client::new();
-    let mut handles: Vec<JoinHandle<Result<Value, ApiError>>> = vec![];
-    let mut result = vec![];
-    for i in 0..20 {
-    println!("starting #{i}");
-    let uri = url.clone();
-    let offset = [("offset", (100 * i.clone()))];
-    println!("{:?}", offset[0]);
-    let cli = client.clone();
-    handles.push(std::thread::spawn(move || sync_chap(uri, offset, cli)));
+    let mut handles: Vec<JoinHandle<Result<Value, ApiError>>> = vec![]; //a vector containing all of the threads
+    let mut result = vec![]; //a vector containing the result of all of the requests
+
+    let mut valid_request = true;
+
+    let mut i = 0;
+    // for i in 0..20 {
+    while valid_request {
+        
+        println!("starting thread #{i}");
+        let uri = url.clone();
+        let offset = [("offset", (100 * i.clone()))];
+        println!("{:?}", offset[0]);
+        let cli = client.clone();
+        handles.push(std::thread::spawn(move || {
+            sync_chap(uri, offset, cli, &mut valid_request)
+        }));
+        println!("{valid_request}");
+        i += 1;
+        std::thread::sleep(Duration::from_millis(1000))
     }
 
     for t in handles {
-        println!("awaiting");
         let response = t.join()??;
-        // println!("{response}");
         result.push(response);
-        
     }
     println!("took {:?} time to make requests", start.elapsed());
     Ok(result)
 }
+
 fn sync_chap(
     url: String,
     offset: [(&str, i32); 1],
     client: reqwest::blocking::Client,
+    valid_req: &mut bool,
 ) -> Result<Value, ApiError> {
+    *valid_req = false;
+    println!("{valid_req}");
     let response = client
         .get(url)
         .header(reqwest::header::USER_AGENT, USER_AGENT)
@@ -87,18 +98,12 @@ fn sync_chap(
 
     let json_res: Value = match json_res_result {
         Ok(json) => json,
-        Err(_) => todo!(),
+        Err(_) => {
+            *valid_req = false;
+            println!("finished req");
+            todo!()
+        }
     };
-
-    // transforms the json into a vector
-    // let response_chapters = json_res["data"]
-    //     .as_array()
-    //     .ok_or("error while adding chapters to the list")
-    //     .unwrap();
-    // iterating in the response chapters list to push each chapter to the chapter list
-    // response_chapters
-    //     .iter()
-    //     .for_each(|chapter| chapter_list.push(chapter.clone()));
     Ok(json_res)
 }
 
@@ -533,19 +538,20 @@ pub fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, ApiError> 
 
     // let chapter_json = request_manga_chapters(url, 0).await?;
     let chapter_json = get_chapters(url).unwrap();
-    let mut json_list:Vec<Value> = vec![];
-    for chap in chapter_json{
+    let mut json_list: Vec<Value> = vec![];
+    for chap in chapter_json {
         println!("loop");
         // let chapter_list = chap.clone().as_array().ok_or("unable to convert chapters to array")?.clone().iter().for_each(|ch| json_list.push(ch));
         // chapter_list.clone().iter().for_each(|ch| json_list.push(ch) )
         // fs::write("t.json", chap.to_string());
-        let list = chap["data"].as_array().ok_or("unable to convert chapters to array").unwrap();
-        for i in list{
+        let list = chap["data"]
+            .as_array()
+            .ok_or("unable to convert chapters to array")
+            .unwrap();
+        for i in list {
             json_list.push(i.clone());
         }
-
     }
-    
 
     let mut chapter_list: Vec<Chapters> = Vec::new();
     // let chapter_json = data.as_array().ok_or("there are no chapters")?; // transforming the json into an array
