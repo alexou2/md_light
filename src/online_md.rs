@@ -1,13 +1,12 @@
-use crate::api_error;
 use crate::api_error::ApiError;
 use crate::md_struct::*;
 use crate::utills::*;
 use reqwest::{header::USER_AGENT, Client};
 use serde_json::json;
 use serde_json::{from_str, Value};
-use std::error::Error;
 use std::fs;
 use std::future::Future;
+use std::sync::{Arc, Mutex, MutexGuard};
 use std::thread::JoinHandle;
 use std::time::Duration;
 
@@ -49,28 +48,38 @@ fn get_chapters(url: String) -> Result<Vec<Value>, ApiError> {
     let mut handles: Vec<JoinHandle<Result<Value, ApiError>>> = vec![]; //a vector containing all of the threads
     let mut result = vec![]; //a vector containing the result of all of the requests
 
-    let mut valid_request = true;
-
+    let mut valid_request = Arc::new(Mutex::new(true));
     let mut i = 0;
     // for i in 0..20 {
-    while valid_request {
-        
+    let valid_lock = valid_request.clone();
+    while *valid_lock.lock().unwrap() {
+        println!("valid: {}", valid_request.lock().unwrap());
         println!("starting thread #{i}");
         let uri = url.clone();
         let offset = [("offset", (100 * i.clone()))];
         println!("{:?}", offset[0]);
         let cli = client.clone();
+        let mut valid_req_clone = Arc::clone(&valid_request);
         handles.push(std::thread::spawn(move || {
-            sync_chap(uri, offset, cli, &mut valid_request)
-        }));
-        println!("{valid_request}");
-        i += 1;
-        std::thread::sleep(Duration::from_millis(1000))
-    }
+            // let mut data = valid_req_clone.lock().unwrap();
+            // *data = false;
 
+            sync_chap(uri, offset, cli, &mut valid_req_clone)
+            // Ok(json!("er"))
+        }));
+        i += 1;
+        std::thread::sleep(Duration::from_millis(100))
+    }
     for t in handles {
-        let response = t.join()??;
-        result.push(response);
+        println!("wait");
+        let response = t.join();
+        println!("is ok {}", response.is_ok());
+        let t = response?;
+        match t {
+            Ok(e) => result.push(e),
+            Err(_) => (),
+        }
+        // result.push(response);
     }
     println!("took {:?} time to make requests", start.elapsed());
     Ok(result)
@@ -80,10 +89,9 @@ fn sync_chap(
     url: String,
     offset: [(&str, i32); 1],
     client: reqwest::blocking::Client,
-    valid_req: &mut bool,
+    valid_req: &mut Arc<Mutex<bool>>,
 ) -> Result<Value, ApiError> {
-    *valid_req = false;
-    println!("{valid_req}");
+    // *valid_req.try_lock().expect("failed to lock") = false;
     let response = client
         .get(url)
         .header(reqwest::header::USER_AGENT, USER_AGENT)
@@ -93,17 +101,37 @@ fn sync_chap(
         .query(&INCLUDE_TL_GROUP)
         .send()?
         .text()?;
+    println!("req");
     // converting the text response into a json value
     let json_res_result = from_str(&response);
-
-    let json_res: Value = match json_res_result {
-        Ok(json) => json,
-        Err(_) => {
-            *valid_req = false;
-            println!("finished req");
-            todo!()
+    println!("converion");
+    let json_res: Value;
+    match json_res_result {
+        Ok(json) => json_res = json,
+        Err(err) => {
+            return Err(ApiError::JSON(err));
         }
     };
+
+    let total = &json_res["total"].to_string().parse::<i32>()?;
+
+    // checks if the request returned all of the chapters
+    let got_all_chapters: bool = total
+        <= &(&json_res["limit"].to_string().parse::<i32>()?
+            + (&json_res["offset"].to_string().parse::<i32>()?));
+
+    // breaks the loop when all of the chapters are returned
+    if json_res["data"].to_string() == "[]" || got_all_chapters {
+        println!(
+            "got all chapters: {}, total: {}",
+            got_all_chapters, &json_res["total"]
+        );
+        *valid_req.lock().unwrap() = false;
+        return Err(ApiError::NoMoreChapters);
+    }
+
+    println!("{}", json_res);
+    println!("finish");
     Ok(json_res)
 }
 

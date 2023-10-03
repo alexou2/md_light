@@ -7,7 +7,8 @@ pub enum ApiError {
     REQWEST(reqwest::Error),
     JSON(serde_json::Error),
     StrError(String),
-    Box(Box<dyn std::any::Any + Send>)
+    Box(Box<dyn std::any::Any + Send>),
+    NoMoreChapters
 }
 impl fmt::Display for ApiError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -16,6 +17,7 @@ impl fmt::Display for ApiError {
             ApiError::JSON(_) => write!(f, "json conversion error"),
             ApiError::StrError(_) => write!(f, "error while processing strings"),
             ApiError::Box(_)=> write!(f, "unknown box error"),
+            ApiError::NoMoreChapters => write!(f, "got all of the chapters for this manga")
         }
     }
 }
