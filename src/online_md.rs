@@ -1,15 +1,17 @@
-use crate::api_error;
 use crate::api_error::ApiError;
 use crate::md_struct::*;
 use crate::utills::*;
 use reqwest::{header::USER_AGENT, Client};
 use serde_json::{from_str, Value};
-use std::error::Error;
 use std::future::Future;
+use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::time::Duration;
 
 const BASE_URL: &'static str = "https://api.mangadex.org";
+const LIMIT: [(&str, i32); 1] = [("limit", 100)];
+const CHAPTER_ORDERING: [(&str, &str); 1] = [("order[chapter]", "asc")];
+const INCLUDE_TL_GROUP: [(&str, &str); 1] = [("includes[]", "scanlation_group")];
 
 // sends a get request to the /ping endpoint of the api
 pub async fn test_connection() -> Result<String, reqwest::Error> {
@@ -38,6 +40,111 @@ pub async fn request_with_agent(
 
     Ok(response)
 }
+
+pub fn request_with_agent_blocking(url: String) -> Result<String, ApiError> {
+    // let client: Client = reqwest::Client::new();
+    // initializes a new client if none is passed as argument
+    let client = reqwest::blocking::Client::new();
+
+    let response = client
+        .get(url)
+        .header(reqwest::header::USER_AGENT, USER_AGENT)
+        .query(&INCLUDE_TL_GROUP)
+        .send()?
+        .text()?;
+
+    Ok(response)
+}
+// uses threads to fetch chapters
+fn get_chapters(url: String) -> Result<Vec<Value>, ApiError> {
+    let start = std::time::Instant::now();
+    let client = reqwest::blocking::Client::new();
+    let mut handles: Vec<JoinHandle<Result<Value, ApiError>>> = vec![]; //a vector containing all of the threads
+    let mut result = vec![]; //a vector containing the result of all of the requests
+
+    let valid_request = Arc::new(Mutex::new(true));
+    let mut i = 0;
+    // for i in 0..20 {
+    let valid_lock = valid_request.clone();
+    while *valid_lock.lock().unwrap() {
+        println!("valid: {}", valid_request.lock().unwrap());
+        println!("starting thread #{i}");
+        let uri = url.clone();
+        let offset = [("offset", (100 * i.clone()))];
+        println!("{:?}", offset[0]);
+        let cli = client.clone();
+        let mut valid_req_clone = Arc::clone(&valid_request);
+        //creates a new thread to fetch manga chapters
+        handles.push(std::thread::spawn(move || {
+            sync_chap(uri, offset, cli, &mut valid_req_clone)
+        }));
+        i += 1;
+        std::thread::sleep(Duration::from_millis(50))
+    }
+    //waits for the thread to finish
+    for t in handles {
+        let response = t.join();
+        let t = response?;
+        match t {
+            Ok(e) => result.push(e),
+            Err(_) => (),
+        }
+        // result.push(response);
+    }
+    println!(
+        "took {:?} and {} threads to fetch chapters",
+        start.elapsed(),
+        i
+    );
+    Ok(result)
+}
+// requests manga chapters synchronously
+fn sync_chap(
+    url: String,
+    offset: [(&str, i32); 1],
+    client: reqwest::blocking::Client,
+    valid_req: &mut Arc<Mutex<bool>>,
+) -> Result<Value, ApiError> {
+    // *valid_req.try_lock().expect("failed to lock") = false;
+    let response = client
+        .get(url)
+        .header(reqwest::header::USER_AGENT, USER_AGENT)
+        .query(&LIMIT)
+        .query(&offset)
+        .query(&CHAPTER_ORDERING)
+        .query(&INCLUDE_TL_GROUP)
+        .send()?
+        .text()?;
+    // converting the text response into a json value
+    let json_res_result = from_str(&response);
+    let json_res: Value;
+    match json_res_result {
+        Ok(json) => json_res = json,
+        Err(err) => {
+            return Err(ApiError::JSON(err));
+        }
+    };
+
+    let total = &json_res["total"].to_string().parse::<i32>()?;
+    let limit = &json_res["limit"].to_string().parse::<i32>()?;
+    let offset = &json_res["offset"].to_string().parse::<i32>()?;
+
+    // checks if the request returned all of the chapters
+    let got_all_chapters: bool = total <= &(limit + offset);
+    if json_res["data"].to_string() == "[]" && got_all_chapters {
+        println!(
+            "got all chapters: {}, total: {}",
+            got_all_chapters, &json_res["total"]
+        );
+        *valid_req.lock().unwrap() = false;
+        return Err(ApiError::NoMoreChapters);
+    }
+
+    println!("finish");
+
+    Ok(json_res)
+}
+
 // sends multiple requests to get all of the manga's chapters in order to get bast the rate limits
 async fn request_manga_chapters(url: String, base_offset: i32) -> Result<Vec<Value>, ApiError> {
     let mut chapter_list = Vec::new();
@@ -110,29 +217,26 @@ async fn request_manga_chapters(url: String, base_offset: i32) -> Result<Vec<Val
 
 // gets the informations for the homepage
 pub async fn get_md_homepage_feed() -> Result<MdHomepageFeed, ApiError> {
-    let pop_handle = tokio::spawn(get_popular_manga());
-    let new_handle = tokio::spawn(get_new_chapters());
-
+    // let pop_handle = tokio::spawn(get_popular_manga());
+    // let new_handle = tokio::spawn(get_new_chapters());
+    let popular_future = std::thread::spawn(|| get_popular_manga());
+    let new_chap_future = std::thread::spawn(|| get_new_chapters());
     // builds the struct for the popular titles+ new chapters
     let homepage_feed = MdHomepageFeed {
-        currently_popular: pop_handle.await??,
-        new_chapter_releases: new_handle.await??,
+        currently_popular: popular_future.join()??,
+        new_chapter_releases: new_chap_future.join()??,
     };
 
     Ok(homepage_feed)
 }
 
 // gets the new chapter releases for the homepage
-pub async fn get_new_chapters() -> Result<Vec<NewChapters>, ApiError> {
+pub fn get_new_chapters() -> Result<Vec<NewChapters>, ApiError> {
     println!("new chap started");
     let mut new_chapters = Vec::new();
     // let url = "https://api.mangadex.org/chapter?includes[]=scanlation_group&translatedLanguage[]=en&translatedLanguage[]=de&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&order[readableAt]=desc&limit=64&includes[]=cover_art";
     let url = "https://api.mangadex.org/chapter?includes[]=scanlation_group&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&order[readableAt]=desc&limit=64&includes[]=cover_art";
-    let resp = request_with_agent(url.to_string(), None)
-        .await?
-        .await?
-        .text()
-        .await?;
+    let resp = request_with_agent_blocking(url.to_string())?;
     // converts the api response to a json string and gets the data part of it
     let json_resp: Value = from_str(&resp)?;
     let data = &json_resp["data"];
@@ -206,7 +310,7 @@ pub async fn get_new_chapters() -> Result<Vec<NewChapters>, ApiError> {
 }
 
 // gets the most popular mangas from the last month that are displayed at the top of the md homepage
-pub async fn get_popular_manga() -> Result<Vec<PopularManga>, ApiError> {
+pub fn get_popular_manga() -> Result<Vec<PopularManga>, ApiError> {
     // std::thread::sleep(Duration::from_millis(10000));
     println!("pop manga started");
     let mut popular_manga: Vec<PopularManga> = Vec::new();
@@ -223,7 +327,8 @@ pub async fn get_popular_manga() -> Result<Vec<PopularManga>, ApiError> {
     println!("url: {}", url);
 
     // doing the get request to the api and transforming it into a json object
-    let resp = request_with_agent(url, None).await?.await?.text().await?;
+    // let resp = request_with_agent(url, None).await?.await?.text().await?;
+    let resp = request_with_agent_blocking(url)?;
     let json_resp: Value = serde_json::from_str(&resp)?;
 
     // transforming the json into an array in order to get all of the search results
@@ -345,7 +450,8 @@ pub fn get_manga_cover(manga_id: &String, manga_json: &Value) -> Result<String, 
 // gets the manga info and chapters
 pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
     // calls the function to get chapters for a faster page loading
-    let manga_chapters_promise = get_manga_chapters(&manga_id);
+    let id_clone = manga_id.clone();
+    let manga_chapters_future = std::thread::spawn(move || get_manga_chapters(&id_clone));
 
     let url = format!(
         "{}/manga/{}?includes[]=author&includes[]=artist&includes[]=cover_art",
@@ -456,21 +562,35 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
         translated_languages: translated_language_list,
         year: year.clone(),
         description: description.clone(),
-        // chapters: sort_by_chapter(manga_chapters_promise.await?), // waits until the request to get the chapters is done
-        chapters: manga_chapters_promise.await?,
+        chapters: manga_chapters_future.join()??,
     };
     Ok(manga_info)
 }
 
 // gets all of the manga's chapters for the manga info page
-pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, ApiError> {
+pub fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, ApiError> {
     let url = format!("{}/manga/{}/feed", BASE_URL, manga_id);
 
-    let chapter_json = request_manga_chapters(url, 0).await?;
+    // let chapter_json = request_manga_chapters(url, 0).await?;
+    let chapter_json = get_chapters(url).unwrap();
+    let mut json_list: Vec<Value> = vec![];
+    for chap in chapter_json {
+        // let chapter_list = chap.clone().as_array().ok_or("unable to convert chapters to array")?.clone().iter().for_each(|ch| json_list.push(ch));
+        // chapter_list.clone().iter().for_each(|ch| json_list.push(ch) )
+        // fs::write("t.json", chap.to_string());
+        let list = chap["data"]
+            .as_array()
+            .ok_or("unable to convert chapters to array")
+            .unwrap();
+        for i in list {
+            json_list.push(i.clone());
+        }
+    }
 
     let mut chapter_list: Vec<Chapters> = Vec::new();
     // let chapter_json = data.as_array().ok_or("there are no chapters")?; // transforming the json into an array
-    for chapter in chapter_json {
+
+    for chapter in json_list.clone() {
         let attributes = &chapter["attributes"];
         // let tl_group = &manga["relationships"][""]
         let chapter_number = &attributes["chapter"]
@@ -480,10 +600,15 @@ pub async fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, ApiE
         let chapter_name = attributes["title"].remove_quotes();
         let language = &attributes["translatedLanguage"]
             .remove_quotes()
-            .ok_or("error while removing quotes in the chapter language")?;
+            .ok_or(format!(
+                "error while removing quotes in the chapter language {}",
+                attributes["translatedLanguage"]
+            ))
+            .unwrap();
         let chapter_id = chapter["id"]
             .remove_quotes()
-            .ok_or("error while removing quotes in the chapter ID")?;
+            .ok_or("error while removing quotes in the chapter ID")
+            .unwrap();
 
         // getting the translator groups
         let mut tl_group: Vec<TlGroup> = Vec::new();
@@ -570,26 +695,11 @@ pub async fn get_author_infos(author_id: String) -> Result<AuthorInfo, ApiError>
                 .ok_or("unable to remove quotes from title id")?,
         );
     }
-    // let mut titles_promise = Vec::new();
-    //
-    // for id in titles_json {
-    //     println!("id: {}", id.to_string());
-    //     let id_string = id["id"]
-    //         .remove_quotes()
-    //         .ok_or("error while converting manga id to a string")?;
-    //     let promise = get_author_manga(id_string);
-    //     titles_promise.push(promise)
-    // }
-
-    // let mut manga_list: Vec<ShortMangaInfo> = Vec::new();
-    // for promise in titles_promise {
-    //     manga_list.push(promise.await?)
-    // }
 
     let author_info = AuthorInfo {
         name: name.clone(),
         id: author_id,
-        titles_id: titles_id, // titles: manga_list,
+        titles_id: titles_id,
     };
 
     Ok(author_info)

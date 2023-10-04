@@ -1,0 +1,14 @@
+name = "auth"
+manga_id = "id"
+downloaded_lang = "en"
+downloaded_at = "now"
+tags = ["tag"]
+original_lang = "jp"
+status = "none"
+description = "desc"
+downloaded_chap = 1
+
+[[authors]]
+author_name = "name"
+author_id = "id"
+role = "role"
