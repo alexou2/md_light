@@ -47,6 +47,7 @@ pub fn render_homepage(feed: MdHomepageFeed, is_localhost: bool) -> String {
             (DOCTYPE)
             link rel="stylesheet" href="ressources/styles.css";
             script src = {"/ressources/index.js"}{}
+            title  {"Home | MD_Light"}
             body {
             // h1 {"HOME"}
             (get_top_bar())
@@ -86,6 +87,8 @@ pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> Stri
         (DOCTYPE)
         link rel="stylesheet" href="/ressources/styles.css";
         script src = {"/ressources/index.js"}{}
+        title  {(manga_info.manga_name) " | MD_Light"}
+
         body{
             (get_top_bar())
             div.manga_info{
@@ -131,6 +134,8 @@ pub fn render_chapter(chapter_info: ChapterPages, is_localhost: bool, manga_id: 
             (DOCTYPE)
             link rel="stylesheet" href="/ressources/styles.css";
             script src = {"/ressources/index.js"}{}
+            title  {(chapter_info.chapter_name)" | MD_Light"}
+
             body {
                 (get_top_bar())
             h1 {(chapter_info.chapter_name)}
@@ -157,6 +162,8 @@ pub fn render_search_page(search_results: Vec<ShortMangaInfo>, is_localhost: boo
             (DOCTYPE)
             link rel="stylesheet" href="/ressources/styles.css";
             script src = {"/ressources/index.js"}{}
+            title  {"Search | MD_Light"}
+
             body {
                 (get_top_bar())
             h1 {"search results"}
@@ -189,6 +196,8 @@ pub fn render_error_page(error_code: ApiError, requested_page: &str) -> String {
     let template = html!(
             (DOCTYPE)
             link rel="stylesheet" href="/ressources/styles.css";
+            title  {"Error! | MD_Light"}
+
             body{
                 div.error_log{
                 h1.error_message{"Oops! looks like there is an error"}
@@ -210,7 +219,8 @@ pub fn render_author_page(author: AuthorInfo) -> String {
         (DOCTYPE)
         link rel="stylesheet" href="/ressources/styles.css";
         script src = {"/ressources/index.js"}{}
-        title {(author.name)}
+        title  {(author.name)" | MD_Light"}
+
         body{
             (get_top_bar())
 

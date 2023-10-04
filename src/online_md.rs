@@ -61,24 +61,22 @@ fn get_chapters(url: String) -> Result<Vec<Value>, ApiError> {
     let client = reqwest::blocking::Client::new();
     let mut handles: Vec<JoinHandle<Result<Value, ApiError>>> = vec![]; //a vector containing all of the threads
     let mut result = vec![]; //a vector containing the result of all of the requests
-
+                             // tells the loop below if all of the chapters were got
     let valid_request = Arc::new(Mutex::new(true));
-    let mut i = 0;
-    // for i in 0..20 {
-    let valid_lock = valid_request.clone();
-    while *valid_lock.lock().unwrap() {
-        println!("valid: {}", valid_request.lock().unwrap());
-        println!("starting thread #{i}");
+    let mut th = 0; // used to calculate the offset
+                    //loops util there are no more chapters to get for the manga
+    while *valid_request.lock().unwrap() {
         let uri = url.clone();
-        let offset = [("offset", (100 * i.clone()))];
-        println!("{:?}", offset[0]);
+        let offset = [("offset", (100 * th.clone()))];
         let cli = client.clone();
         let mut valid_req_clone = Arc::clone(&valid_request);
+
         //creates a new thread to fetch manga chapters
         handles.push(std::thread::spawn(move || {
             sync_chap(uri, offset, cli, &mut valid_req_clone)
         }));
-        i += 1;
+        th += 1;
+        // limits the number of threads created per second
         std::thread::sleep(Duration::from_millis(50))
     }
     //waits for the thread to finish
@@ -94,7 +92,7 @@ fn get_chapters(url: String) -> Result<Vec<Value>, ApiError> {
     println!(
         "took {:?} and {} threads to fetch chapters",
         start.elapsed(),
-        i
+        th
     );
     Ok(result)
 }
