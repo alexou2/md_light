@@ -37,6 +37,7 @@ pub fn get_flag_offline(language: &str) -> &'static str {
         "ko" => KO,
         "ar" => AR,
         "jp" => JP,
+        "ja" => JP,
         "de" => DE,
         "hi" => HI,
         "pt-br" => PT,
