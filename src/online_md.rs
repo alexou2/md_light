@@ -3,7 +3,6 @@ use crate::md_struct::*;
 use crate::utills::*;
 use reqwest::{header::USER_AGENT, Client};
 use serde_json::{from_str, Value};
-use std::fs;
 use std::future::Future;
 use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
@@ -56,13 +55,14 @@ pub fn request_with_agent_blocking(url: String) -> Result<String, ApiError> {
 
     Ok(response)
 }
+// uses threads to fetch chapters
 fn get_chapters(url: String) -> Result<Vec<Value>, ApiError> {
     let start = std::time::Instant::now();
     let client = reqwest::blocking::Client::new();
     let mut handles: Vec<JoinHandle<Result<Value, ApiError>>> = vec![]; //a vector containing all of the threads
     let mut result = vec![]; //a vector containing the result of all of the requests
 
-    let mut valid_request = Arc::new(Mutex::new(true));
+    let valid_request = Arc::new(Mutex::new(true));
     let mut i = 0;
     // for i in 0..20 {
     let valid_lock = valid_request.clone();
@@ -98,7 +98,7 @@ fn get_chapters(url: String) -> Result<Vec<Value>, ApiError> {
     );
     Ok(result)
 }
-
+// requests manga chapters synchronously
 fn sync_chap(
     url: String,
     offset: [(&str, i32); 1],
@@ -236,11 +236,6 @@ pub fn get_new_chapters() -> Result<Vec<NewChapters>, ApiError> {
     let mut new_chapters = Vec::new();
     // let url = "https://api.mangadex.org/chapter?includes[]=scanlation_group&translatedLanguage[]=en&translatedLanguage[]=de&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&order[readableAt]=desc&limit=64&includes[]=cover_art";
     let url = "https://api.mangadex.org/chapter?includes[]=scanlation_group&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&order[readableAt]=desc&limit=64&includes[]=cover_art";
-    // let resp = request_with_agent(url.to_string(), None)
-    //     .await?
-    //     .await?
-    //     .text()
-    //     .await?;
     let resp = request_with_agent_blocking(url.to_string())?;
     // converts the api response to a json string and gets the data part of it
     let json_resp: Value = from_str(&resp)?;
@@ -456,7 +451,7 @@ pub fn get_manga_cover(manga_id: &String, manga_json: &Value) -> Result<String, 
 pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
     // calls the function to get chapters for a faster page loading
     let id_clone = manga_id.clone();
-    let manga_chapters_promise = std::thread::spawn(move || get_manga_chapters(&id_clone));
+    let manga_chapters_future = std::thread::spawn(move || get_manga_chapters(&id_clone));
 
     let url = format!(
         "{}/manga/{}?includes[]=author&includes[]=artist&includes[]=cover_art",
@@ -567,8 +562,7 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
         translated_languages: translated_language_list,
         year: year.clone(),
         description: description.clone(),
-        // chapters: sort_by_chapter(manga_chapters_promise.await?), // waits until the request to get the chapters is done
-        chapters: manga_chapters_promise.join()??,
+        chapters: manga_chapters_future.join()??,
     };
     Ok(manga_info)
 }
@@ -701,26 +695,11 @@ pub async fn get_author_infos(author_id: String) -> Result<AuthorInfo, ApiError>
                 .ok_or("unable to remove quotes from title id")?,
         );
     }
-    // let mut titles_promise = Vec::new();
-    //
-    // for id in titles_json {
-    //     println!("id: {}", id.to_string());
-    //     let id_string = id["id"]
-    //         .remove_quotes()
-    //         .ok_or("error while converting manga id to a string")?;
-    //     let promise = get_author_manga(id_string);
-    //     titles_promise.push(promise)
-    // }
-
-    // let mut manga_list: Vec<ShortMangaInfo> = Vec::new();
-    // for promise in titles_promise {
-    //     manga_list.push(promise.await?)
-    // }
 
     let author_info = AuthorInfo {
         name: name.clone(),
         id: author_id,
-        titles_id: titles_id, // titles: manga_list,
+        titles_id: titles_id,
     };
 
     Ok(author_info)

@@ -87,7 +87,6 @@ impl ValueExtensions for Value {
         } else if self.is_number() {
             Some(self.to_string())
         } else {
-            // println!("{}", self);
             None
         }
     }
