@@ -1084,7 +1084,7 @@ dependencies = [
 
 [[package]]
 name = "md_light"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "actix-files",
  "actix-web",
@@ -1097,7 +1097,6 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
- "tokio",
  "toml",
 ]
 
@@ -1786,19 +1785,7 @@ dependencies = [
  "pin-project-lite",
  "signal-hook-registry",
  "socket2 0.5.4",
- "tokio-macros",
  "windows-sys",
-]
-
-[[package]]
-name = "tokio-macros"
-version = "2.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "630bdcf245f78637c13ec01ffae6187cca34625e8c63150d424b59e55af2675e"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.28",
 ]
 
 [[package]]

@@ -7,6 +7,7 @@ use serde_json::json;
 use serde_json::Value;
 use std::fs::{create_dir, read_dir, write};
 use toml;
+use std::thread::spawn;
 
 pub fn write_toml(offline_data: OfflineData) {
     let toml_str = toml::to_string(&offline_data).expect("unable to save");

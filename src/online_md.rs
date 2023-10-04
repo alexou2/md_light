@@ -29,7 +29,7 @@ pub async fn request_with_agent(
     // let client: Client = reqwest::Client::new();
     // initializes a new client if none is passed as argument
     match client {
-        Some(_) => println!("a request client was suppied"),
+        Some(_) => (),
         None => client = Some(reqwest::Client::new()),
     }
     let response = client
@@ -138,7 +138,6 @@ fn sync_chap(
         return Err(ApiError::NoMoreChapters);
     }
 
-    println!("finish");
 
     Ok(json_res)
 }
@@ -230,7 +229,6 @@ pub async fn get_md_homepage_feed() -> Result<MdHomepageFeed, ApiError> {
 
 // gets the new chapter releases for the homepage
 pub fn get_new_chapters() -> Result<Vec<NewChapters>, ApiError> {
-    println!("new chap started");
     let mut new_chapters = Vec::new();
     // let url = "https://api.mangadex.org/chapter?includes[]=scanlation_group&translatedLanguage[]=en&translatedLanguage[]=de&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&order[readableAt]=desc&limit=64&includes[]=cover_art";
     let url = "https://api.mangadex.org/chapter?includes[]=scanlation_group&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&order[readableAt]=desc&limit=64&includes[]=cover_art";
@@ -309,8 +307,6 @@ pub fn get_new_chapters() -> Result<Vec<NewChapters>, ApiError> {
 
 // gets the most popular mangas from the last month that are displayed at the top of the md homepage
 pub fn get_popular_manga() -> Result<Vec<PopularManga>, ApiError> {
-    // std::thread::sleep(Duration::from_millis(10000));
-    println!("pop manga started");
     let mut popular_manga: Vec<PopularManga> = Vec::new();
     let formatted_time = get_offset_time();
     // formatting the request url to include the atrists/authores and the cover fileName
@@ -322,7 +318,6 @@ pub fn get_popular_manga() -> Result<Vec<PopularManga>, ApiError> {
     //         r"https://api.mangadex.org/manga?includes[]=cover_art&includes[]=artist&includes[]=author&order[followedCount]=desc&hasAvailableChapters=true&createdAtSince={}",
     //         formatted_time
     //     );
-    println!("url: {}", url);
 
     // doing the get request to the api and transforming it into a json object
     // let resp = request_with_agent(url, None).await?.await?.text().await?;
@@ -541,7 +536,6 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
         .as_array()
         .ok_or("translated_languages is not an array")?;
     for language in translation_options_json {
-        println!("{}", language);
         translated_language_list.push(language.remove_quotes().ok_or(format!(
             "error while removing quotes in the language options: {}",
             language
