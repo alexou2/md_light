@@ -169,9 +169,9 @@ pub fn render_search_page(search_results: Vec<ShortMangaInfo>, is_localhost: boo
             body {
                 (get_top_bar())
             h1 {"search results"}
-            div.search_list{
+            div.search_list.works{
                 @for i in search_results{
-                    div.manga_restult{
+                    div.manga_restult.title{
                         a href = (format!("/manga/{}",i.manga_id)){
 
                             // uses the proxied images if not localhost or links the images directly
@@ -181,7 +181,7 @@ pub fn render_search_page(search_results: Vec<ShortMangaInfo>, is_localhost: boo
                             //     img src = (i.thumbnail);
                             // }
                             img src = (get_correct_image(is_localhost, i.thumbnail));
-                        {(i.manga_name)}
+                        div.manga-title{(i.manga_name)}
                         }
                     }
                 }
