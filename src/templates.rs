@@ -88,14 +88,14 @@ pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> Stri
             (get_top_bar())
             div.manga_info{
                 div.col_1{
-                img src = (get_correct_image(is_localhost, manga_info.thumbnail));
+                img.cover_art src = (get_correct_image(is_localhost, manga_info.thumbnail));
                 }
                 div.col_2{
-                div.title {(manga_info.manga_name)}
-                // div.description{(manga_info.description)}
-                md-span.description{(manga_info.description)}
+                   h1  {(manga_info.manga_name)}
+                    // div.description{(manga_info.description)}
+                    md-span.description{(manga_info.description)}
                 }
-                div.author_list.md-block{
+                div.author_list{
                     h3{"authors: "}
                     @for author in manga_info.author{
                          div.author{
@@ -104,8 +104,8 @@ pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> Stri
                              }
                          }
 
-            };
-        }
+                    };
+                }
 
         }
         div.chapter_list{

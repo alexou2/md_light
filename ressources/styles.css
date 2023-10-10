@@ -9,6 +9,7 @@ body {
   background-color: black;
   font-size: 1.2em;
   color: whitesmoke;
+  width: 100%;
 }
 
 a.chapter_link:link {
@@ -149,16 +150,18 @@ a {
   border-radius: .3em;
   align-self: center;
 }
-.manga_info{
-display: flex;
-flex-wrap: wrap;
+
+.manga_info {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 1em;
+}
+
+.col_2 {
+  margin-left: 1em;
+  margin-right: 1em;
 }
 
 .description {
   white-space: pre;
-  /* font-family: monospace; */
-}
-.title{
-  font-size: 2em;
-  text-align: left;
 }
