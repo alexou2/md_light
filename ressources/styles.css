@@ -7,6 +7,8 @@ img.chapter_page {
 
 body {
   background-color: black;
+  font-size: 1.2em;
+
 }
 
 a.chapter_link:link {
@@ -48,16 +50,17 @@ body {
   border-radius: 5em;
   height: 100%; */
   /* width: 100%; */
-    padding: 10px;
-    box-sizing: border-box;
-    margin-bottom: 10px;
-    border: none;
-    outline: none;
-    border: 1px solid grey;
-    font-size: 15px;
-    border-radius: 5px;
+  padding: 10px;
+  box-sizing: border-box;
+  margin-bottom: 10px;
+  border: none;
+  outline: none;
+  border: 1px solid grey;
+  font-size: 15px;
+  border-radius: 5px;
 }
-.search_bar{
+
+.search_bar {
   /* height: 1.7em;
   font-size: 1.5em;
   border-radius: 5em;
@@ -75,9 +78,76 @@ body {
 .author_list {
   align-self: flex-end;
 } */
-.description{
+.description {
   max-width: 50%;
 }
-.author_list{
+
+.author_list {
   color: rgb(255, 183, 0);
+}
+
+
+/* author page */
+.works {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.title {
+  width: 15em;
+  text-align: center;
+  margin: 1em;
+  transition: transform .3s;
+  font-size: 1.15em;
+}
+
+
+.popular {
+  display: flex;
+  overflow-x: scroll;
+  scroll-snap-type: x mandatory;
+  width: 75%;
+  background-color: gray;
+  margin-left: auto;
+  margin-right: auto;
+  scrollbar-width: none;
+  border-radius: 1em;
+  margin-bottom: 5em;
+  margin-top: 3em;
+}
+
+.popular-manga {
+  border-bottom: 1px solid white;
+
+}
+
+/*turn on or off to change the popular manga ui design*/
+/* .popular-manga{
+  margin-right: 100%; 
+  padding: 1rem;
+  scroll-snap-align: start;
+} */
+
+.popular-manga>a>img {
+  border-radius: .3em;
+}
+
+/* .new-release {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 10em;
+  align-items: flex-start;
+  justify-content: space-around;
+} */
+.new-release{
+  margin-bottom: 10em;
+}
+.new_chapter, .new-release {
+  background-color: gray;
+  margin: .5em;
+  padding: .5em;
+  border-radius: .3em;
+  align-self: center;
 }
