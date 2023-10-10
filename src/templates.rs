@@ -76,20 +76,26 @@ pub fn render_homepage(feed: MdHomepageFeed, is_localhost: bool) -> String {
 }
 
 pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> String {
+    println!("{}", manga_info.description);
     let template = html!(
         (DOCTYPE)
         link rel="stylesheet" href="/ressources/styles.css";
         script src = {"/ressources/index.js"}{}
         title  {(manga_info.manga_name) " | MD_Light"}
+        script type={"module"} src ={"https://md-block.verou.me/md-block.js"}{}
 
         body{
             (get_top_bar())
             div.manga_info{
+                div.col_1{
                 img src = (get_correct_image(is_localhost, manga_info.thumbnail));
-
-                h1 {(manga_info.manga_name)}
-                div.description{(manga_info.description)}
-                div.author_list{
+                }
+                div.col_2{
+                div.title {(manga_info.manga_name)}
+                // div.description{(manga_info.description)}
+                md-span.description{(manga_info.description)}
+                }
+                div.author_list.md-block{
                     h3{"authors: "}
                     @for author in manga_info.author{
                          div.author{
@@ -216,7 +222,6 @@ pub fn render_author_page(author: AuthorInfo) -> String {
         link rel="stylesheet" href="/ressources/styles.css";
         script src = {"/ressources/index.js"}{}
         title  {(author.name)" | MD_Light"}
-
         body{
             (get_top_bar())
 

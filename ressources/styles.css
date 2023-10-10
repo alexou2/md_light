@@ -8,7 +8,7 @@ img.chapter_page {
 body {
   background-color: black;
   font-size: 1.2em;
-
+  color: whitesmoke;
 }
 
 a.chapter_link:link {
@@ -21,10 +21,6 @@ a.chapter_link:visited {
 }
 
 a {
-  color: aqua;
-}
-
-body {
   color: aqua;
 }
 
@@ -141,13 +137,28 @@ body {
   align-items: flex-start;
   justify-content: space-around;
 } */
-.new-release{
+.new-release {
   margin-bottom: 10em;
 }
-.new_chapter, .new-release {
+
+.new_chapter,
+.new-release {
   background-color: gray;
   margin: .5em;
   padding: .5em;
   border-radius: .3em;
   align-self: center;
+}
+.manga_info{
+display: flex;
+flex-wrap: wrap;
+}
+
+.description {
+  white-space: pre;
+  /* font-family: monospace; */
+}
+.title{
+  font-size: 2em;
+  text-align: left;
 }
