@@ -9,7 +9,6 @@ body {
   background-color: black;
   font-size: 1.2em;
   color: whitesmoke;
-  width: 100%;
 }
 
 a.chapter_link:link {
@@ -154,12 +153,11 @@ a {
 .manga_info {
   display: flex;
   flex-wrap: wrap;
-  margin: 1em;
 }
 
 .col_2 {
-  margin-left: 1em;
-  margin-right: 1em;
+  margin-left: .5em;
+  margin-right: .5em;
 }
 
 .description {
