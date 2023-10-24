@@ -161,5 +161,10 @@ a {
 }
 
 .description {
-  white-space: pre;
+  /* white-space: pre; */
+  white-space-collapse:collapse;
+  width: 10em;
+
+}
+.author_list{
 }

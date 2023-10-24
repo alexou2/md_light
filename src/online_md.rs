@@ -3,10 +3,9 @@ use crate::md_struct::*;
 use crate::utills::*;
 use reqwest::{header::USER_AGENT, Client};
 use serde_json::{from_str, Value};
-use std::future::Future;
+use std::{future::Future, thread::JoinHandle, time::Duration};
 use std::sync::{Arc, Mutex};
-use std::thread::JoinHandle;
-use std::time::Duration;
+
 
 const BASE_URL: &'static str = "https://api.mangadex.org";
 const LIMIT: [(&str, i32); 1] = [("limit", 100)];
