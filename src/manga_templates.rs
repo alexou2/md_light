@@ -26,7 +26,7 @@ fn get_return_to_manga(manga_id: String) -> PreEscaped<String> {
     let home = html!(
 
         div.top_bar{
-            img src = "/ressources/logo.svg";
+            img src = "/ressources/logo.svg" loading="lazy";
             h1.go_home{a href = (format!("/manga/{}", manga_id)); "back to manga"}
 
         }
@@ -57,7 +57,7 @@ pub fn render_homepage(feed: MdHomepageFeed, is_localhost: bool) -> String {
                 @for i in popular_manga{
                     div.popular-manga{
                         a href = (format!("/manga/{}",i.manga_id)){
-                            img src = (get_correct_image(is_localhost, i.thumbnail));
+                            img src = (get_correct_image(is_localhost, i.thumbnail))loading="lazy";
                             {(i.manga_name)}
                         }
                     }
@@ -175,14 +175,7 @@ pub fn render_search_page(search_results: Vec<ShortMangaInfo>, is_localhost: boo
                 @for i in search_results{
                     div.manga_restult.title{
                         a href = (format!("/manga/{}",i.manga_id)){
-
-                            // uses the proxied images if not localhost or links the images directly
-                            // @if !is_localhost{
-                            //     img src = { (format!("/proxy/images/{}", i.thumbnail))};
-                            // }@else{
-                            //     img src = (i.thumbnail);
-                            // }
-                            img src = (get_correct_image(is_localhost, i.thumbnail));
+                            img src = (get_correct_image(is_localhost, i.thumbnail))loading="lazy";
                         div.manga-title{(i.manga_name)}
                         }
                     }
@@ -231,14 +224,6 @@ pub fn render_author_page(author: AuthorInfo) -> String {
             // script {"console.log(`kj`)"}
             div.title_number {(author.titles_id.len())" titles"}
             div.works #works{
-                // @for manga in author.titles{
-                //     a.title href = {"/manga/"(manga.id)}{
-                //         // img src = (manga.cover_link);
-                //         img src = (get_correct_image(is_localhost, manga.cover_link));
-                //         (manga.name)
-                //     }
-                // }
-                // {(author.titles_id.join(","))}
 
                 // button onclick = {"getAuhorChapters(['"(author.titles_id.join("', '"))"'])"}{}
                 }
@@ -254,17 +239,13 @@ pub fn render_author_manga(titles: Vec<ShortMangaInfo>, is_localhost: bool) -> S
             @for manga in titles{
     div.title{
         a.title-image href = {"/manga/"(manga.manga_id)}{
-            img src = (get_correct_image(is_localhost, manga.thumbnail));
+            img src = (get_correct_image(is_localhost, manga.thumbnail)) loading="lazy";
             div.manga-title{(manga.manga_name)}
         }
     }
 
 
-                // a.title href = {"/manga/"(manga.manga_id)}{
-                //     // img src = (manga.cover_link);
-                //     img src = (get_correct_image(is_localhost, manga.thumbnail));
-                //     (manga.manga_name)
-                // }
+              
             }
         );
     template.into_string()
