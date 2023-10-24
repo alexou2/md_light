@@ -5,6 +5,8 @@ use maud::*;
 
 fn get_top_bar() -> PreEscaped<String> {
     let top_bar = html!(
+        link rel="stylesheet" href="/ressources/styles.css";
+        script src = {"/ressources/index.js"}{}
         div.top_bar{
             div.home{
                 img.logo src = "/ressources/logo.svg";
@@ -265,5 +267,19 @@ pub fn render_author_manga(titles: Vec<ShortMangaInfo>, is_localhost: bool) -> S
                 // }
             }
         );
+    template.into_string()
+}
+
+pub fn get_server_options() -> String {
+    let template = html!(
+        (DOCTYPE)
+        (get_top_bar())
+        title {"Server options | MD_Light"}
+        body{
+
+            button type="button" onclick = "location.href = '/server/kill' "{"Kill server"}
+            button type="button" onclick = "location.href = '/server/ping' "{"Ping MangaDex"}
+        }
+    );
     template.into_string()
 }

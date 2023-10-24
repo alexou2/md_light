@@ -122,6 +122,15 @@ async fn get_author_feed(author_id: web::Path<String>, path: HttpRequest) -> Htt
         .body(html)
 }
 
+#[get("/server")]
+async fn get_server_options() -> HttpResponse {
+    let html = manga_templates::get_server_options();
+
+    HttpResponse::build(StatusCode::OK)
+        .content_type("text/html; charset=utf-8")
+        .body(html)
+}
+
 // pings the mangadex server to test connection
 #[get("/server/ping")]
 async fn ping_md() -> impl Responder {
@@ -187,15 +196,17 @@ async fn image_proxy(image_url: web::Path<String>) -> Result<HttpResponse> {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    // manages the cli options
+    // the launch options
     let mut args = Args::parse();
 
+    // sets the recommended options if launched with `--recommended`
     if args.recommended {
         args.lan = true;
         args.secure = true;
     }
-
+//sets the server port
     let port = args.port;
+
     println!("Server running at port {}", &port);
     // creates the server with its endpoints
     let mut server = HttpServer::new(|| {
@@ -203,6 +214,7 @@ async fn main() -> std::io::Result<()> {
             .route("/proxy/images/{image_url:.+}", web::get().to(image_proxy))
             .service(index)
             .service(kill_server)
+            .service(get_server_options)
             .service(get_chapter)
             .service(get_manga_info)
             .service(search_for_manga)
