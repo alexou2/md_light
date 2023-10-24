@@ -134,7 +134,7 @@ async fn ping_md() -> impl Responder {
 // kills the server
 #[get("/server/kill")]
 async fn kill_server(path: HttpRequest) -> impl Responder {
-    let restrict = Args::parse().restrict;
+    let restrict = Args::parse().secure;
     // allows killing the server only if the restrict option is on and the client is the host or if the  restrict option is false
     if (restrict && utills::check_localhost(&path)) || (!restrict) {
         println!("The server was killed with exit code 1");
@@ -157,8 +157,6 @@ async fn kill_server(path: HttpRequest) -> impl Responder {
     }
     // "".to_string()
 }
-
-
 
 async fn image_proxy(image_url: web::Path<String>) -> Result<HttpResponse> {
     let client = Client::new();
@@ -190,16 +188,16 @@ async fn image_proxy(image_url: web::Path<String>) -> Result<HttpResponse> {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // manages the cli options
-    let args = Args::parse();
-    let mut lan_addr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
-    if args.lan {
-        lan_addr = local_ip().unwrap();
-        println!("local ip address is: {}", lan_addr);
+    let mut args = Args::parse();
+
+    if args.recommended {
+        args.lan = true;
+        args.secure = true;
     }
 
     let port = args.port;
     println!("Server running at port {}", &port);
-// creates the server with its endpoints
+    // creates the server with its endpoints
     let mut server = HttpServer::new(|| {
         App::new()
             .route("/proxy/images/{image_url:.+}", web::get().to(image_proxy))
@@ -215,13 +213,11 @@ async fn main() -> std::io::Result<()> {
     });
     // the ip addreses used to access the server
 
-    
-
     server = server.bind(("127.0.0.1", 8080))?;
-    if args.lan{
+    if args.lan {
+        let lan_addr = local_ip().unwrap();
         server = server.bind((lan_addr, port))?;
     }
-
 
     server.run().await
 }
@@ -240,13 +236,17 @@ pub struct Args {
 
     /// Uses the lower quality images from mangadex instead of the high quality ones
     #[arg(short, long)]
-    pub saver: bool,
+    pub datasaver: bool,
 
     /// Restricts download access for other users on the lan
     #[arg(short, long)]
-    pub restrict: bool,
+    pub secure: bool,
 
     /// Manually set the port for the listener
-    #[arg(long = "PORT", default_value_t = 8080)]
+    #[arg(short, long = "PORT", default_value_t = 8080)]
     pub port: u16,
+
+    /// Uses the recommended server options
+    #[arg(short, long)]
+    pub recommended: bool,
 }
