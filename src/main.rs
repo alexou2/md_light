@@ -1,5 +1,3 @@
-mod anime_scraper;
-mod anime_templates;
 mod api_error;
 mod flags;
 mod manga_templates;
@@ -160,38 +158,7 @@ async fn kill_server(path: HttpRequest) -> impl Responder {
     // "".to_string()
 }
 
-#[get("/anime")]
-async fn anime() -> HttpResponse {
-    let update = anime_scraper::get_updates().await;
 
-    let html = match update {
-        Ok(e) => anime_templates::render_homepage(e),
-        Err(_) => "err".to_string(),
-    };
-
-    // let t = update.unwrap()[0].anime_name.clone();
-    HttpResponse::build(StatusCode::OK)
-        .content_type("text/html; charset=utf-8")
-        .body(html)
-}
-
-// returns the chapter's pages
-#[get("/anime/{anime}")]
-async fn watch_episode(chapter: web::Path<String>, path: HttpRequest) -> HttpResponse {
-    let episode_id = chapter.to_string();
-    let episode_info = anime_scraper::get_anime_info(
-        "https://gogoanimehd.io/category/houkago-shounen-hanako-kun".to_string(),
-    );
-    let html = match episode_info {
-        Ok(e) => anime_templates::render_anime_description_page(e),
-        Err(v) => anime_templates::return_error_page(v.into()),
-    };
-
-    // let html = templates::render_chapter(chapter_info.unwrap(), is_localhost);
-    HttpResponse::build(StatusCode::OK)
-        .content_type("text/html; charset=utf-8")
-        .body(html)
-}
 
 async fn image_proxy(image_url: web::Path<String>) -> Result<HttpResponse> {
     let client = Client::new();
@@ -232,13 +199,11 @@ async fn main() -> std::io::Result<()> {
 
     let port = args.port;
     println!("Server running at port {}", &port);
-
-    HttpServer::new(|| {
+// creates the server with its endpoints
+    let mut server = HttpServer::new(|| {
         App::new()
             .route("/proxy/images/{image_url:.+}", web::get().to(image_proxy))
             .service(index)
-            .service(anime)
-            .service(watch_episode)
             .service(kill_server)
             .service(get_chapter)
             .service(get_manga_info)
@@ -247,12 +212,18 @@ async fn main() -> std::io::Result<()> {
             .service(get_author_feed)
             .service(get_author)
             .service(Files::new("/", "/ressources"))
-    })
+    });
     // the ip addreses used to access the server
-    // .bind(("127.0.0.1", 8080))?
-    .bind((lan_addr, port))?
-    .run()
-    .await
+
+    
+
+    server = server.bind(("127.0.0.1", 8080))?;
+    if args.lan{
+        server = server.bind((lan_addr, port))?;
+    }
+
+
+    server.run().await
 }
 
 /// A web server that uses the mangadex api with a lighweight frontend for potato devices
@@ -275,19 +246,7 @@ pub struct Args {
     #[arg(short, long)]
     pub restrict: bool,
 
-    /// Uses absolutely no javascript (makes the frontend lighter, but some features WILL be broken)
-    #[arg(short, long)]
-    pub no_js: bool,
-
-    /// Prints messages about the requested pages and errors
-    #[arg(short, long)]
-    pub verbose: bool,
-
     /// Manually set the port for the listener
     #[arg(long = "PORT", default_value_t = 8080)]
     pub port: u16,
-
-    /// use the tor network for viewing chapters online
-    #[arg(short, long)]
-    pub tor: bool,
 }
