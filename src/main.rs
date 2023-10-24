@@ -1,10 +1,12 @@
+mod anime_scraper;
+mod anime_templates;
+mod api_error;
 mod flags;
+mod manga_templates;
 mod md_struct;
 mod offline_reader;
 mod online_md;
-mod templates;
 mod utills;
-mod api_error;
 use actix_files::Files;
 use actix_web::{
     get, http::StatusCode, web, App, HttpRequest, HttpResponse, HttpServer, Responder, Result,
@@ -22,9 +24,10 @@ async fn index(path: HttpRequest) -> HttpResponse {
 
     // handles the errors by sending the error page
     let html = match feed {
-        Ok(e) => templates::render_homepage(e, is_localhost),
-        Err(v) => templates::render_error_page(v, "/"),
+        Ok(e) => manga_templates::render_homepage(e, is_localhost),
+        Err(v) => manga_templates::render_error_page(v, "/"),
     };
+
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
         .body(html)
@@ -39,8 +42,8 @@ async fn get_manga_info(manga_id: web::Path<String>, path: HttpRequest) -> HttpR
 
     // handles the errors by sending the error page
     let html = match manga_info {
-        Ok(e) => templates::render_manga_info_page(e, is_localhost),
-        Err(v) => templates::render_error_page(v.into(), requested_page),
+        Ok(e) => manga_templates::render_manga_info_page(e, is_localhost),
+        Err(v) => manga_templates::render_error_page(v.into(), requested_page),
     };
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
@@ -61,8 +64,8 @@ async fn get_chapter(chapter: web::Path<(String, String)>, path: HttpRequest) ->
     // handles the errors by sending the error page
     // let mut html = String::new();
     let html = match chapter_info {
-        Ok(e) => templates::render_chapter(e, is_localhost, manga_id),
-        Err(v) => templates::render_error_page(v.into(), path.path()),
+        Ok(e) => manga_templates::render_chapter(e, is_localhost, manga_id),
+        Err(v) => manga_templates::render_error_page(v.into(), path.path()),
     };
 
     // let html = templates::render_chapter(chapter_info.unwrap(), is_localhost);
@@ -80,8 +83,8 @@ async fn search_for_manga(name: web::Path<String>, path: HttpRequest) -> HttpRes
 
     // handles the errors by sending the error page
     let html = match search_results {
-        Ok(e) => templates::render_search_page(e, is_localhost),
-        Err(v) => templates::render_error_page(v, path.path()),
+        Ok(e) => manga_templates::render_search_page(e, is_localhost),
+        Err(v) => manga_templates::render_error_page(v, path.path()),
     };
 
     HttpResponse::build(StatusCode::OK)
@@ -95,8 +98,8 @@ async fn get_author(author_id: web::Path<String>, path: HttpRequest) -> HttpResp
     let author_data = online_md::get_author_infos(author_id.to_string()).await;
     // handles the errors by sending the error page
     let html = match author_data {
-        Ok(e) => templates::render_author_page(e),
-        Err(v) => templates::render_error_page(v, path.path()),
+        Ok(e) => manga_templates::render_author_page(e),
+        Err(v) => manga_templates::render_error_page(v, path.path()),
     };
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
@@ -113,8 +116,8 @@ async fn get_author_feed(author_id: web::Path<String>, path: HttpRequest) -> Htt
 
     // handles the errors by sending the error page
     let html = match manga_list {
-        Ok(e) => templates::render_author_manga(e, is_localhost),
-        Err(v) => templates::render_error_page(v, path.path()),
+        Ok(e) => manga_templates::render_author_manga(e, is_localhost),
+        Err(v) => manga_templates::render_error_page(v, path.path()),
     };
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
@@ -155,6 +158,39 @@ async fn kill_server(path: HttpRequest) -> impl Responder {
         );
     }
     // "".to_string()
+}
+
+#[get("/anime")]
+async fn anime() -> HttpResponse {
+    let update = anime_scraper::get_updates().await;
+
+    let html = match update {
+        Ok(e) => anime_templates::render_homepage(e),
+        Err(_) => "err".to_string(),
+    };
+
+    // let t = update.unwrap()[0].anime_name.clone();
+    HttpResponse::build(StatusCode::OK)
+        .content_type("text/html; charset=utf-8")
+        .body(html)
+}
+
+// returns the chapter's pages
+#[get("/anime/{anime}")]
+async fn watch_episode(chapter: web::Path<String>, path: HttpRequest) -> HttpResponse {
+    let episode_id = chapter.to_string();
+    let episode_info = anime_scraper::get_anime_info(
+        "https://gogoanimehd.io/category/houkago-shounen-hanako-kun".to_string(),
+    );
+    let html = match episode_info {
+        Ok(e) => anime_templates::render_anime_description_page(e),
+        Err(v) => anime_templates::return_error_page(v.into()),
+    };
+
+    // let html = templates::render_chapter(chapter_info.unwrap(), is_localhost);
+    HttpResponse::build(StatusCode::OK)
+        .content_type("text/html; charset=utf-8")
+        .body(html)
 }
 
 async fn image_proxy(image_url: web::Path<String>) -> Result<HttpResponse> {
@@ -201,6 +237,8 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .route("/proxy/images/{image_url:.+}", web::get().to(image_proxy))
             .service(index)
+            .service(anime)
+            .service(watch_episode)
             .service(kill_server)
             .service(get_chapter)
             .service(get_manga_info)
