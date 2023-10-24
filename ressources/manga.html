@@ -3,6 +3,7 @@
 <script src="/ressources/index.js"></script>
 <title>Higurashi no Naku Koro ni Shin Kitanshuu | MD_Light</title>
 
+
 <body>
     <div class="top_bar">
         <div class="home"><img class="logo" src="/ressources/logo.svg"><a class="go_home" href="/">
@@ -11,32 +12,55 @@
         <div class="search_bar"><input id="search_box" action="search()" type="text" title="search" required><button
                 type="button" onclick="search()">Search</button></div>
     </div>
-    <div class="manga_info"><img
-            src="https://mangadex.org/covers/e7848275-9834-47ee-9ddb-9edf625f0015/ff8ba7ba-f85b-427a-b423-c46c1a984093.png.256.jpg">
-        <h1>Higurashi no Naku Koro ni Shin Kitanshuu</h1>
-        <div class="description">A series of Higurashi When They Cry anthology manga published by Ichijinsha with 10
-            total volumes.
 
 
-            ---
-            **Volume 1**
-            **Cover Illustration**: [Houjou Yutori](https://mangadex.org/author/a2625b28-1340-4516-9e66-45d448625823)
-            **Title Page**: [Yoneda Kazusa](https://mangadex.org/author/905dea3e-e77c-4b12-833a-c5ebcadd5736)
+    <div class="manga_info">
+        <div class="col_1"><img src="./image.jpg"></div>
+        <div class="col_2">
+           <div class="title"> Higurashi no Naku Koro ni Shin Kitanshuu</div>
+            <md-span id="md_text" class="description md-block">
+                A series of Higurashi When They Cry anthology manga published by Ichijinsha with 10 total volumes.
+                ---
+                **Volume 1**
+                **Cover Illustration**: [Houjou Yutori](https://mangadex.org/author/a2625b28-1340-4516-9e66-45d448625823)
+                **Title Page**: [Yoneda Kazusa](https://mangadex.org/author/905dea3e-e77c-4b12-833a-c5ebcadd5736)
 
-            1. **Collecting Happening** by Yoneda Kazusa
-            2. **White Light** by Sakura Tasuke
-            3. **The Law of Relative Victory** by Yukiri Aron
-            4. **Satoshyndrome** by Hano Haruka
-            5. **After School Crisis+** by Kuriyama Renji
-            6. **A Sudden Tradigy** by Wakaru Kana
-            7. **Club Curry** by Shigure Mira
-            8. **Girlfriend** by Mochizuki Kako
-            9. **Our Little House** by Taira Kosaka
-            10. **L'Oiseau bleu** by Itagaki Hako</div>
+                1. **Collecting Happening** by Yoneda Kazusa
+                2. **White Light** by Sakura Tasuke
+                3. **The Law of Relative Victory** by Yukiri Aron
+                4. **Satoshyndrome** by Hano Haruka
+                5. **After School Crisis+** by Kuriyama Renji
+                6. **A Sudden Tradigy** by Wakaru Kana
+                7. **Club Curry** by Shigure Mira
+                8. **Girlfriend** by Mochizuki Kako
+                9. **Our Little House** by Taira Kosaka
+                10. **L'Oiseau bleu** by Itagaki Hako
+            </md-span>
+        </div>
+    </div>
+
+    <!-- <div id="markdown-content"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/2.1.3/marked.min.js"></script>
+<script>
+  var markdownText = document.getElementById("md_text").innerText;
+  var html = marked(markdownText);
+  console.log(html)
+  document.getElementById('md_text').innerHTML = html;
+</script> -->
+ 
+<script type="module" src="https://md-block.verou.me/md-block.js"></script>
+  
+ 
+
         <div class="author_list">
-            <h3>authors: </h3><a href="/author/1506ec1a-3126-4c6d-837f-5046dde135a6">
-                <div class="author">Wakaru Kana: author</div>
-            </a><a href="/author/2e8eb5e6-242d-4af0-85b9-5e230c92e449">
+            <h3>authors: </h3>
+            <div class="author">
+                <a href="/author/1506ec1a-3126-4c6d-837f-5046dde135a6">
+                    <div class="author">Wakaru Kana: author
+                </a>
+            </div>
+            <a href="/author/2e8eb5e6-242d-4af0-85b9-5e230c92e449">
                 <div class="author">Kuriyama Renji: author</div>
             </a><a href="/author/357286b3-4aaf-4d1a-b68b-f75a11b2aaef">
                 <div class="author">Shigure Mira: author</div>
@@ -76,7 +100,7 @@
                 <div class="author">Taira Kosaka: artist</div>
             </a>
         </div>
-    </div>
+    
     <div class="chapter_list">
         <div class="chapter_item"><a class="chapter_link"
                 href="/manga/e7848275-9834-47ee-9ddb-9edf625f0015/ab9156d2-5932-4d56-8420-c38805022646">

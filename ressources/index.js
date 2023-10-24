@@ -8,7 +8,7 @@ async function getAuhorChapters(authorID) {
     //     // params: chapterID[0], // *GET, POST, PUT, DELETE, etc.
     //     body: JSON.stringify(chapterID)
     // })
-    let mangaList = await fetch(`/author/${authorID}/feed`,)
+    let mangaList = await fetch(`/author/${authorID}/feed`,);
     let manga = await mangaList.text();
     console.log(await mangaList)
     changeAuthorManga(manga)
@@ -16,8 +16,8 @@ async function getAuhorChapters(authorID) {
 }
 function changeAuthorManga(content) {
     console.log("content", content)
-    let manga_div = document.getElementById("author_manga")
-    console.log(manga_div.innerHTML);
+    let manga_div = document.getElementById("works")
+    // console.log(manga_div.innerHTML);
     manga_div.innerHTML = content
 }
 
