@@ -8,8 +8,8 @@ pub async fn install_ressources() -> Result<(), ApiError> {
     let js_code = download_js().await?;
 
     create_dir("./ressources")?;
-    write("ressources/styles.css", css_code)?;
-    write("ressources/index.js", js_code)?;
+    // write("ressources/styles.css", css_code)?;
+    // write("ressources/index.js", js_code)?;
 
     Ok(())
 }
