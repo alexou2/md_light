@@ -9,6 +9,7 @@ pub enum ApiError {
     Box(Box<dyn std::any::Any + Send>),
     NoMoreChapters,
     ParseIntError(ParseIntError),
+    FileWriteError(std::io::Error)
 }
 impl fmt::Display for ApiError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -19,6 +20,7 @@ impl fmt::Display for ApiError {
             ApiError::Box(_) => write!(f, "unknown box error"),
             ApiError::NoMoreChapters => write!(f, "got all of the chapters for this manga"),
             ApiError::ParseIntError(_) => write!(f, "ParseInt error"),
+            ApiError::FileWriteError(_)=> write!(f, "unable to write to file or creating directory")
         }
     }
 }
@@ -57,5 +59,10 @@ impl std::convert::From<std::string::String> for ApiError {
 impl std::convert::From<Box<dyn std::any::Any + Send>> for ApiError {
     fn from(err: Box<dyn std::any::Any + Send>) -> Self {
         ApiError::Box(err)
+    }
+}
+impl std::convert::From<std::io::Error> for ApiError {
+    fn from(err: std::io::Error) -> Self {
+        ApiError::FileWriteError(err)
     }
 }

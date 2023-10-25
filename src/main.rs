@@ -210,9 +210,11 @@ async fn main() -> std::io::Result<()> {
     if args.install {
         let installer = installer::install_ressources().await;
         match installer {
-            Ok(_) => println!("installation successful"),
+            Ok(_) => println!("installation successful, now exiting"),
             Err(_) => println!("error while installing the files"),
-        }
+        };
+
+        std::process::exit(1);
     }
 
     //sets the server port
