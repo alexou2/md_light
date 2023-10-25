@@ -142,74 +142,74 @@ fn sync_chap(
 }
 
 // sends multiple requests to get all of the manga's chapters in order to get bast the rate limits
-async fn request_manga_chapters(url: String, base_offset: i32) -> Result<Vec<Value>, ApiError> {
-    let mut chapter_list = Vec::new();
-    let mut i = 0;
-    const LIMIT: [(&str, i32); 1] = [("limit", 100)];
-    const CHAPTER_ORDERING: [(&str, &str); 1] = [("order[chapter]", "asc")];
-    const INCLUDE_TL_GROUP: [(&str, &str); 1] = [("includes[]", "scanlation_group")];
-    let client: Client = reqwest::Client::new();
+// async fn request_manga_chapters(url: String, base_offset: i32) -> Result<Vec<Value>, ApiError> {
+//     let mut chapter_list = Vec::new();
+//     let mut i = 0;
+//     const LIMIT: [(&str, i32); 1] = [("limit", 100)];
+//     const CHAPTER_ORDERING: [(&str, &str); 1] = [("order[chapter]", "asc")];
+//     const INCLUDE_TL_GROUP: [(&str, &str); 1] = [("includes[]", "scanlation_group")];
+//     let client: Client = reqwest::Client::new();
 
-    loop {
-        println!("made chapter request #{i}");
-        let offset = [("offset", 100 * i + base_offset)];
-        // sending the request to the api with the limit and the offset
-        let response = client
-            .get(&url)
-            .header(reqwest::header::USER_AGENT, USER_AGENT)
-            .query(&LIMIT)
-            .query(&offset)
-            .query(&CHAPTER_ORDERING)
-            .query(&INCLUDE_TL_GROUP)
-            .send()
-            .await?
-            .text()
-            .await?;
-        // converting the text response into a json value
-        let json_res_result: Result<Value, serde_json::Error> = from_str(&response);
+//     loop {
+//         println!("made chapter request #{i}");
+//         let offset = [("offset", 100 * i + base_offset)];
+//         // sending the request to the api with the limit and the offset
+//         let response = client
+//             .get(&url)
+//             .header(reqwest::header::USER_AGENT, USER_AGENT)
+//             .query(&LIMIT)
+//             .query(&offset)
+//             .query(&CHAPTER_ORDERING)
+//             .query(&INCLUDE_TL_GROUP)
+//             .send()
+//             .await?
+//             .text()
+//             .await?;
+//         // converting the text response into a json value
+//         let json_res_result: Result<Value, serde_json::Error> = from_str(&response);
 
-        let json_res = match json_res_result {
-            Ok(json) => json,
-            Err(_) => {
-                println!(
-                    "Dindn't get every chapters, only got {}",
-                    chapter_list.len()
-                );
-                break;
-            }
-        };
+//         let json_res = match json_res_result {
+//             Ok(json) => json,
+//             Err(_) => {
+//                 println!(
+//                     "Dindn't get every chapters, only got {}",
+//                     chapter_list.len()
+//                 );
+//                 break;
+//             }
+//         };
 
-        // transforms the json into a vector
-        let response_chapters = json_res["data"]
-            .as_array()
-            .ok_or("error while adding chapters to the list")?;
-        // iterating in the response chapters list to push each chapter to the chapter list
-        response_chapters
-            .iter()
-            .for_each(|chapter| chapter_list.push(chapter.clone()));
+//         // transforms the json into a vector
+//         let response_chapters = json_res["data"]
+//             .as_array()
+//             .ok_or("error while adding chapters to the list")?;
+//         // iterating in the response chapters list to push each chapter to the chapter list
+//         response_chapters
+//             .iter()
+//             .for_each(|chapter| chapter_list.push(chapter.clone()));
 
-        // the total number of chapters
-        let total = &json_res["total"].to_string().parse::<i32>()?;
+//         // the total number of chapters
+//         let total = &json_res["total"].to_string().parse::<i32>()?;
 
-        // checks if the request returned all of the chapters
-        let got_all_chapters: bool = total
-            <= &(&json_res["limit"].to_string().parse::<i32>()?
-                + (&json_res["offset"].to_string().parse::<i32>()?));
+//         // checks if the request returned all of the chapters
+//         let got_all_chapters: bool = total
+//             <= &(&json_res["limit"].to_string().parse::<i32>()?
+//                 + (&json_res["offset"].to_string().parse::<i32>()?));
 
-        // breaks the loop when all of the chapters are returned
-        if json_res["data"].to_string() == "[]" || got_all_chapters {
-            println!(
-                "got all chapters: {}, total: {}",
-                got_all_chapters, &json_res["total"]
-            );
-            break;
-        }
-        println!("finished request #{i}");
-        // raises the offset
-        i += 1;
-    }
-    Ok(chapter_list)
-}
+//         // breaks the loop when all of the chapters are returned
+//         if json_res["data"].to_string() == "[]" || got_all_chapters {
+//             println!(
+//                 "got all chapters: {}, total: {}",
+//                 got_all_chapters, &json_res["total"]
+//             );
+//             break;
+//         }
+//         println!("finished request #{i}");
+//         // raises the offset
+//         i += 1;
+//     }
+//     Ok(chapter_list)
+// }
 
 // gets the informations for the homepage
 pub async fn get_md_homepage_feed() -> Result<MdHomepageFeed, ApiError> {

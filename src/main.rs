@@ -14,7 +14,6 @@ use clap::Parser;
 use colored::Colorize;
 use local_ip_address::local_ip;
 use reqwest::Client;
-use std::net::{IpAddr, Ipv4Addr};
 
 #[get("/")]
 async fn index(path: HttpRequest) -> HttpResponse {
