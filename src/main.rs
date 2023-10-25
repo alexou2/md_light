@@ -1,5 +1,6 @@
 mod api_error;
 mod flags;
+mod installer;
 mod manga_templates;
 mod md_struct;
 mod offline_reader;
@@ -204,7 +205,17 @@ async fn main() -> std::io::Result<()> {
         args.lan = true;
         args.secure = true;
     }
-//sets the server port
+
+    // creates the css and js files
+    if args.install {
+        let installer = installer::install_ressources().await;
+        match installer {
+            Ok(_) => println!("installation successful"),
+            Err(_) => println!("error while installing the files"),
+        }
+    }
+
+    //sets the server port
     let port = args.port;
 
     println!("Server running at port {}", &port);
