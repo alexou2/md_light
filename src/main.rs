@@ -53,20 +53,13 @@ async fn get_manga_info(manga_id: web::Path<String>, path: HttpRequest) -> HttpR
 async fn get_chapter(chapter: web::Path<(String, String)>, path: HttpRequest) -> HttpResponse {
     let is_localhost = utills::check_localhost(&path);
     let manga_id = chapter.0.to_string();
-    // let manga_id = "as".to_string();
     let chapter_id = chapter.1.to_string();
+
     let chapter_info = online_md::get_chapter_pages(chapter_id.clone()).await;
-
-    // println!("{} {}", chapter.0.to_string(), chapter_id);
-
-    // handles the errors by sending the error page
-    // let mut html = String::new();
     let html = match chapter_info {
         Ok(e) => manga_templates::render_chapter(e, is_localhost, manga_id),
         Err(v) => manga_templates::render_error_page(v.into(), path.path()),
     };
-
-    // let html = templates::render_chapter(chapter_info.unwrap(), is_localhost);
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
         .body(html)
@@ -74,17 +67,25 @@ async fn get_chapter(chapter: web::Path<(String, String)>, path: HttpRequest) ->
 
 // searches for a manga
 #[get("/search/{query}")]
-async fn search_for_manga(name: web::Path<String>, path: HttpRequest) -> HttpResponse {
+async fn search(query: web::Path<String>, path: HttpRequest) -> HttpResponse {
     let is_localhost = utills::check_localhost(&path);
 
-    let search_results = online_md::search_manga(Some(name.to_string()), None).await;
+    let manga_results = online_md::search_manga(Some(query.to_string()), None).await;
+    let author_results = online_md::search_author(query.to_string()).await;
 
-    // handles the errors by sending the error page
-    let html = match search_results {
-        Ok(e) => manga_templates::render_search_page(e, is_localhost),
+    // let search_tuple = (manga_results, author_results);
+
+    let search_result = manga_results.and_then(|a| author_results.map(|b| (a, b)));
+
+    let html = match search_result {
+        Ok(e) => manga_templates::render_complete_search(e, is_localhost, query.to_string()),
         Err(v) => manga_templates::render_error_page(v, path.path()),
     };
 
+    // let html = match manga_results {
+    //     Ok(e) => manga_templates::render_search_page(e, is_localhost),
+    //     Err(v) => manga_templates::render_error_page(v, path.path()),
+    // };
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
         .body(html)
@@ -210,7 +211,7 @@ async fn main() -> std::io::Result<()> {
         let installer = installer::install_ressources().await;
         match installer {
             Ok(_) => println!("installation successful, now exiting"),
-            Err(_) => println!("error while installing the files"),
+            Err(e) => println!("error while installing the files: {}", e),
         };
 
         std::process::exit(1);
@@ -229,7 +230,7 @@ async fn main() -> std::io::Result<()> {
             .service(get_server_options)
             .service(get_chapter)
             .service(get_manga_info)
-            .service(search_for_manga)
+            .service(search)
             .service(ping_md)
             .service(get_author_feed)
             .service(get_author)

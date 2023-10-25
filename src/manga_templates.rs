@@ -245,7 +245,7 @@ pub fn render_author_manga(titles: Vec<ShortMangaInfo>, is_localhost: bool) -> S
     }
 
 
-              
+
             }
         );
     template.into_string()
@@ -262,5 +262,46 @@ pub fn get_server_options() -> String {
             button type="button" onclick = "location.href = '/server/ping' "{"Ping MangaDex"}
         }
     );
+    template.into_string()
+}
+
+pub fn render_complete_search(
+    search_data: (Vec<ShortMangaInfo>, Vec<AuthorInfo>),
+    is_localhost: bool,
+    query:String
+) -> String {
+    let search_results = search_data.0;
+    let authors = search_data.1;
+
+    let template = html!(
+                (DOCTYPE)
+                link rel="stylesheet" href="/ressources/styles.css";
+                script src = {"/ressources/index.js"}{}
+                title  {"Search | MD_Light"}
+
+                body {
+                    (get_top_bar())
+                    h1 {"search " (query)}
+                h2 {(search_results.len())" titles"}
+                div.search_list.works{
+                    @for i in search_results{
+                        div.manga_result.title{
+                            a href = (format!("/manga/{}",i.manga_id)){
+                                img src = (get_correct_image(is_localhost, i.thumbnail))loading="lazy";
+                            div.manga-title{(i.manga_name)}
+                            }
+                        }
+                    }
+                }
+                h2 {(authors.len())" authors"}
+                div.search_author{
+                    @for i in authors{
+                        div.author_result{
+                            a href = {"/author/"(i.id)}{(i.name)": "(i.titles_id.len())" titles"};
+                        }
+                    }
+                }
+            }
+        );
     template.into_string()
 }

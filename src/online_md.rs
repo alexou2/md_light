@@ -1,11 +1,12 @@
 use crate::api_error::ApiError;
 use crate::md_struct::*;
 use crate::utills::*;
+use actix_web::http::uri;
+use chrono::format::format;
 use reqwest::{header::USER_AGENT, Client};
 use serde_json::{from_str, Value};
-use std::{future::Future, thread::JoinHandle, time::Duration};
 use std::sync::{Arc, Mutex};
-
+use std::{future::Future, thread::JoinHandle, time::Duration};
 
 const BASE_URL: &'static str = "https://api.mangadex.org";
 const LIMIT: [(&str, i32); 1] = [("limit", 100)];
@@ -23,16 +24,12 @@ pub async fn test_connection() -> Result<String, reqwest::Error> {
 // makes the request to the url with custom user agents, since MD requires them now
 pub async fn request_with_agent(
     url: String,
-    mut client: Option<Client>,
 ) -> Result<impl Future<Output = Result<reqwest::Response, reqwest::Error>>, ApiError> {
     // let client: Client = reqwest::Client::new();
     // initializes a new client if none is passed as argument
-    match client {
-        Some(_) => (),
-        None => client = Some(reqwest::Client::new()),
-    }
+    let client = reqwest::Client::new();
+
     let response = client
-        .ok_or("there is no client in function request_with_agent()")?
         .get(url)
         .header(reqwest::header::USER_AGENT, USER_AGENT)
         .send();
@@ -136,7 +133,6 @@ fn sync_chap(
         *valid_req.lock().unwrap() = false;
         return Err(ApiError::NoMoreChapters);
     }
-
 
     Ok(json_res)
 }
@@ -364,6 +360,7 @@ pub async fn search_manga(
     ); // formatting the correct url for the api endpoint
     let title_param = [("title", title)]; // setting the parameters of the search
     let client: reqwest::Client = reqwest::Client::new();
+    // does the request using custom parameters
     let resp = client
         .get(url)
         .query(&title_param)
@@ -421,6 +418,52 @@ pub async fn search_manga(
     Ok(search_results)
 }
 
+pub async fn search_author(query: String) -> Result<Vec<AuthorInfo>, ApiError> {
+    let url = format!("{BASE_URL}/author?name={query}");
+
+    // does the request and converts it to json
+    let resp = request_with_agent(url).await?.await?.text().await?;
+    let json_resp: Value = from_str(&resp)?;
+
+    //converting the response data into an array
+    let author_list = json_resp["data"]
+        .as_array()
+        .ok_or("unable to convert author search to array")?;
+
+    let mut author_info_list = vec![];
+// gets the infos for each author in the response
+    for author in author_list {
+        let id = author["id"]
+            .remove_quotes()
+            .ok_or("unable to remove quotes")?;
+        let name = author["attributes"]["name"]
+            .remove_quotes()
+            .ok_or("unable to remove quotes")?;
+
+        let title_list = author["relationships"]
+            .as_array()
+            .ok_or("unable to convert author search to array")?;
+
+        let mut title_id_list = vec![];
+
+        // gets all of the author's titles
+        for title in title_list {
+            let title_id = title["id"]
+                .remove_quotes()
+                .ok_or("unable to remove quotes")?;
+            title_id_list.push(title_id)
+        }
+
+        let author_info = AuthorInfo {
+            name: name,
+            id: id,
+            titles_id: title_id_list,
+        };
+        author_info_list.push(author_info);
+    }
+    Ok(author_info_list)
+}
+
 // gets the cover from the json the request url needs to have includes[]=cover_art for this function to work
 pub fn get_manga_cover(manga_id: &String, manga_json: &Value) -> Result<String, ApiError> {
     let mut thumbnail = String::new();
@@ -450,11 +493,7 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
         BASE_URL, &manga_id
     );
     // calling the function to make the request to the api
-    let resp = request_with_agent(url.clone(), None)
-        .await?
-        .await?
-        .text()
-        .await?;
+    let resp = request_with_agent(url.clone()).await?.await?.text().await?;
     // parsing the api response into a json
     let json_resp: Value = from_str(&resp)?;
     // separating the json response to make it easier to access items
@@ -638,7 +677,7 @@ pub fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, ApiError> 
 pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterPages, ApiError> {
     let url = format!("{}/at-home/server/{}", BASE_URL, chapter_id);
     // let resp = reqwest::get(&url).await?.text().await?;
-    let resp = request_with_agent(url, None).await?.await?.text().await?;
+    let resp = request_with_agent(url).await?.await?.text().await?;
 
     let json_resp: Value = from_str(&resp)?;
     let chapter_hash = json_resp["chapter"]["hash"].to_string().replace('"', "");
@@ -667,7 +706,7 @@ pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterPages, ApiEr
 
 pub async fn get_author_infos(author_id: String) -> Result<AuthorInfo, ApiError> {
     let url = format!("{}/author/{}", BASE_URL, author_id);
-    let resp = request_with_agent(url, None).await?.await?.text().await?;
+    let resp = request_with_agent(url).await?.await?.text().await?;
     let json_resp: Value = from_str(&resp)?;
     let data = &json_resp["data"];
 
