@@ -1,9 +1,11 @@
 use crate::api_error::ApiError;
 use crate::md_struct::*;
 use crate::utills::*;
+use actix_web::cookie::time::error;
 use actix_web::http::uri;
 use chrono::format::format;
 use reqwest::{header::USER_AGENT, Client};
+use serde_json::json;
 use serde_json::{from_str, Value};
 use std::sync::{Arc, Mutex};
 use std::{future::Future, thread::JoinHandle, time::Duration};
@@ -51,6 +53,7 @@ pub fn request_with_agent_blocking(url: String) -> Result<String, ApiError> {
 
     Ok(response)
 }
+
 // uses threads to fetch chapters
 fn get_chapters(url: String) -> Result<Vec<Value>, ApiError> {
     let start = std::time::Instant::now();
@@ -60,7 +63,8 @@ fn get_chapters(url: String) -> Result<Vec<Value>, ApiError> {
                              // tells the loop below if all of the chapters were got
     let valid_request = Arc::new(Mutex::new(true));
     let mut th = 0; // used to calculate the offset
-                    //loops util there are no more chapters to get for the manga
+
+    //loops util there are no more chapters to get for the manga
     while *valid_request.lock().unwrap() {
         let uri = url.clone();
         let offset = [("offset", (100 * th.clone()))];
@@ -75,7 +79,8 @@ fn get_chapters(url: String) -> Result<Vec<Value>, ApiError> {
         // limits the number of threads created per second
         std::thread::sleep(Duration::from_millis(50))
     }
-    //waits for the thread to finish
+
+    //waiting for the threads to finish
     for t in handles {
         let response = t.join();
         let t = response?;
@@ -92,6 +97,7 @@ fn get_chapters(url: String) -> Result<Vec<Value>, ApiError> {
     );
     Ok(result)
 }
+
 // requests manga chapters synchronously
 fn sync_chap(
     url: String,
@@ -112,6 +118,7 @@ fn sync_chap(
     // converting the text response into a json value
     let json_res_result = from_str(&response);
     let json_res: Value;
+
     match json_res_result {
         Ok(json) => json_res = json,
         Err(err) => {
@@ -131,81 +138,12 @@ fn sync_chap(
             got_all_chapters, &json_res["total"]
         );
         *valid_req.lock().unwrap() = false;
-        return Err(ApiError::NoMoreChapters);
+        return Err(ApiError::ApiResponseError);
+        // return Ok(json!(""));
     }
 
     Ok(json_res)
 }
-
-// sends multiple requests to get all of the manga's chapters in order to get bast the rate limits
-// async fn request_manga_chapters(url: String, base_offset: i32) -> Result<Vec<Value>, ApiError> {
-//     let mut chapter_list = Vec::new();
-//     let mut i = 0;
-//     const LIMIT: [(&str, i32); 1] = [("limit", 100)];
-//     const CHAPTER_ORDERING: [(&str, &str); 1] = [("order[chapter]", "asc")];
-//     const INCLUDE_TL_GROUP: [(&str, &str); 1] = [("includes[]", "scanlation_group")];
-//     let client: Client = reqwest::Client::new();
-
-//     loop {
-//         println!("made chapter request #{i}");
-//         let offset = [("offset", 100 * i + base_offset)];
-//         // sending the request to the api with the limit and the offset
-//         let response = client
-//             .get(&url)
-//             .header(reqwest::header::USER_AGENT, USER_AGENT)
-//             .query(&LIMIT)
-//             .query(&offset)
-//             .query(&CHAPTER_ORDERING)
-//             .query(&INCLUDE_TL_GROUP)
-//             .send()
-//             .await?
-//             .text()
-//             .await?;
-//         // converting the text response into a json value
-//         let json_res_result: Result<Value, serde_json::Error> = from_str(&response);
-
-//         let json_res = match json_res_result {
-//             Ok(json) => json,
-//             Err(_) => {
-//                 println!(
-//                     "Dindn't get every chapters, only got {}",
-//                     chapter_list.len()
-//                 );
-//                 break;
-//             }
-//         };
-
-//         // transforms the json into a vector
-//         let response_chapters = json_res["data"]
-//             .as_array()
-//             .ok_or("error while adding chapters to the list")?;
-//         // iterating in the response chapters list to push each chapter to the chapter list
-//         response_chapters
-//             .iter()
-//             .for_each(|chapter| chapter_list.push(chapter.clone()));
-
-//         // the total number of chapters
-//         let total = &json_res["total"].to_string().parse::<i32>()?;
-
-//         // checks if the request returned all of the chapters
-//         let got_all_chapters: bool = total
-//             <= &(&json_res["limit"].to_string().parse::<i32>()?
-//                 + (&json_res["offset"].to_string().parse::<i32>()?));
-
-//         // breaks the loop when all of the chapters are returned
-//         if json_res["data"].to_string() == "[]" || got_all_chapters {
-//             println!(
-//                 "got all chapters: {}, total: {}",
-//                 got_all_chapters, &json_res["total"]
-//             );
-//             break;
-//         }
-//         println!("finished request #{i}");
-//         // raises the offset
-//         i += 1;
-//     }
-//     Ok(chapter_list)
-// }
 
 // gets the informations for the homepage
 pub async fn get_md_homepage_feed() -> Result<MdHomepageFeed, ApiError> {
@@ -229,7 +167,8 @@ pub fn get_new_chapters() -> Result<Vec<NewChapters>, ApiError> {
     let url = "https://api.mangadex.org/chapter?includes[]=scanlation_group&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&order[readableAt]=desc&limit=64&includes[]=cover_art";
     let resp = request_with_agent_blocking(url.to_string())?;
     // converts the api response to a json string and gets the data part of it
-    let json_resp: Value = from_str(&resp)?;
+    // let json_resp: Value = from_str(&resp)?;
+    let json_resp = parse_json(&resp)?;
     let data = &json_resp["data"];
 
     // getting the required info of each new chapter
@@ -309,6 +248,7 @@ pub fn get_popular_manga() -> Result<Vec<PopularManga>, ApiError> {
         r"https://api.mangadex.org/manga?includes[]=cover_art&includes[]=artist&includes[]=author&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive&hasAvailableChapters=true&createdAtSince={}",
         formatted_time
     );
+    println!("{url}");
     // let url = format!(
     //         r"https://api.mangadex.org/manga?includes[]=cover_art&includes[]=artist&includes[]=author&order[followedCount]=desc&hasAvailableChapters=true&createdAtSince={}",
     //         formatted_time
@@ -317,7 +257,8 @@ pub fn get_popular_manga() -> Result<Vec<PopularManga>, ApiError> {
     // doing the get request to the api and transforming it into a json object
     // let resp = request_with_agent(url, None).await?.await?.text().await?;
     let resp = request_with_agent_blocking(url)?;
-    let json_resp: Value = serde_json::from_str(&resp)?;
+    // let json_resp: Value = serde_json::from_str(&resp)?;
+    let json_resp = parse_json(&resp)?;
 
     // transforming the json into an array in order to get all of the search results
     if let Some(response_data) = json_resp["data"].as_array() {
@@ -371,7 +312,8 @@ pub async fn search_manga(
         .text()
         .await?;
     // converting the response string into a json object
-    let json_resp: Value = serde_json::from_str(&resp)?;
+    // let json_resp: Value = serde_json::from_str(&resp)?;
+    let json_resp = parse_json(&resp)?;
 
     // if the api response is an array, add every manga to the search_results vector
     if let Some(response_data) = json_resp["data"].as_array() {
@@ -418,12 +360,14 @@ pub async fn search_manga(
     Ok(search_results)
 }
 
+// searches for an author
 pub async fn search_author(query: String) -> Result<Vec<AuthorInfo>, ApiError> {
     let url = format!("{BASE_URL}/author?name={query}");
 
     // does the request and converts it to json
     let resp = request_with_agent(url).await?.await?.text().await?;
-    let json_resp: Value = from_str(&resp)?;
+    // let json_resp: Value = from_str(&resp)?;
+    let json_resp = parse_json(&resp)?;
 
     //converting the response data into an array
     let author_list = json_resp["data"]
@@ -431,7 +375,7 @@ pub async fn search_author(query: String) -> Result<Vec<AuthorInfo>, ApiError> {
         .ok_or("unable to convert author search to array")?;
 
     let mut author_info_list = vec![];
-// gets the infos for each author in the response
+    // gets the infos for each author in the response
     for author in author_list {
         let id = author["id"]
             .remove_quotes()
@@ -495,7 +439,8 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
     // calling the function to make the request to the api
     let resp = request_with_agent(url.clone()).await?.await?.text().await?;
     // parsing the api response into a json
-    let json_resp: Value = from_str(&resp)?;
+    // let json_resp: Value = from_str(&resp)?;
+    let json_resp = parse_json(&resp)?;
     // separating the json response to make it easier to access items
     let data = &json_resp["data"];
     let attributes = &data["attributes"];
@@ -622,7 +567,6 @@ pub fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, ApiError> 
 
     for chapter in json_list.clone() {
         let attributes = &chapter["attributes"];
-        // let tl_group = &manga["relationships"][""]
         let chapter_number = &attributes["chapter"]
             .remove_quotes()
             .unwrap_or("Oneshot".to_string()); // if there is no chapter number, set the chapter as a Oneshot
@@ -637,14 +581,15 @@ pub fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, ApiError> 
             .unwrap();
         let chapter_id = chapter["id"]
             .remove_quotes()
-            .ok_or("error while removing quotes in the chapter ID")
-            .unwrap();
+            .ok_or("error while removing quotes in the chapter ID")?;
 
         // getting the translator groups
         let mut tl_group: Vec<TlGroup> = Vec::new();
+
         let reletionships = chapter["relationships"]
             .as_array()
             .ok_or("Unable to convert chapter_relationships into an array")?;
+
         for relation in reletionships {
             if relation["type"] == "scanlation_group" {
                 let group_name = &relation["attributes"]["name"]
@@ -679,8 +624,14 @@ pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterPages, ApiEr
     // let resp = reqwest::get(&url).await?.text().await?;
     let resp = request_with_agent(url).await?.await?.text().await?;
 
-    let json_resp: Value = from_str(&resp)?;
-    let chapter_hash = json_resp["chapter"]["hash"].to_string().replace('"', "");
+    // let json_resp: Value = from_str(&resp)?;
+    let json_resp = parse_json(&resp)?;
+    let chapter_hash = json_resp["chapter"]["hash"]
+        .remove_quotes()
+        .ok_or("can't get chapter hash")?;
+
+    println!("{}", resp);
+
     let pages_json = json_resp["chapter"]["data"]
         .as_array()
         .ok_or("there are no pages")?; //transforming the response string into a json object
@@ -707,7 +658,9 @@ pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterPages, ApiEr
 pub async fn get_author_infos(author_id: String) -> Result<AuthorInfo, ApiError> {
     let url = format!("{}/author/{}", BASE_URL, author_id);
     let resp = request_with_agent(url).await?.await?.text().await?;
-    let json_resp: Value = from_str(&resp)?;
+    // let json_resp: Value = from_str(&resp)?;
+    let json_resp = parse_json(&resp)?;
+
     let data = &json_resp["data"];
 
     let name = &data["attributes"]["name"]
@@ -733,4 +686,23 @@ pub async fn get_author_infos(author_id: String) -> Result<AuthorInfo, ApiError>
     };
 
     Ok(author_info)
+}
+
+// parses the json response from the api and returns an error if it is invalid
+fn parse_json(response: &String) -> Result<Value, ApiError> {
+    let json_resp = from_str(&response);
+    let json_success: Value;
+    match json_resp {
+        Ok(v) => json_success = v,
+        Err(e) => return Err(ApiError::JSON(e)),
+    };
+
+println!("{}",json_success["result"]);
+// Ok(json_success)
+    let result = json_success["result"].to_owned();
+    match result.to_string().as_str() {
+        r#""error""# => Err(ApiError::ApiResponseError),
+        r#""ok""# => Ok(json_success),
+        _ => Err(ApiError::ApiResponseError),
+    }
 }

@@ -19,6 +19,10 @@ fn get_top_bar() -> PreEscaped<String> {
                             }
         }
     );
+
+
+
+
     top_bar
 }
 fn get_return_to_manga(manga_id: String) -> PreEscaped<String> {

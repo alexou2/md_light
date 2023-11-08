@@ -1,26 +1,34 @@
 use std::fmt;
 use std::num::ParseIntError;
 
+use actix_web::cookie::time::error;
+
 #[derive(Debug)]
 pub enum ApiError {
     REQWEST(reqwest::Error),
     JSON(serde_json::Error),
     StrError(String),
     Box(Box<dyn std::any::Any + Send>),
-    NoMoreChapters,
+    ApiResponseError,
     ParseIntError(ParseIntError),
-    FileWriteError(std::io::Error)
+    FileWriteError(std::io::Error),
 }
+
 impl fmt::Display for ApiError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            ApiError::REQWEST(_) => write!(f, "Unable to make a request to the api. Please check your connection"),
-            ApiError::JSON(_) => write!(f, "json conversion error"),
-            ApiError::StrError(_) => write!(f, "error while processing strings"),
+        match &self {
+            ApiError::REQWEST(_) => write!(
+                f,
+                "Unable to make a request to the api. Please check your connection"
+            ),
+            ApiError::JSON(err) => write!(f, "json conversion error: {err}"),
+            ApiError::StrError(err) => write!(f, "error while processing strings: {err}"),
             ApiError::Box(_) => write!(f, "unknown box error"),
-            ApiError::NoMoreChapters => write!(f, "got all of the chapters for this manga"),
-            ApiError::ParseIntError(_) => write!(f, "ParseInt error"),
-            ApiError::FileWriteError(_)=> write!(f, "unable to write to file or creating directory")
+            ApiError::ApiResponseError => write!(f, "Got an api response error"),
+            ApiError::ParseIntError(err) => write!(f, "ParseInt error: {err}"),
+            ApiError::FileWriteError(err) => {
+                write!(f, "unable to write to file or creating directory: {err}")
+            }
         }
     }
 }
