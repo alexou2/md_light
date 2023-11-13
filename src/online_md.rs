@@ -691,17 +691,17 @@ pub async fn get_author_infos(author_id: String) -> Result<AuthorInfo, ApiError>
 // parses the json response from the api and returns an error if it is invalid
 fn parse_json(response: &String) -> Result<Value, ApiError> {
     let json_resp = from_str(&response);
+    // checks if the response is of type error
     let json_success: Value;
     match json_resp {
         Ok(v) => json_success = v,
         Err(e) => return Err(ApiError::JSON(e)),
     };
 
-println!("{}",json_success["result"]);
-// Ok(json_success)
-    let result = json_success["result"].to_owned();
-    match result.to_string().as_str() {
-        r#""error""# => Err(ApiError::ApiResponseError),
+    // checking if the request HAS an error
+    let result = json_success["result"].to_string();
+    match result.as_str() {
+        r#""error""# => Err(ApiError::ApiResponseError), // needs double " because the data is in json format
         r#""ok""# => Ok(json_success),
         _ => Err(ApiError::ApiResponseError),
     }

@@ -209,7 +209,7 @@ async fn main() -> std::io::Result<()> {
     // creates the css and js files
     if args.install {
         let installer = installer::install_ressources().await;
-        match installer {
+       match installer {
             Ok(_) => println!("installation successful, now exiting"),
             Err(e) => println!("error while installing the files: {}", e),
         };
