@@ -1,3 +1,4 @@
+use crate::api_error;
 use crate::api_error::ApiError;
 use crate::md_struct::*;
 use crate::utills::*;
@@ -55,12 +56,13 @@ pub fn request_with_agent_blocking(url: String) -> Result<String, ApiError> {
 }
 
 // uses threads to fetch chapters
-fn get_chapters(url: String) -> Result<Vec<Value>, ApiError> {
-    let start = std::time::Instant::now();
+// fn get_chapters(url: String) -> Result<Vec<Value>, ApiError> {
+fn get_chapters(url: String) -> Vec<Result<Value, ApiError>> {
+    let start = std::time::Instant::now(); //starting the timer for request time
     let client = reqwest::blocking::Client::new();
     let mut handles: Vec<JoinHandle<Result<Value, ApiError>>> = vec![]; //a vector containing all of the threads
-    let mut result = vec![]; //a vector containing the result of all of the requests
-                             // tells the loop below if all of the chapters were got
+    let mut result: Vec<Result<Value, ApiError>> = vec![]; //a vector containing the result of all of the requests
+                                                           // tells the loop below if all of the chapters were got
     let valid_request = Arc::new(Mutex::new(true));
     let mut th = 0; // used to calculate the offset
 
@@ -81,21 +83,20 @@ fn get_chapters(url: String) -> Result<Vec<Value>, ApiError> {
     }
 
     //waiting for the threads to finish
-    for t in handles {
-        let response = t.join();
-        let t = response?;
-        match t {
+    for th in handles {
+        let response = th.join();
+
+        match response {
             Ok(e) => result.push(e),
             Err(_) => (),
         }
-        // result.push(response);
     }
     println!(
-        "took {:?} and {} threads to fetch chapters",
+        "took {:?} and {th} threads to fetch chapters",
         start.elapsed(),
-        th
     );
-    Ok(result)
+
+    result
 }
 
 // requests manga chapters synchronously
@@ -543,29 +544,32 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
 }
 
 // gets all of the manga's chapters for the manga info page
-pub fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, ApiError> {
+pub fn get_manga_chapters(manga_id: &String) -> Vec<Result<Chapters, ApiError>> {
     let url = format!("{}/manga/{}/feed", BASE_URL, manga_id);
 
     // let chapter_json = request_manga_chapters(url, 0).await?;
-    let chapter_json = get_chapters(url).unwrap();
-    let mut json_list: Vec<Value> = vec![];
+    let chapter_json = get_chapters(url);
+    let mut json_list: Vec<Result<Value, ApiError>> = vec![];
     for chap in chapter_json {
-        // let chapter_list = chap.clone().as_array().ok_or("unable to convert chapters to array")?.clone().iter().for_each(|ch| json_list.push(ch));
-        // chapter_list.clone().iter().for_each(|ch| json_list.push(ch) )
-        // fs::write("t.json", chap.to_string());
+        let chap = match chap {
+            Ok(e) => e,
+            Err(v) => todo!(),
+        };
+
+
         let list = chap["data"]
             .as_array()
             .ok_or("unable to convert chapters to array")
             .unwrap();
         for i in list {
-            json_list.push(i.clone());
+            json_list.push(Ok(i.to_owned()));
         }
     }
 
-    let mut chapter_list: Vec<Chapters> = Vec::new();
+    let mut chapter_list: Vec<Result<Chapters, ApiError>> = Vec::new();
     // let chapter_json = data.as_array().ok_or("there are no chapters")?; // transforming the json into an array
 
-    for chapter in json_list.clone() {
+    for chapter in json_list {
         let attributes = &chapter["attributes"];
         let chapter_number = &attributes["chapter"]
             .remove_quotes()
@@ -697,8 +701,8 @@ fn parse_json(response: &String) -> Result<Value, ApiError> {
         Err(e) => return Err(ApiError::JSON(e)),
     };
 
-println!("{}",json_success["result"]);
-// Ok(json_success)
+    println!("{}", json_success["result"]);
+    // Ok(json_success)
     let result = json_success["result"].to_owned();
     match result.to_string().as_str() {
         r#""error""# => Err(ApiError::ApiResponseError),
