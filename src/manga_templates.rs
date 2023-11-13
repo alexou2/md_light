@@ -83,6 +83,9 @@ pub fn render_homepage(feed: MdHomepageFeed, is_localhost: bool) -> String {
 
 pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> String {
     println!("{}", manga_info.description);
+
+
+
     let template = html!(
         (DOCTYPE)
         link rel="stylesheet" href="/ressources/styles.css";
@@ -116,6 +119,9 @@ pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> Stri
         }
         div.chapter_list{
             @for chapter in manga_info.chapters{
+
+
+
             div.chapter_item{
                 a.chapter_link href = (format!("/manga/{manga_id}/{chapter}", manga_id = manga_info.manga_id, chapter = chapter.chapter_id )){
                     // link to the chapter

@@ -538,7 +538,7 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
         translated_languages: translated_language_list,
         year: year.clone(),
         description: description.clone(),
-        chapters: manga_chapters_future.join()??,
+        chapters: manga_chapters_future.join().unwrap(),
     };
     Ok(manga_info)
 }
@@ -556,7 +556,6 @@ pub fn get_manga_chapters(manga_id: &String) -> Vec<Result<Chapters, ApiError>> 
             Err(v) => todo!(),
         };
 
-
         let list = chap["data"]
             .as_array()
             .ok_or("unable to convert chapters to array")
@@ -569,7 +568,16 @@ pub fn get_manga_chapters(manga_id: &String) -> Vec<Result<Chapters, ApiError>> 
     let mut chapter_list: Vec<Result<Chapters, ApiError>> = Vec::new();
     // let chapter_json = data.as_array().ok_or("there are no chapters")?; // transforming the json into an array
 
-    for chapter in json_list {
+    for chap in json_list {
+        let mut chapter;
+        match chap {
+            Ok(e) => chapter = e,
+            Err(v) => {
+                chapter_list.push(Err(v));
+                continue;
+            }
+        };
+
         let attributes = &chapter["attributes"];
         let chapter_number = &attributes["chapter"]
             .remove_quotes()
@@ -585,42 +593,49 @@ pub fn get_manga_chapters(manga_id: &String) -> Vec<Result<Chapters, ApiError>> 
             .unwrap();
         let chapter_id = chapter["id"]
             .remove_quotes()
-            .ok_or("error while removing quotes in the chapter ID")?;
+            .ok_or("error while removing quotes in the chapter ID")
+            .expect("can't get chapterID");
 
         // getting the translator groups
         let mut tl_group: Vec<TlGroup> = Vec::new();
 
         let reletionships = chapter["relationships"]
             .as_array()
-            .ok_or("Unable to convert chapter_relationships into an array")?;
+            .ok_or("Unable to convert chapter_relationships into an array")
+            .unwrap_or(&vec![json!("")]);
 
         for relation in reletionships {
             if relation["type"] == "scanlation_group" {
                 let group_name = &relation["attributes"]["name"]
                     .remove_quotes()
-                    .ok_or("error while removing tl_name quotes")?;
+                    .ok_or("error while removing tl_name quotes");
                 let group_id = relation["id"]
                     .remove_quotes()
-                    .ok_or("unable to remove quotes in tl_group id")?;
+                    .ok_or("unable to remove quotes in tl_group id");
 
-                let group = TlGroup {
-                    name: group_name.clone(),
-                    id: group_id.clone(),
-                };
-                tl_group.push(group);
+                if group_name.is_ok() && group_id.is_ok() {
+                    let name = group_name.unwrap();
+                    let id = group_id.unwrap();
+
+                    let group = TlGroup {
+                        name: name,
+                        id: id,
+                    };
+                    tl_group.push(group);
+                }
             }
         }
 
-        let chapter_instance = Chapters {
+        let chapter_instance = Ok(Chapters {
             chapter_name: chapter_name,
-            chapter_number: chapter_number.clone(),
-            language: language.clone(),
+            chapter_number: chapter_number,
+            language: language,
             tl_group: tl_group,
             chapter_id: chapter_id,
-        };
+        });
         chapter_list.push(chapter_instance)
     }
-    Ok(chapter_list)
+    chapter_list
 }
 
 pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterPages, ApiError> {

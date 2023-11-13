@@ -2,6 +2,8 @@ use serde_json::Value;
 use serde_derive::Deserialize;
 use serde_derive::Serialize;
 
+use crate::api_error::ApiError;
+
 pub struct MdHomepageFeed {
     pub currently_popular: Vec<PopularManga>,
     pub new_chapter_releases: Vec<NewChapters>,
@@ -46,7 +48,7 @@ pub struct MangaInfo {
     pub translated_languages: Vec<String>,
     pub year: Option<i64>,
     pub description: String,
-    pub chapters: Vec<Chapters>,
+    pub chapters: Vec<Result<Chapters, ApiError>>,
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Author {
@@ -59,8 +61,8 @@ pub struct Author {
 pub struct Chapters {
     pub tl_group: Vec<TlGroup>,
     pub chapter_name: Option<String>,
-    pub chapter_number: String,
-    pub language: String,
+    pub chapter_number: &'static String,
+    pub language: &'static String,
     pub chapter_id: String,
 }
 pub struct AuthorInfo {
