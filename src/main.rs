@@ -200,37 +200,46 @@ async fn main() -> std::io::Result<()> {
     // the launch options
     let mut args = Args::parse();
 
-
-println!(r"Arguments:
-lan: {lan},
-Port: {port},
-recommended:{recom},
-secure: {sec}
-", lan = args.lan, port= args.port, recom = args.recommended, sec = args.secure);
-
-
     // sets the recommended options if launched with `--recommended`
     if args.recommended {
         args.lan = true;
         args.secure = true;
     }
 
-    // creates the css and js files
+    // prints the options the server will start with
+    println!(
+        r"Startup options:
+    Lan: {lan},
+    Port: {port},
+    Recommended settings:{recom},
+    Secure: {sec}
+    ",
+        lan = args.lan,
+        port = args.port,
+        recom = args.recommended,
+        sec = args.secure
+    );
+
+    // downloads the resources for the frontend, then exits
     if args.install {
         let installer = installer::install_ressources().await;
         match installer {
-            Ok(_) => println!("installation successful, now exiting"),
-            Err(e) => println!("error while installing the files: {}", e),
+            Ok(_) => {
+                println!("installation successful, now exiting");
+                std::process::exit(0);
+            }
+            Err(e) => {
+                println!("error while installing the files: {}", e);
+                std::process::exit(1);
+            }
         };
-
-        std::process::exit(1);
     }
 
     //sets the server port
     let port = args.port;
 
     println!("Server running at port {}", &port);
-    // creates the server with its endpoints
+    // creates the server
     let mut server = HttpServer::new(|| {
         App::new()
             .route("/proxy/images/{image_url:.+}", web::get().to(image_proxy))
@@ -245,7 +254,7 @@ secure: {sec}
             .service(get_author)
             .service(Files::new("/", "/ressources"))
     });
-    
+
     // the ip addreses used to access the server
     server = server.bind(("127.0.0.1", port))?;
     if args.lan {
@@ -260,7 +269,7 @@ secure: {sec}
 #[derive(Parser, Debug)]
 #[command(author = "_alexou_", version = "0.1.2", about , long_about = None)]
 pub struct Args {
-    /// Creates all of the necessary files and folders for the program to run
+    /// Creates all of the necessary files and folders for the frontend
     #[arg(short, long)]
     pub install: bool,
 
