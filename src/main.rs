@@ -200,6 +200,15 @@ async fn main() -> std::io::Result<()> {
     // the launch options
     let mut args = Args::parse();
 
+
+println!(r"Arguments:
+lan: {lan},
+Port: {port},
+recommended:{recom},
+secure: {sec}
+", lan = args.lan, port= args.port, recom = args.recommended, sec = args.secure);
+
+
     // sets the recommended options if launched with `--recommended`
     if args.recommended {
         args.lan = true;
@@ -236,9 +245,9 @@ async fn main() -> std::io::Result<()> {
             .service(get_author)
             .service(Files::new("/", "/ressources"))
     });
+    
     // the ip addreses used to access the server
-
-    server = server.bind(("127.0.0.1", 8080))?;
+    server = server.bind(("127.0.0.1", port))?;
     if args.lan {
         let lan_addr = local_ip().unwrap();
         server = server.bind((lan_addr, port))?;
@@ -249,7 +258,7 @@ async fn main() -> std::io::Result<()> {
 
 /// A web server that uses the mangadex api with a lighweight frontend for potato devices
 #[derive(Parser, Debug)]
-#[command(author = "_alexou_", version = "0.1.1", about , long_about = None)]
+#[command(author = "_alexou_", version = "0.1.2", about , long_about = None)]
 pub struct Args {
     /// Creates all of the necessary files and folders for the program to run
     #[arg(short, long)]

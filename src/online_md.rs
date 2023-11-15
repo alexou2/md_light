@@ -107,6 +107,10 @@ fn sync_chap(
     valid_req: &mut Arc<Mutex<bool>>,
 ) -> Result<Value, ApiError> {
     // *valid_req.try_lock().expect("failed to lock") = false;
+
+    if *valid_req.lock()? == false {
+        return Err(ApiError::ApiResponseError);
+    }
     let response = client
         .get(url)
         .header(reqwest::header::USER_AGENT, USER_AGENT)
@@ -134,11 +138,11 @@ fn sync_chap(
     // checks if the request returned all of the chapters
     let got_all_chapters: bool = total <= &(limit + offset);
     if json_res["data"].to_string() == "[]" && got_all_chapters {
+        *valid_req.lock()? = false;
         println!(
             "got all chapters: {}, total: {}",
             got_all_chapters, &json_res["total"]
         );
-        *valid_req.lock().unwrap() = false;
         return Err(ApiError::ApiResponseError);
         // return Ok(json!(""));
     }
@@ -552,7 +556,6 @@ pub fn get_manga_chapters(manga_id: &String) -> Vec<Result<Chapters, ApiError>> 
     let chapter_json = get_chapters(url);
     let mut json_list: Vec<Result<Value, ApiError>> = vec![];
     for chap in chapter_json {
-        
         let chap = match chap {
             Ok(e) => e,
             Err(v) => {
@@ -592,12 +595,11 @@ pub fn get_manga_chapters(manga_id: &String) -> Vec<Result<Chapters, ApiError>> 
             .unwrap_or("Oneshot".to_string()); // if there is no chapter number, set the chapter as a Oneshot
 
         let chapter_name = attributes["title"].remove_quotes();
-        let language = &attributes["translatedLanguage"]
-            .remove_quotes();
-            // .ok_or(format!(
-            //     "error while removing quotes in the chapter language {}",
-            //     attributes["translatedLanguage"]
-            // ));
+        let language = &attributes["translatedLanguage"].remove_quotes();
+        // .ok_or(format!(
+        //     "error while removing quotes in the chapter language {}",
+        //     attributes["translatedLanguage"]
+        // ));
         let chapter_id = chapter["id"]
             .remove_quotes()
             .ok_or("error while removing quotes in the chapter ID")
