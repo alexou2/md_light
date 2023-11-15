@@ -120,7 +120,10 @@ pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> Stri
         div.chapter_list{
             @for chapter in manga_info.chapters{
 
-
+@let chapter = match chapter {
+    Ok(e)=> e,
+    Err(_)=> continue,
+};
 
             div.chapter_item{
                 a.chapter_link href = (format!("/manga/{manga_id}/{chapter}", manga_id = manga_info.manga_id, chapter = chapter.chapter_id )){
@@ -142,6 +145,7 @@ pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> Stri
     );
     template.into_string()
 }
+
 
 pub fn render_chapter(chapter_info: ChapterPages, is_localhost: bool, manga_id: String) -> String {
     let template = html!(

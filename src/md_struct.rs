@@ -61,8 +61,8 @@ pub struct Author {
 pub struct Chapters {
     pub tl_group: Vec<TlGroup>,
     pub chapter_name: Option<String>,
-    pub chapter_number: &'static String,
-    pub language: &'static String,
+    pub chapter_number: String,
+    pub language: String,
     pub chapter_id: String,
 }
 pub struct AuthorInfo {
@@ -74,8 +74,8 @@ pub struct AuthorInfo {
 
 #[derive(Clone)]
 pub struct TlGroup {
-    pub id: String,
-    pub name: String,
+    pub id:  String,
+    pub name:  String,
 }
 
 pub struct ChapterPages {
