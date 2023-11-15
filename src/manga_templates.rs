@@ -129,7 +129,7 @@ pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> Stri
                 a.chapter_link href = (format!("/manga/{manga_id}/{chapter}", manga_id = manga_info.manga_id, chapter = chapter.chapter_id )){
                     // link to the chapter
                 div.chapter{
-                    div.language{(get_flag_offline(&chapter.language))" Ch."(chapter.chapter_number)}
+                    div.language{(get_flag_offline(&chapter.language.unwrap_or("N/a".to_owned())))" Ch."(chapter.chapter_number)}
 
                        div.chapter_name{(chapter.chapter_name.unwrap_or(format!("Chapter {}", chapter.chapter_number)))}
                     //     div.chapter_number{(format!("Chapter {}", chapter.chapter_number))}

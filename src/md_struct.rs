@@ -45,7 +45,7 @@ pub struct MangaInfo {
     pub thumbnail: String,
     pub status: String,
     pub original_language: String,
-    pub translated_languages: Vec<String>,
+    pub translated_languages: Vec<Option<String>>,
     pub year: Option<i64>,
     pub description: String,
     pub chapters: Vec<Result<Chapters, ApiError>>,
@@ -62,7 +62,7 @@ pub struct Chapters {
     pub tl_group: Vec<TlGroup>,
     pub chapter_name: Option<String>,
     pub chapter_number: String,
-    pub language: String,
+    pub language: Option<String>,
     pub chapter_id: String,
 }
 pub struct AuthorInfo {

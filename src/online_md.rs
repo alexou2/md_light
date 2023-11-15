@@ -520,10 +520,11 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
         .as_array()
         .ok_or("translated_languages is not an array")?;
     for language in translation_options_json {
-        translated_language_list.push(language.remove_quotes().ok_or(format!(
-            "error while removing quotes in the language options: {}",
-            language
-        ))?);
+        translated_language_list.push(language.remove_quotes());
+        // .ok_or(format!(
+        //     "error while removing quotes in the language options: {}",
+        //     language
+        // ))?);
     }
 
     // building the struct with all of the manga's informations+ chapters
@@ -592,12 +593,11 @@ pub fn get_manga_chapters(manga_id: &String) -> Vec<Result<Chapters, ApiError>> 
 
         let chapter_name = attributes["title"].remove_quotes();
         let language = &attributes["translatedLanguage"]
-            .remove_quotes()
-            .ok_or(format!(
-                "error while removing quotes in the chapter language {}",
-                attributes["translatedLanguage"]
-            ))
-            .unwrap();
+            .remove_quotes();
+            // .ok_or(format!(
+            //     "error while removing quotes in the chapter language {}",
+            //     attributes["translatedLanguage"]
+            // ));
         let chapter_id = chapter["id"]
             .remove_quotes()
             .ok_or("error while removing quotes in the chapter ID")
