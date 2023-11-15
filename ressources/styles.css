@@ -36,7 +36,7 @@ a {
   flex-wrap: wrap;
   width: 100%;
   justify-content: space-between;
-  align-items: baseline;
+  align-items:start;
 }
 
 
@@ -61,7 +61,7 @@ a {
   font-size: 1.5em;
   border-radius: 5em;
   background-color: blue; */
-
+top:auto;
 }
 
 
@@ -166,5 +166,9 @@ a {
   width: 10em;
 
 }
-.author_list{
+img.logo{
+  height: 7em;
+}
+.go_home{
+  align-items: center;
 }

@@ -5,23 +5,20 @@ use maud::*;
 
 fn get_top_bar() -> PreEscaped<String> {
     let top_bar = html!(
-        link rel="stylesheet" href="/ressources/styles.css";
-        script src = {"/ressources/index.js"}{}
-        div.top_bar{
-            div.home{
-                img.logo src = "/ressources/logo.svg";
-                a.go_home href = "/"{ h1 {"HOME"}}
+            link rel="stylesheet" href="/ressources/styles.css";
+            script src = {"/ressources/index.js"}{}
+            div.top_bar{
+                    a.go_home href = "/"{
+                        img.logo src = "/ressources/logo.svg";
+                    }
+
+                    div.search_bar{
+                        input #search_box action = "search()" type = "text" title = "search" required;
+                        button type="button" onclick = "search()" {"Search"}
+
+                    }
             }
-            div.search_bar{
-                input #search_box action = "search()" type = "text" title = "search" required;
-                button type="button" onclick = "search()" {"Search"}
-
-                            }
-        }
-    );
-
-
-
+        );
 
     top_bar
 }
@@ -84,8 +81,6 @@ pub fn render_homepage(feed: MdHomepageFeed, is_localhost: bool) -> String {
 pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> String {
     println!("{}", manga_info.description);
 
-
-
     let template = html!(
         (DOCTYPE)
         link rel="stylesheet" href="/ressources/styles.css";
@@ -120,10 +115,11 @@ pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> Stri
         div.chapter_list{
             @for chapter in manga_info.chapters{
 
-@let chapter = match chapter {
-    Ok(e)=> e,
-    Err(_)=> continue,
-};
+            // skips the chapter if it contains an error
+            @let chapter = match chapter {
+                Ok(e)=> e,
+                Err(_)=> continue,
+            };
 
             div.chapter_item{
                 a.chapter_link href = (format!("/manga/{manga_id}/{chapter}", manga_id = manga_info.manga_id, chapter = chapter.chapter_id )){
@@ -145,7 +141,6 @@ pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> Stri
     );
     template.into_string()
 }
-
 
 pub fn render_chapter(chapter_info: ChapterPages, is_localhost: bool, manga_id: String) -> String {
     let template = html!(
@@ -282,40 +277,40 @@ pub fn get_server_options() -> String {
 pub fn render_complete_search(
     search_data: (Vec<ShortMangaInfo>, Vec<AuthorInfo>),
     is_localhost: bool,
-    query:String
+    query: String,
 ) -> String {
     let search_results = search_data.0;
     let authors = search_data.1;
 
     let template = html!(
-                (DOCTYPE)
-                link rel="stylesheet" href="/ressources/styles.css";
-                script src = {"/ressources/index.js"}{}
-                title  {"Search | MD_Light"}
+            (DOCTYPE)
+            link rel="stylesheet" href="/ressources/styles.css";
+            script src = {"/ressources/index.js"}{}
+            title  {"Search | MD_Light"}
 
-                body {
-                    (get_top_bar())
-                    h1 {"search " (query)}
-                h2 {(search_results.len())" titles"}
-                div.search_list.works{
-                    @for i in search_results{
-                        div.manga_result.title{
-                            a href = (format!("/manga/{}",i.manga_id)){
-                                img src = (get_correct_image(is_localhost, i.thumbnail))loading="lazy";
-                            div.manga-title{(i.manga_name)}
-                            }
-                        }
-                    }
-                }
-                h2 {(authors.len())" authors"}
-                div.search_author{
-                    @for i in authors{
-                        div.author_result{
-                            a href = {"/author/"(i.id)}{(i.name)": "(i.titles_id.len())" titles"};
+            body {
+                (get_top_bar())
+                h1 {"search " (query)}
+            h2 {(search_results.len())" titles"}
+            div.search_list.works{
+                @for i in search_results{
+                    div.manga_result.title{
+                        a href = (format!("/manga/{}",i.manga_id)){
+                            img src = (get_correct_image(is_localhost, i.thumbnail))loading="lazy";
+                        div.manga-title{(i.manga_name)}
                         }
                     }
                 }
             }
-        );
+            h2 {(authors.len())" authors"}
+            div.search_author{
+                @for i in authors{
+                    div.author_result{
+                        a href = {"/author/"(i.id)}{(i.name)": "(i.titles_id.len())" titles"};
+                    }
+                }
+            }
+        }
+    );
     template.into_string()
 }
