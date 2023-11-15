@@ -1,33 +1,41 @@
 use crate::api_error::ApiError;
 use crate::flags::*;
 use crate::md_struct::*;
+use markdown::to_html;
 use maud::*;
 
 fn get_top_bar() -> PreEscaped<String> {
     let top_bar = html!(
-            link rel="stylesheet" href="/ressources/styles.css";
-            script src = {"/ressources/index.js"}{}
-            div.top_bar{
-                    a.go_home href = "/"{
-                        img.logo src = "/ressources/logo.svg";
-                    }
+        link rel="stylesheet" href="/ressources/styles.css";
+        script src = {"/ressources/index.js"}{}
+        link rel="icon" href="/ressources/feather.svg" type="image/x-icon";
+        div.top_bar{
+                a.go_home href = "/"{
+                    img.logo src = "/ressources/logo.svg";
+                }
 
-                    div.search_bar{
-                        input #search_box action = "search()" type = "text" title = "search" required;
-                        button type="button" onclick = "search()" {"Search"}
+                div.search_bar{
+                    input #search_box action = "search()" type = "text" title = "search" required;
+                    button type="button" onclick = "search()" {"Search"}
 
-                    }
-            }
-        );
+                }
+        }
+    );
 
     top_bar
 }
+
+fn get_desc(desc:String)-> PreEscaped<String>{
+html!{(PreEscaped(&desc))}
+
+}
+
 fn get_return_to_manga(manga_id: String) -> PreEscaped<String> {
     // let manga_id = path.split("/").collect::<Vec<&str>>()[2];
     let home = html!(
 
-        div.top_bar{
-            img src = "/ressources/logo.svg" loading="lazy";
+        div.bottom_bar{
+            img.feather src = "/ressources/feather.svg";
             h1.go_home{a href = (format!("/manga/{}", manga_id)); "back to manga"}
 
         }
@@ -79,14 +87,14 @@ pub fn render_homepage(feed: MdHomepageFeed, is_localhost: bool) -> String {
 }
 
 pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> String {
-    println!("{}", manga_info.description);
+    println!("{}\n{}", manga_info.description, to_html(&manga_info.description));
 
     let template = html!(
         (DOCTYPE)
         link rel="stylesheet" href="/ressources/styles.css";
         script src = {"/ressources/index.js"}{}
         title  {(manga_info.manga_name) " | MD_Light"}
-        script type={"module"} src ={"https://md-block.verou.me/md-block.js"}{}
+        // script type={"module"} src ={"https://md-block.verou.me/md-block.js"}{}
 
         body{
             (get_top_bar())
@@ -96,8 +104,12 @@ pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> Stri
                 }
                 div.col_2{
                    h1  {(manga_info.manga_name)}
-                    // div.description{(manga_info.description)}
-                    md-span.description{(manga_info.description)}
+
+                   @ let desc = to_html(&manga_info.description);
+                    // div.description{(desc)}
+                    div.description {(get_desc(desc))}
+
+                    // md-span.description{(manga_info.description)}
                 }
                 div.author_list{
                     h3{"authors: "}
@@ -243,6 +255,7 @@ pub fn render_author_page(author: AuthorInfo) -> String {
     );
     template.into_string()
 }
+
 pub fn render_author_manga(titles: Vec<ShortMangaInfo>, is_localhost: bool) -> String {
     let template = html!(
             @for manga in titles{
@@ -260,6 +273,7 @@ pub fn render_author_manga(titles: Vec<ShortMangaInfo>, is_localhost: bool) -> S
     template.into_string()
 }
 
+// renders the server config page
 pub fn get_server_options() -> String {
     let template = html!(
         (DOCTYPE)

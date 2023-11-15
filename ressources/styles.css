@@ -36,7 +36,8 @@ a {
   flex-wrap: wrap;
   width: 100%;
   justify-content: space-between;
-  align-items:start;
+  align-items: center;
+  margin-bottom: 1em;
 }
 
 
@@ -46,24 +47,14 @@ a {
   border-radius: 5em;
   height: 100%; */
   /* width: 100%; */
-  padding: 10px;
+  padding: .5em;
   box-sizing: border-box;
-  margin-bottom: 10px;
   border: none;
   outline: none;
-  border: 1px solid grey;
-  font-size: 15px;
-  border-radius: 5px;
+  border: .1em solid pink;
+  font-size: 1.2em;
+  border-radius: .5em;
 }
-
-.search_bar {
-  /* height: 1.7em;
-  font-size: 1.5em;
-  border-radius: 5em;
-  background-color: blue; */
-top:auto;
-}
-
 
 /* .manga_info {
   display: flex;
@@ -129,7 +120,9 @@ top:auto;
 .popular-manga>a>img {
   border-radius: .3em;
 }
-
+img.cover_art{
+  margin-left: 1em;
+}
 /* .new-release {
   display: flex;
   flex-wrap: wrap;
@@ -162,13 +155,25 @@ top:auto;
 
 .description {
   /* white-space: pre; */
-  white-space-collapse:collapse;
-  width: 10em;
+  /* white-space-collapse: collapse; */
+  /* width: 10em; */
 
 }
-img.logo{
+
+img.logo {
   height: 7em;
 }
-.go_home{
+
+.go_home {
   align-items: center;
+}
+
+div.bottom_bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content:space-evenly;
+}
+img.feather{
+  width: 10em;
 }
