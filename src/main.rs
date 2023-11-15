@@ -281,11 +281,11 @@ pub struct Args {
     #[arg(short, long)]
     pub datasaver: bool,
 
-    /// Restricts download access for other users on the lan
+    /// Restricts functionnalities for non-admin users
     #[arg(short, long)]
     pub secure: bool,
 
-    /// Manually set the port for the listener
+    /// Manually set the port for the server
     #[arg(short, long = "PORT", default_value_t = 8080)]
     pub port: u16,
 
