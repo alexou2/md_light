@@ -73,13 +73,12 @@ async fn get_chapter(chapter: web::Path<(String, String)>, path: HttpRequest) ->
 
 async fn search(path: HttpRequest) -> HttpResponse {
     let is_localhost = utills::check_localhost(&path);
-    let query = path.query_string();
+    let query = path.query_string().replace("query=", "");
     println!("{:?}", query);
     // let query: web::Path<String> = todo!();
     let manga_results = online_md::search_manga(Some(query.to_string()), None).await;
     let author_results = online_md::search_author(query.to_string()).await;
 
-    // let search_tuple = (manga_results, author_results);
 
     let search_result = manga_results.and_then(|a| author_results.map(|b| (a, b)));
 

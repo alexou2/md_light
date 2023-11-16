@@ -10,40 +10,39 @@
 
 <body>
     <link rel="icon" href="/ressources/feather.svg" type="image/x-icon">
-    <div class="top_bar"><a class="go_home" href="/"><img class="logo"
-                src="/ressources/logo.svg"></a>
-        <div class="search_bar">
-            <!-- <input id="search_box" action="search()" type="text" name={{query}} required="">
+    <div class="top_bar"><a class="go_home" href="/"><img class="logo" src="/ressources/logo.svg"></a>
+        <!-- <div class="search_bar"> -->
+        <!-- <input id="search_box" action="search()" type="text" name={{query}} required="">
             <button
                 type="button" onclick="search()">Search</button></div> -->
 
-<form action="/search" method="get"  >
+        <form action="/search" method="get">
+            <input autocomplete="off" id="search_box" type="text" name="query" id="mangaName"  placeholder="Search" value={{query}}
+                autofocus required>
+        </form>
+</div>
+        <!-- </div> -->
+        <!-- <h1>search e</h1> -->
+        <h2>{{manga_number}} titles</h2>
+        <div class="search_list works">
+            {% for manga in manga_result %}
 
-    <input autocomplete="off" type="text" name="query" id="mangaName" placeholder="Manga Name" autofocus
-    required>
-</form>
+            <div class="manga_result title"><a href="http://localhost:8080/manga/{{manga.manga_id}}"><img
+                        src={{manga.thumbnail}} loading="lazy">
+                    <div class="manga-title">{{manga.manga_name}}</div>
+                </a></div>
+            {% endfor %}
 
-    </div>
-    <!-- <h1>search e</h1> -->
-    <h2>{{manga_number}} titles</h2>
-    <div class="search_list works">
-        {% for manga in manga_result %}
-
-        <div class="manga_result title"><a href="http://localhost:8080/manga/{{manga.manga_id}}"><img
-                    src={{manga.thumbnail}} loading="lazy">
-                <div class="manga-title">{{manga.manga_name}}</div>
-            </a></div>
-        {% endfor %}
-
-    </div>
-    <h2>10 authors</h2>
-    <div class="search_author">
+        </div>
+        <h2>10 authors</h2>
+        <div class="search_author">
 
 
-        <div class="author_result"><a href="http://localhost:8080/author/7431ddb6-cad4-4a75-ba3e-670a925209b6">Lee
-                syu-en (이슈앤): 1 titles</a></div>
+            <div class="author_result"><a href="http://localhost:8080/author/7431ddb6-cad4-4a75-ba3e-670a925209b6">Lee
+                    syu-en (이슈앤): 1 titles</a></div>
 
-    </div>
+        </div>
+        
 </body>
 
 </html>
