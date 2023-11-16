@@ -721,6 +721,7 @@ pub async fn get_author_infos(author_id: String) -> Result<AuthorInfo, ApiError>
 // parses the json response from the api and returns an error if it is invalid
 fn parse_json(response: &String) -> Result<Value, ApiError> {
     let json_resp = from_str(&response);
+    // checks if the response is of type error
     let json_success: Value;
     match json_resp {
         Ok(v) => json_success = v,
