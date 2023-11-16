@@ -29,6 +29,8 @@ pub async fn install_ressources() -> Result<(), ApiError> {
         "ressources/styles.css",
         "ressources/profile.svg",
         "ressources/logo.svg",
+        "ressources/feather.svg",
+        "ressources/home.svg"
     ];
     // downloading and saving the files from the repo
     for file in ressource_file_list {
