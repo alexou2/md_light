@@ -51,7 +51,7 @@ a {
   box-sizing: border-box;
   border: none;
   outline: none;
-  border: .1em solid pink;
+  border: .1em solid rgb(255, 0, 130);
   font-size: 1.2em;
   border-radius: .5em;
 }
@@ -66,7 +66,7 @@ a {
   align-self: flex-end;
 } */
 .description {
-  max-width: 50%;
+  /* max-width: 50%; */
 }
 
 .author_list {
@@ -120,9 +120,11 @@ a {
 .popular-manga>a>img {
   border-radius: .3em;
 }
-img.cover_art{
+
+img.cover_art {
   margin-left: 1em;
 }
+
 /* .new-release {
   display: flex;
   flex-wrap: wrap;
@@ -153,13 +155,6 @@ img.cover_art{
   margin-right: .5em;
 }
 
-.description {
-  /* white-space: pre; */
-  /* white-space-collapse: collapse; */
-  /* width: 10em; */
-
-}
-
 img.logo {
   height: 7em;
 }
@@ -172,8 +167,9 @@ div.bottom_bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content:space-evenly;
+  justify-content: space-evenly;
 }
-img.feather{
+
+img.feather {
   width: 10em;
 }
