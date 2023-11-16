@@ -1,8 +1,9 @@
 use serde_json::Value;
 use serde_derive::Deserialize;
-use serde_derive::Serialize;
-
+// use serde_derive::Serialize;
+use serde::{Serialize, Serializer};
 use crate::api_error::ApiError;
+use serde::ser::SerializeStruct;
 
 pub struct MdHomepageFeed {
     pub currently_popular: Vec<PopularManga>,
@@ -25,7 +26,7 @@ pub struct NewChapters {
     pub tl_group_name: String,
     pub page_number: String,
 }
-
+#[derive(Debug)]
 pub struct ShortMangaInfo {
     pub manga_name: String,
     pub manga_id: String,
@@ -36,6 +37,26 @@ pub struct ShortMangaInfo {
     pub translated_languages: Vec<Value>,
     pub description: String,
 }
+
+impl Serialize for ShortMangaInfo {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("ShortMangaInfo", 7)?;
+        state.serialize_field("manga_name", &self.manga_name)?;
+        state.serialize_field("manga_id", &self.manga_id)?;
+        // state.serialize_field("tags", &self.tags)?;
+        state.serialize_field("thumbnail", &self.thumbnail)?;
+        state.serialize_field("status", &self.status)?;
+        state.serialize_field("original_language", &self.original_language)?;
+        state.serialize_field("translated_languages", &self.translated_languages)?;
+        state.serialize_field("description", &self.description)?;
+        state.end()
+    }
+}
+
+
 // used in /manga/{id}
 pub struct MangaInfo {
     pub manga_name: String,
@@ -50,7 +71,7 @@ pub struct MangaInfo {
     pub description: String,
     pub chapters: Vec<Result<Chapters, ApiError>>,
 }
-#[derive(Debug, Serialize, Deserialize)]
+// #[derive(Debug, Serialize, Deserialize)]
 pub struct Author {
     pub author_name: String,
     pub author_id: String,
@@ -99,7 +120,7 @@ impl ValueExtensions for Value {
 }
 
 /// structs that will be used to write the files when downloading the manga
-#[derive(Debug, Serialize, Deserialize)]
+// #[derive(Debug, Serialize, Deserialize)]
 pub struct OfflineData {
     pub name: String,
     pub manga_id: String,

@@ -5,7 +5,9 @@ mod manga_templates;
 mod md_struct;
 mod offline_reader;
 mod online_md;
+mod tera_templates;
 mod utills;
+
 use actix_files::Files;
 use actix_web::{
     get, http::StatusCode, web, App, HttpRequest, HttpResponse, HttpServer, Responder, Result,
@@ -66,10 +68,14 @@ async fn get_chapter(chapter: web::Path<(String, String)>, path: HttpRequest) ->
 }
 
 // searches for a manga
-#[get("/search/{query}")]
-async fn search(query: web::Path<String>, path: HttpRequest) -> HttpResponse {
-    let is_localhost = utills::check_localhost(&path);
+// #[get("/search/{query}")]
+#[get("/search")]
 
+async fn search(path: HttpRequest) -> HttpResponse {
+    let is_localhost = utills::check_localhost(&path);
+    let query = path.query_string();
+    println!("{:?}", query);
+    // let query: web::Path<String> = todo!();
     let manga_results = online_md::search_manga(Some(query.to_string()), None).await;
     let author_results = online_md::search_author(query.to_string()).await;
 
@@ -78,12 +84,13 @@ async fn search(query: web::Path<String>, path: HttpRequest) -> HttpResponse {
     let search_result = manga_results.and_then(|a| author_results.map(|b| (a, b)));
 
     let html = match search_result {
-        Ok(e) => manga_templates::render_complete_search(e, is_localhost, query.to_string()),
+        // Ok(e) => manga_templates::render_complete_search(e, is_localhost, query.to_string()),
+        Ok(e) => tera_templates::render_complete_search(e, query.to_string()),
         Err(v) => manga_templates::render_error_page(v, path.path()),
     };
 
     // let html = match manga_results {
-    //     Ok(e) => manga_templates::render_search_page(e, is_localhost),
+    //     Ok(e) => tera_templates::render_complete_search(e, query.to_string()),
     //     Err(v) => manga_templates::render_error_page(v, path.path()),
     // };
     HttpResponse::build(StatusCode::OK)
