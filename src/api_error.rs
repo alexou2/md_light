@@ -1,7 +1,8 @@
+use actix_web::cookie::time::error;
 use std::fmt;
 use std::num::ParseIntError;
-
-use actix_web::cookie::time::error;
+use std::sync::MutexGuard;
+use std::sync::PoisonError;
 
 #[derive(Debug)]
 pub enum ApiError {
@@ -72,5 +73,10 @@ impl std::convert::From<Box<dyn std::any::Any + Send>> for ApiError {
 impl std::convert::From<std::io::Error> for ApiError {
     fn from(err: std::io::Error) -> Self {
         ApiError::FileWriteError(err)
+    }
+}
+impl From<PoisonError<MutexGuard<'_, bool>>> for ApiError {
+    fn from(err: PoisonError<MutexGuard<'_, bool>>) -> Self {
+        todo!()
     }
 }

@@ -1,36 +1,41 @@
 use crate::api_error::ApiError;
 use crate::flags::*;
 use crate::md_struct::*;
+use markdown::to_html;
 use maud::*;
 
 fn get_top_bar() -> PreEscaped<String> {
     let top_bar = html!(
         link rel="stylesheet" href="/ressources/styles.css";
         script src = {"/ressources/index.js"}{}
+        link rel="icon" href="/ressources/feather.svg" type="image/x-icon";
         div.top_bar{
-            div.home{
-                img.logo src = "/ressources/logo.svg";
-                a.go_home href = "/"{ h1 {"HOME"}}
-            }
-            div.search_bar{
-                input #search_box action = "search()" type = "text" title = "search" required;
-                button type="button" onclick = "search()" {"Search"}
+                a.go_home href = "/"{
+                    img.logo src = "/ressources/logo.svg";
+                }
 
-                            }
+                div.search_bar{
+                    input #search_box action = "search()" type = "text" title = "search" required;
+                    button type="button" onclick = "search()" {"Search"}
+
+                }
         }
     );
 
-
-
-
     top_bar
 }
+
+fn get_desc(desc:String)-> PreEscaped<String>{
+html!{(PreEscaped(&desc))}
+
+}
+
 fn get_return_to_manga(manga_id: String) -> PreEscaped<String> {
     // let manga_id = path.split("/").collect::<Vec<&str>>()[2];
     let home = html!(
 
-        div.top_bar{
-            img src = "/ressources/logo.svg" loading="lazy";
+        div.bottom_bar{
+            img.feather src = "/ressources/feather.svg";
             h1.go_home{a href = (format!("/manga/{}", manga_id)); "back to manga"}
 
         }
@@ -82,13 +87,14 @@ pub fn render_homepage(feed: MdHomepageFeed, is_localhost: bool) -> String {
 }
 
 pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> String {
-    println!("{}", manga_info.description);
+    println!("{}\n{}", manga_info.description, to_html(&manga_info.description));
+
     let template = html!(
         (DOCTYPE)
         link rel="stylesheet" href="/ressources/styles.css";
         script src = {"/ressources/index.js"}{}
         title  {(manga_info.manga_name) " | MD_Light"}
-        script type={"module"} src ={"https://md-block.verou.me/md-block.js"}{}
+        // script type={"module"} src ={"https://md-block.verou.me/md-block.js"}{}
 
         body{
             (get_top_bar())
@@ -98,8 +104,12 @@ pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> Stri
                 }
                 div.col_2{
                    h1  {(manga_info.manga_name)}
-                    // div.description{(manga_info.description)}
-                    md-span.description{(manga_info.description)}
+
+                   @ let desc = to_html(&manga_info.description);
+                    // div.description{(desc)}
+                    div.description {(get_desc(desc))}
+
+                    // md-span.description{(manga_info.description)}
                 }
                 div.author_list{
                     h3{"authors: "}
@@ -116,11 +126,18 @@ pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> Stri
         }
         div.chapter_list{
             @for chapter in manga_info.chapters{
+
+            // skips the chapter if it contains an error
+            @let chapter = match chapter {
+                Ok(e)=> e,
+                Err(_)=> continue,
+            };
+
             div.chapter_item{
                 a.chapter_link href = (format!("/manga/{manga_id}/{chapter}", manga_id = manga_info.manga_id, chapter = chapter.chapter_id )){
                     // link to the chapter
                 div.chapter{
-                    div.language{(get_flag_offline(&chapter.language))" Ch."(chapter.chapter_number)}
+                    div.language{(get_flag_offline(&chapter.language.unwrap_or("N/a".to_owned())))" Ch."(chapter.chapter_number)}
 
                        div.chapter_name{(chapter.chapter_name.unwrap_or(format!("Chapter {}", chapter.chapter_number)))}
                     //     div.chapter_number{(format!("Chapter {}", chapter.chapter_number))}
@@ -238,6 +255,7 @@ pub fn render_author_page(author: AuthorInfo) -> String {
     );
     template.into_string()
 }
+
 pub fn render_author_manga(titles: Vec<ShortMangaInfo>, is_localhost: bool) -> String {
     let template = html!(
             @for manga in titles{
@@ -255,6 +273,7 @@ pub fn render_author_manga(titles: Vec<ShortMangaInfo>, is_localhost: bool) -> S
     template.into_string()
 }
 
+// renders the server config page
 pub fn get_server_options() -> String {
     let template = html!(
         (DOCTYPE)
@@ -272,40 +291,40 @@ pub fn get_server_options() -> String {
 pub fn render_complete_search(
     search_data: (Vec<ShortMangaInfo>, Vec<AuthorInfo>),
     is_localhost: bool,
-    query:String
+    query: String,
 ) -> String {
     let search_results = search_data.0;
     let authors = search_data.1;
 
     let template = html!(
-                (DOCTYPE)
-                link rel="stylesheet" href="/ressources/styles.css";
-                script src = {"/ressources/index.js"}{}
-                title  {"Search | MD_Light"}
+            (DOCTYPE)
+            link rel="stylesheet" href="/ressources/styles.css";
+            script src = {"/ressources/index.js"}{}
+            title  {"Search | MD_Light"}
 
-                body {
-                    (get_top_bar())
-                    h1 {"search " (query)}
-                h2 {(search_results.len())" titles"}
-                div.search_list.works{
-                    @for i in search_results{
-                        div.manga_result.title{
-                            a href = (format!("/manga/{}",i.manga_id)){
-                                img src = (get_correct_image(is_localhost, i.thumbnail))loading="lazy";
-                            div.manga-title{(i.manga_name)}
-                            }
-                        }
-                    }
-                }
-                h2 {(authors.len())" authors"}
-                div.search_author{
-                    @for i in authors{
-                        div.author_result{
-                            a href = {"/author/"(i.id)}{(i.name)": "(i.titles_id.len())" titles"};
+            body {
+                (get_top_bar())
+                h1 {"search " (query)}
+            h2 {(search_results.len())" titles"}
+            div.search_list.works{
+                @for i in search_results{
+                    div.manga_result.title{
+                        a href = (format!("/manga/{}",i.manga_id)){
+                            img src = (get_correct_image(is_localhost, i.thumbnail))loading="lazy";
+                        div.manga-title{(i.manga_name)}
                         }
                     }
                 }
             }
-        );
+            h2 {(authors.len())" authors"}
+            div.search_author{
+                @for i in authors{
+                    div.author_result{
+                        a href = {"/author/"(i.id)}{(i.name)": "(i.titles_id.len())" titles"};
+                    }
+                }
+            }
+        }
+    );
     template.into_string()
 }

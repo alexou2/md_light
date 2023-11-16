@@ -1,3 +1,4 @@
+use crate::api_error;
 use crate::api_error::ApiError;
 use crate::md_struct::*;
 use crate::utills::*;
@@ -55,12 +56,13 @@ pub fn request_with_agent_blocking(url: String) -> Result<String, ApiError> {
 }
 
 // uses threads to fetch chapters
-fn get_chapters(url: String) -> Result<Vec<Value>, ApiError> {
-    let start = std::time::Instant::now();
+// fn get_chapters(url: String) -> Result<Vec<Value>, ApiError> {
+fn get_chapters(url: String) -> Vec<Result<Value, ApiError>> {
+    let start = std::time::Instant::now(); //starting the timer for request time
     let client = reqwest::blocking::Client::new();
     let mut handles: Vec<JoinHandle<Result<Value, ApiError>>> = vec![]; //a vector containing all of the threads
-    let mut result = vec![]; //a vector containing the result of all of the requests
-                             // tells the loop below if all of the chapters were got
+    let mut result: Vec<Result<Value, ApiError>> = vec![]; //a vector containing the result of all of the requests
+                                                           // tells the loop below if all of the chapters were got
     let valid_request = Arc::new(Mutex::new(true));
     let mut th = 0; // used to calculate the offset
 
@@ -81,21 +83,20 @@ fn get_chapters(url: String) -> Result<Vec<Value>, ApiError> {
     }
 
     //waiting for the threads to finish
-    for t in handles {
-        let response = t.join();
-        let t = response?;
-        match t {
+    for th in handles {
+        let response = th.join();
+
+        match response {
             Ok(e) => result.push(e),
             Err(_) => (),
         }
-        // result.push(response);
     }
     println!(
-        "took {:?} and {} threads to fetch chapters",
+        "took {:?} and {th} threads to fetch chapters",
         start.elapsed(),
-        th
     );
-    Ok(result)
+
+    result
 }
 
 // requests manga chapters synchronously
@@ -106,6 +107,10 @@ fn sync_chap(
     valid_req: &mut Arc<Mutex<bool>>,
 ) -> Result<Value, ApiError> {
     // *valid_req.try_lock().expect("failed to lock") = false;
+
+    if *valid_req.lock()? == false {
+        return Err(ApiError::ApiResponseError);
+    }
     let response = client
         .get(url)
         .header(reqwest::header::USER_AGENT, USER_AGENT)
@@ -133,11 +138,11 @@ fn sync_chap(
     // checks if the request returned all of the chapters
     let got_all_chapters: bool = total <= &(limit + offset);
     if json_res["data"].to_string() == "[]" && got_all_chapters {
+        *valid_req.lock()? = false;
         println!(
             "got all chapters: {}, total: {}",
             got_all_chapters, &json_res["total"]
         );
-        *valid_req.lock().unwrap() = false;
         return Err(ApiError::ApiResponseError);
         // return Ok(json!(""));
     }
@@ -519,10 +524,11 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
         .as_array()
         .ok_or("translated_languages is not an array")?;
     for language in translation_options_json {
-        translated_language_list.push(language.remove_quotes().ok_or(format!(
-            "error while removing quotes in the language options: {}",
-            language
-        ))?);
+        translated_language_list.push(language.remove_quotes());
+        // .ok_or(format!(
+        //     "error while removing quotes in the language options: {}",
+        //     language
+        // ))?);
     }
 
     // building the struct with all of the manga's informations+ chapters
@@ -537,86 +543,110 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
         translated_languages: translated_language_list,
         year: year.clone(),
         description: description.clone(),
-        chapters: manga_chapters_future.join()??,
+        chapters: manga_chapters_future.join()?,
     };
     Ok(manga_info)
 }
 
 // gets all of the manga's chapters for the manga info page
-pub fn get_manga_chapters(manga_id: &String) -> Result<Vec<Chapters>, ApiError> {
+pub fn get_manga_chapters(manga_id: &String) -> Vec<Result<Chapters, ApiError>> {
     let url = format!("{}/manga/{}/feed", BASE_URL, manga_id);
 
     // let chapter_json = request_manga_chapters(url, 0).await?;
-    let chapter_json = get_chapters(url).unwrap();
-    let mut json_list: Vec<Value> = vec![];
+    let chapter_json = get_chapters(url);
+    let mut json_list: Vec<Result<Value, ApiError>> = vec![];
     for chap in chapter_json {
-        // let chapter_list = chap.clone().as_array().ok_or("unable to convert chapters to array")?.clone().iter().for_each(|ch| json_list.push(ch));
-        // chapter_list.clone().iter().for_each(|ch| json_list.push(ch) )
-        // fs::write("t.json", chap.to_string());
+        let chap = match chap {
+            Ok(e) => e,
+            Err(v) => {
+                json_list.push(Err(v));
+                continue;
+            }
+        };
+
         let list = chap["data"]
             .as_array()
             .ok_or("unable to convert chapters to array")
             .unwrap();
         for i in list {
-            json_list.push(i.clone());
+            json_list.push(Ok(i.to_owned()));
         }
     }
 
-    let mut chapter_list: Vec<Chapters> = Vec::new();
+    let mut chapter_list: Vec<Result<Chapters, ApiError>> = Vec::new();
     // let chapter_json = data.as_array().ok_or("there are no chapters")?; // transforming the json into an array
 
-    for chapter in json_list.clone() {
+    for chap in json_list {
+        // skips the chapter if it has an error
+        let chapter;
+        match chap {
+            Ok(e) => chapter = e,
+            Err(v) => {
+                chapter_list.push(Err(v));
+                continue;
+            }
+        };
+
         let attributes = &chapter["attributes"];
-        let chapter_number = &attributes["chapter"]
+        let chapter_number = &attributes["chapter"];
+
+        let chapter_number = chapter_number
             .remove_quotes()
             .unwrap_or("Oneshot".to_string()); // if there is no chapter number, set the chapter as a Oneshot
 
         let chapter_name = attributes["title"].remove_quotes();
-        let language = &attributes["translatedLanguage"]
-            .remove_quotes()
-            .ok_or(format!(
-                "error while removing quotes in the chapter language {}",
-                attributes["translatedLanguage"]
-            ))
-            .unwrap();
+        let language = &attributes["translatedLanguage"].remove_quotes();
+        // .ok_or(format!(
+        //     "error while removing quotes in the chapter language {}",
+        //     attributes["translatedLanguage"]
+        // ));
         let chapter_id = chapter["id"]
             .remove_quotes()
-            .ok_or("error while removing quotes in the chapter ID")?;
+            .ok_or("error while removing quotes in the chapter ID")
+            .expect("can't get chapterID");
 
         // getting the translator groups
         let mut tl_group: Vec<TlGroup> = Vec::new();
 
-        let reletionships = chapter["relationships"]
+        let relationships = chapter["relationships"]
             .as_array()
-            .ok_or("Unable to convert chapter_relationships into an array")?;
+            .ok_or("Unable to convert chapter_relationships into an array");
 
-        for relation in reletionships {
-            if relation["type"] == "scanlation_group" {
-                let group_name = &relation["attributes"]["name"]
-                    .remove_quotes()
-                    .ok_or("error while removing tl_name quotes")?;
-                let group_id = relation["id"]
-                    .remove_quotes()
-                    .ok_or("unable to remove quotes in tl_group id")?;
+        if relationships.is_ok() {
+            let relationships = relationships.unwrap();
+            for relation in relationships {
+                if relation["type"] == "scanlation_group" {
+                    let group_name = &relation["attributes"]["name"]
+                        .remove_quotes()
+                        .ok_or("error while removing tl_name quotes");
+                    let group_id = relation["id"]
+                        .remove_quotes()
+                        .ok_or("unable to remove quotes in tl_group id");
+                    // cheks if the group's ID or name is an error
+                    if group_name.is_ok() && group_id.is_ok() {
+                        let name = group_name.as_ref().unwrap();
+                        let id = group_id.unwrap();
 
-                let group = TlGroup {
-                    name: group_name.clone(),
-                    id: group_id.clone(),
-                };
-                tl_group.push(group);
+                        let group = TlGroup {
+                            name: name.clone(),
+                            id: id.clone(),
+                        };
+                        tl_group.push(group);
+                    }
+                }
             }
         }
 
-        let chapter_instance = Chapters {
+        let chapter_instance = Ok(Chapters {
             chapter_name: chapter_name,
-            chapter_number: chapter_number.clone(),
-            language: language.clone(),
+            chapter_number: chapter_number,
+            language: language.to_owned(),
             tl_group: tl_group,
             chapter_id: chapter_id,
-        };
+        });
         chapter_list.push(chapter_instance)
     }
-    Ok(chapter_list)
+    chapter_list
 }
 
 pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterPages, ApiError> {
@@ -698,10 +728,11 @@ fn parse_json(response: &String) -> Result<Value, ApiError> {
         Err(e) => return Err(ApiError::JSON(e)),
     };
 
-    // checking if the request HAS an error
-    let result = json_success["result"].to_string();
-    match result.as_str() {
-        r#""error""# => Err(ApiError::ApiResponseError), // needs double " because the data is in json format
+    println!("{}", json_success["result"]);
+    // Ok(json_success)
+    let result = json_success["result"].to_owned();
+    match result.to_string().as_str() {
+        r#""error""# => Err(ApiError::ApiResponseError),
         r#""ok""# => Ok(json_success),
         _ => Err(ApiError::ApiResponseError),
     }

@@ -206,22 +206,40 @@ async fn main() -> std::io::Result<()> {
         args.secure = true;
     }
 
-    // creates the css and js files
+    // prints the options the server will start with
+    println!(
+        r"Startup options:
+    Lan: {lan},
+    Port: {port},
+    Recommended settings:{recom},
+    Secure: {sec}
+    ",
+        lan = args.lan,
+        port = args.port,
+        recom = args.recommended,
+        sec = args.secure
+    );
+
+    // downloads the resources for the frontend, then exits
     if args.install {
         let installer = installer::install_ressources().await;
-       match installer {
-            Ok(_) => println!("installation successful, now exiting"),
-            Err(e) => println!("error while installing the files: {}", e),
+        match installer {
+            Ok(_) => {
+                println!("installation successful, now exiting");
+                std::process::exit(0);
+            }
+            Err(e) => {
+                println!("error while installing the files: {}", e);
+                std::process::exit(1);
+            }
         };
-
-        std::process::exit(1);
     }
 
     //sets the server port
     let port = args.port;
 
     println!("Server running at port {}", &port);
-    // creates the server with its endpoints
+    // creates the server
     let mut server = HttpServer::new(|| {
         App::new()
             .route("/proxy/images/{image_url:.+}", web::get().to(image_proxy))
@@ -236,9 +254,9 @@ async fn main() -> std::io::Result<()> {
             .service(get_author)
             .service(Files::new("/", "/ressources"))
     });
-    // the ip addreses used to access the server
 
-    server = server.bind(("127.0.0.1", 8080))?;
+    // the ip addreses used to access the server
+    server = server.bind(("127.0.0.1", port))?;
     if args.lan {
         let lan_addr = local_ip().unwrap();
         server = server.bind((lan_addr, port))?;
@@ -249,9 +267,9 @@ async fn main() -> std::io::Result<()> {
 
 /// A web server that uses the mangadex api with a lighweight frontend for potato devices
 #[derive(Parser, Debug)]
-#[command(author = "_alexou_", version = "0.1.1", about , long_about = None)]
+#[command(author = "_alexou_", version = "0.1.2", about , long_about = None)]
 pub struct Args {
-    /// Creates all of the necessary files and folders for the program to run
+    /// Creates all of the necessary files and folders for the frontend
     #[arg(short, long)]
     pub install: bool,
 
@@ -263,11 +281,11 @@ pub struct Args {
     #[arg(short, long)]
     pub datasaver: bool,
 
-    /// Restricts download access for other users on the lan
+    /// Restricts functionnalities for non-admin users
     #[arg(short, long)]
     pub secure: bool,
 
-    /// Manually set the port for the listener
+    /// Manually set the port for the server
     #[arg(short, long = "PORT", default_value_t = 8080)]
     pub port: u16,
 
