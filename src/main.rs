@@ -70,7 +70,6 @@ async fn get_chapter(chapter: web::Path<(String, String)>, path: HttpRequest) ->
 // searches for a manga
 // #[get("/search/{query}")]
 #[get("/search")]
-
 async fn search(path: HttpRequest) -> HttpResponse {
     let is_localhost = utills::check_localhost(&path);
     let query = path.query_string().replace("query=", "");

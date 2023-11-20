@@ -39,7 +39,9 @@ a {
   align-items: center;
   margin-bottom: 1em;
 }
-
+img.profile{
+  height: 1.5em;
+}
 
 #search_box {
   /* height: 2em;
@@ -51,9 +53,11 @@ a {
   box-sizing: border-box;
   border: none;
   outline: none;
-  border: .1em solid rgb(255, 0, 130);
   font-size: 1.2em;
   border-radius: .5em;
+  background-color : rgb(60, 60, 60);
+  color: whitesmoke;
+  /* filter: drop-shadow(0 0 1em crimson); */
 }
 
 /* .manga_info {

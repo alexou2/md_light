@@ -26,7 +26,7 @@ pub struct NewChapters {
     pub tl_group_name: String,
     pub page_number: String,
 }
-#[derive(Debug)]
+#[derive(Serialize)]
 pub struct ShortMangaInfo {
     pub manga_name: String,
     pub manga_id: String,
@@ -38,23 +38,6 @@ pub struct ShortMangaInfo {
     pub description: String,
 }
 
-impl Serialize for ShortMangaInfo {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut state = serializer.serialize_struct("ShortMangaInfo", 7)?;
-        state.serialize_field("manga_name", &self.manga_name)?;
-        state.serialize_field("manga_id", &self.manga_id)?;
-        // state.serialize_field("tags", &self.tags)?;
-        state.serialize_field("thumbnail", &self.thumbnail)?;
-        state.serialize_field("status", &self.status)?;
-        state.serialize_field("original_language", &self.original_language)?;
-        state.serialize_field("translated_languages", &self.translated_languages)?;
-        state.serialize_field("description", &self.description)?;
-        state.end()
-    }
-}
 
 
 // used in /manga/{id}
@@ -86,6 +69,7 @@ pub struct Chapters {
     pub language: Option<String>,
     pub chapter_id: String,
 }
+#[derive(Serialize)]
 pub struct AuthorInfo {
     pub name: String,
     pub id: String,

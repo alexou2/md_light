@@ -17,32 +17,33 @@
                 type="button" onclick="search()">Search</button></div> -->
 
         <form action="/search" method="get">
-            <input autocomplete="off" id="search_box" type="text" name="query" id="mangaName"  placeholder="Search" value={{query}}
-                autofocus required>
+            <input autocomplete="off" id="search_box" type="text" name="query" placeholder="Search" value={{query}}
+                required>
         </form>
-</div>
-        <!-- </div> -->
-        <!-- <h1>search e</h1> -->
-        <h2>{{manga_number}} titles</h2>
-        <div class="search_list works">
-            {% for manga in manga_result %}
+    </div>
+    <!-- </div> -->
+    <!-- <h1>search e</h1> -->
+    <h2>{{manga_number}} titles</h2>
+    <div class="search_list works">
+        {% for manga in manga_result %}
 
-            <div class="manga_result title"><a href="http://localhost:8080/manga/{{manga.manga_id}}"><img
-                        src={{manga.thumbnail}} loading="lazy">
-                    <div class="manga-title">{{manga.manga_name}}</div>
-                </a></div>
-            {% endfor %}
+        <div class="manga_result title"><a href="manga/{{manga.manga_id}}"><img
+                    src={{manga.thumbnail}} loading="lazy">
+                <div class="manga-title">{{manga.manga_name}}</div>
+            </a></div>
+        {% endfor %}
 
-        </div>
-        <h2>10 authors</h2>
-        <div class="search_author">
+    </div>
+    <h2>10 authors</h2>
+    <div class="search_author">
 
+        {%for author in author_list %}
+        <div class="author_result"><a href="/author/{{author.id}}">
+                <img class="profile" src="/ressources/profile.svg">
+                {{author.name}}</a></div>
+        {% endfor %}
+    </div>
 
-            <div class="author_result"><a href="http://localhost:8080/author/7431ddb6-cad4-4a75-ba3e-670a925209b6">Lee
-                    syu-en (이슈앤): 1 titles</a></div>
-
-        </div>
-        
 </body>
 
 </html>

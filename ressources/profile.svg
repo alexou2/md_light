@@ -1,3 +1,8 @@
-<svg width="100" height="136" viewBox="0 0 100 136" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M82.5 35C82.5 52.9493 67.9493 67.5 50 67.5C32.0507 67.5 17.5 52.9493 17.5 35C17.5 17.0507 32.0507 2.5 50 2.5C67.9493 2.5 82.5 17.0507 82.5 35Z" stroke="black" stroke-width="5"/>
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="100" cy="100" r="100" fill="#B593BB"/>
+<mask id="path-2-inside-1_110_15" fill="white">
+<path d="M50 133C50 116.431 63.4315 103 80 103H120C136.569 103 150 116.431 150 133V166H50V133Z"/>
+</mask>
+<path d="M45 133C45 113.67 60.67 98 80 98H120C139.33 98 155 113.67 155 133H145C145 119.193 133.807 108 120 108H80C66.1929 108 55 119.193 55 133H45ZM150 166H50H150ZM45 166V133C45 113.67 60.67 98 80 98V108C66.1929 108 55 119.193 55 133V166H45ZM120 98C139.33 98 155 113.67 155 133V166H145V133C145 119.193 133.807 108 120 108V98Z" fill="black" mask="url(#path-2-inside-1_110_15)"/>
+<circle cx="100" cy="65" r="32.5" stroke="black" stroke-width="5"/>
 </svg>

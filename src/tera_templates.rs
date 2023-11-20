@@ -33,6 +33,9 @@ pub fn render_complete_search(
     context.insert("query", &query);
 
 
+context.insert("author_list", &search_data.1);
+
+
 
     let rendered = TEMPLATES
         .render("search.html", &context)
