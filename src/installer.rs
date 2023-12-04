@@ -101,7 +101,7 @@ pub fn create_service(mut path_to_binary: &str) {
     }
 
     let mut global_dir =
-        prompt("Enter the path to the ressources folder [default /home/<user>/ressources] > ");
+        prompt("Enter the path to the working directory folder [default /home/<user>/] > ");
     match global_dir.as_str() {
         "" => {
             global_dir = home_dir()
