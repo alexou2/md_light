@@ -14,6 +14,7 @@ use clap::Parser;
 use colored::Colorize;
 use local_ip_address::local_ip;
 use reqwest::Client;
+use std::thread::sleep;
 use std::time::Duration;
 
 #[get("/")]
@@ -269,17 +270,25 @@ async fn main() -> std::io::Result<()> {
     server = server.bind(("127.0.0.1", port))?;
     if args.lan {
         let lan_addr = local_ip();
-        // loop {
-        //     match lan_addr {
-        //         Ok(ip_addr) => {
-        //             server = server.bind((ip_addr, port))?;
-        //             break;
-        //         }
-        //         Err(_) => std::thread::sleep(Duration::from_millis(500)),
-        //     }
-        // }
-        while let Ok(ip_addr) = lan_addr {
-            server = server.bind((ip_addr, port))?;
+        let mut i = 0;
+
+        // attempting to bing an ip address
+        // tries 90 times (1min 30 sec) before exiting
+        loop {
+            i += 1;
+            if let Ok(ip_addr) = lan_addr {
+                server = server.bind((ip_addr, port))?;
+            } else
+             if i >= 90 {
+                println!(
+                    "The server couldn't get an ip addressin {} attmpts. Exiting",
+                    i
+                );
+
+                std::process::exit(1);
+            } else {
+                sleep(Duration::from_millis(1000))
+            }
         }
     }
 
