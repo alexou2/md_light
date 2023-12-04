@@ -1,3 +1,4 @@
+use dirs::home_dir;
 use reqwest;
 use std::env::consts::OS;
 use std::fs;
@@ -99,7 +100,30 @@ pub fn create_service(mut path_to_binary: &str) {
         }
     }
 
-    let args = prompt("startup args: ");
+    let mut global_dir =
+        prompt("Enter the path to the ressources folder [default /home/<user>/ressources] > ");
+    match global_dir.as_str() {
+        "" => {
+            global_dir = home_dir()
+                .unwrap()
+                .join("ressources")
+                .to_str()
+                .unwrap()
+                .to_owned()
+        }
+        _ => (),
+    }
+
+    let ressources_dir = fs::read_dir(&global_dir);
+    match ressources_dir {
+        Ok(_) => (),
+        Err(err) => {
+            println!("Directory not found : {err}");
+            std::process::exit(1);
+        }
+    }
+
+    let args = prompt("Startup args (use -r for reccomanded configuration) > ");
 
     let file_content = format!(
         r"[Unit]
@@ -109,16 +133,18 @@ pub fn create_service(mut path_to_binary: &str) {
     [Service]
     Type=simple
     ExecStart={path_to_binary} {args}
+    WorkingDirectory={}
     
     [Install]
     WantedBy=default.target",
+        global_dir
     );
 
     // lets the user confirm before creating the file
     let confirm_write = prompt("write file in /etc/systemd/system/md_light.service ? [Y/n]");
     match confirm_write.as_str() {
         "" | " " | "y" | "Y" => {
-            fs::write("/etc/systemd/system/md_light.service", file_content)
+            fs::write("/etc/systemd/system/md_light.service", &file_content)
                 .expect("Unable to create file");
             println!("successfully created file");
         }
@@ -138,11 +164,5 @@ pub fn create_service(mut path_to_binary: &str) {
 
     View status and logs: systemctl status md_light.service
     "
-    )
+    );
 }
-// fn get_parent_dir(file:&str)-> Option<&'static str>{
-// let parent_dir:Vec<String> = file.split("/").collect();
-// let t = parent_dir;
-
-//     todo!()
-// }
