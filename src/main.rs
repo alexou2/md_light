@@ -14,6 +14,7 @@ use clap::Parser;
 use colored::Colorize;
 use local_ip_address::local_ip;
 use reqwest::Client;
+use std::time::Duration;
 
 #[get("/")]
 async fn index(path: HttpRequest) -> HttpResponse {
@@ -204,6 +205,17 @@ async fn main() -> std::io::Result<()> {
     if args.recommended {
         args.lan = true;
         args.secure = true;
+        // waits for the host to get an ip address
+        // helps when running the server as a service
+        // while local_ip().is_err() {
+        //     std::thread::sleep(Duration::from_millis(500))
+        // }
+    }
+
+    // the option for creating a systemd service
+    match &args.service {
+        Some(path) => installer::create_service(&path),
+        None => (),
     }
 
     // prints the options the server will start with
@@ -219,14 +231,12 @@ async fn main() -> std::io::Result<()> {
         recom = args.recommended,
         sec = args.secure
     );
-
     // downloads the resources for the frontend, then exits
     if args.install {
         let installer = installer::install_ressources().await;
         match installer {
             Ok(_) => {
-                println!("installation successful, now exiting");
-                std::process::exit(0);
+                println!("Installation successful");
             }
             Err(e) => {
                 println!("error while installing the files: {}", e);
@@ -258,15 +268,26 @@ async fn main() -> std::io::Result<()> {
     // the ip addreses used to access the server
     server = server.bind(("127.0.0.1", port))?;
     if args.lan {
-        let lan_addr = local_ip().unwrap();
-        server = server.bind((lan_addr, port))?;
+        let lan_addr = local_ip();
+        // loop {
+        //     match lan_addr {
+        //         Ok(ip_addr) => {
+        //             server = server.bind((ip_addr, port))?;
+        //             break;
+        //         }
+        //         Err(_) => std::thread::sleep(Duration::from_millis(500)),
+        //     }
+        // }
+        while let Ok(ip_addr) = lan_addr {
+            server = server.bind((ip_addr, port))?;
+        }
     }
 
     server.run().await
 }
 
 /// A web server that uses the mangadex api with a lighweight frontend for potato devices
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 #[command(author = "_alexou_", version = "0.1.2", about , long_about = None)]
 pub struct Args {
     /// Creates all of the necessary files and folders for the frontend
@@ -292,4 +313,8 @@ pub struct Args {
     /// Uses the recommended server options
     #[arg(short, long)]
     pub recommended: bool,
+
+    /// Creates a systemd service for managing the server
+    #[arg(short = 'S', long, value_name = "path_to_binary")]
+    pub service: Option<String>,
 }
