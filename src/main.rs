@@ -270,23 +270,25 @@ async fn main() -> std::io::Result<()> {
     server = server.bind(("127.0.0.1", port))?;
     if args.lan {
         let lan_addr = local_ip();
-        let mut i = 0;
 
         // attempting to bing an ip address
         // tries 90 times (1min 30 sec) before exiting
         loop {
-            i += 1;
             if let Ok(ip_addr) = lan_addr {
                 server = server.bind((ip_addr, port))?;
-            } else
-             if i >= 90 {
-                println!(
-                    "The server couldn't get an ip addressin {} attmpts. Exiting",
-                    i
-                );
+                println!("the server IP is {}", ip_addr);
+                break;
+            // }
+            // else
+            //  if i >= 90 {
+            //     println!(
+            //         "The server couldn't get an ip addressin {} attmpts. Exiting",
+            //         i
+            //     );
 
-                std::process::exit(1);
+            //     std::process::exit(1);
             } else {
+                println!("No ip address found, Retrying");
                 sleep(Duration::from_millis(1000))
             }
         }

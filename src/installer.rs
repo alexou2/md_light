@@ -100,21 +100,9 @@ pub fn create_service(mut path_to_binary: &str) {
         }
     }
 
-    let mut global_dir =
+    let global_dir =
         prompt("Enter the path to the working directory folder [default /home/<user>/] > ");
-    match global_dir.as_str() {
-        "" => {
-            global_dir = home_dir()
-                .unwrap()
-                .join("ressources")
-                .to_str()
-                .unwrap()
-                .to_owned()
-        }
-        _ => (),
-    }
-
-    let ressources_dir = fs::read_dir(&global_dir);
+    let ressources_dir = fs::read_dir(format!("{}/ressources", &global_dir));
     match ressources_dir {
         Ok(_) => (),
         Err(err) => {
