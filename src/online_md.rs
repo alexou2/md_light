@@ -1,4 +1,3 @@
-use crate::api_error;
 use crate::api_error::ApiError;
 use crate::md_struct::*;
 use crate::utills::*;
@@ -56,17 +55,17 @@ pub fn request_with_agent_blocking(url: String) -> Result<String, ApiError> {
 }
 
 // uses threads to fetch chapters
-// fn get_chapters(url: String) -> Result<Vec<Value>, ApiError> {
 fn get_chapters(url: String) -> Vec<Result<Value, ApiError>> {
     let start = std::time::Instant::now(); //starting the timer for request time
     let client = reqwest::blocking::Client::new();
     let mut handles: Vec<JoinHandle<Result<Value, ApiError>>> = vec![]; //a vector containing all of the threads
     let mut result: Vec<Result<Value, ApiError>> = vec![]; //a vector containing the result of all of the requests
-                                                           // tells the loop below if all of the chapters were got
+    
+    // true while there are no errors and not all of the chapters were returned
     let valid_request = Arc::new(Mutex::new(true));
     let mut th = 0; // used to calculate the offset
 
-    //loops util there are no more chapters to get for the manga
+    //loops utill there are no more chapters to get for the manga
     while *valid_request.lock().unwrap() {
         let uri = url.clone();
         let offset = [("offset", (100 * th.clone()))];
@@ -138,7 +137,7 @@ fn sync_chap(
     // checks if the request returned all of the chapters
     let got_all_chapters: bool = total <= &(limit + offset);
     if json_res["data"].to_string() == "[]" && got_all_chapters {
-        *valid_req.lock()? = false;
+        *valid_req.lock()? = false; // sets valid request to false if there are no more chapters remaining
         println!(
             "got all chapters: {}, total: {}",
             got_all_chapters, &json_res["total"]
@@ -152,10 +151,10 @@ fn sync_chap(
 
 // gets the informations for the homepage
 pub async fn get_md_homepage_feed() -> Result<MdHomepageFeed, ApiError> {
-    // let pop_handle = tokio::spawn(get_popular_manga());
-    // let new_handle = tokio::spawn(get_new_chapters());
+
     let popular_future = std::thread::spawn(|| get_popular_manga());
     let new_chap_future = std::thread::spawn(|| get_new_chapters());
+   
     // builds the struct for the popular titles+ new chapters
     let homepage_feed = MdHomepageFeed {
         currently_popular: popular_future.join()??,
@@ -549,43 +548,49 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
 }
 
 // gets all of the manga's chapters for the manga info page
-pub fn get_manga_chapters(manga_id: &String) -> Vec<Result<Chapters, ApiError>> {
+// returns a vector that contains both errors and chapters
+pub fn get_manga_chapters(manga_id: &String) -> Vec<Result<Chapter, ApiError>> {
     let url = format!("{}/manga/{}/feed", BASE_URL, manga_id);
 
-    // let chapter_json = request_manga_chapters(url, 0).await?;
-    let chapter_json = get_chapters(url);
-    let mut json_list: Vec<Result<Value, ApiError>> = vec![];
+    let chapter_json = get_chapters(url); // a list of successful requests and requests errors
+    let mut json_list: Vec<Value> = vec![]; // a list containing the json data about the chapters
+
+    // loops through all of the request
     for chap in chapter_json {
+
+        // skips the request if there is an error
         let chap = match chap {
             Ok(e) => e,
-            Err(v) => {
-                json_list.push(Err(v));
+            Err(_) => {
                 continue;
             }
         };
-
+        // divides the json data into a list of json elements representing chapters
         let list = chap["data"]
             .as_array()
             .ok_or("unable to convert chapters to array")
             .unwrap();
+
+        // json_list.append(&mut list.clone());
+
         for i in list {
-            json_list.push(Ok(i.to_owned()));
+            json_list.push(i.to_owned());
         }
     }
 
-    let mut chapter_list: Vec<Result<Chapters, ApiError>> = Vec::new();
+    let mut chapter_list: Vec<Result<Chapter, ApiError>> = Vec::new();
     // let chapter_json = data.as_array().ok_or("there are no chapters")?; // transforming the json into an array
 
-    for chap in json_list {
+    for chapter in json_list {
         // skips the chapter if it has an error
-        let chapter;
-        match chap {
-            Ok(e) => chapter = e,
-            Err(v) => {
-                chapter_list.push(Err(v));
-                continue;
-            }
-        };
+        // let chapter = chap;
+        // match chap {
+        //     Ok(e) => chapter = e,
+        //     Err(v) => {
+        //         chapter_list.push(Err(v));
+        //         continue;
+        //     }
+        // };
 
         let attributes = &chapter["attributes"];
         let chapter_number = &attributes["chapter"];
@@ -637,7 +642,7 @@ pub fn get_manga_chapters(manga_id: &String) -> Vec<Result<Chapters, ApiError>> 
             }
         }
 
-        let chapter_instance = Ok(Chapters {
+        let chapter_instance = Ok(Chapter {
             chapter_name: chapter_name,
             chapter_number: chapter_number,
             language: language.to_owned(),
@@ -649,7 +654,7 @@ pub fn get_manga_chapters(manga_id: &String) -> Vec<Result<Chapters, ApiError>> 
     chapter_list
 }
 
-pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterPages, ApiError> {
+pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterPage, ApiError> {
     let url = format!("{}/at-home/server/{}", BASE_URL, chapter_id);
     // let resp = reqwest::get(&url).await?.text().await?;
     let resp = request_with_agent(url).await?.await?.text().await?;
@@ -678,7 +683,7 @@ pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterPages, ApiEr
         );
         page_list.push(page_link)
     }
-    let chapter = ChapterPages {
+    let chapter = ChapterPage {
         chapter_name: "ch".to_string(),
         pages: page_list,
     };
@@ -728,7 +733,8 @@ fn parse_json(response: &String) -> Result<Value, ApiError> {
         Err(e) => return Err(ApiError::JSON(e)),
     };
 
-    println!("{}", json_success["result"]);
+    println!(" result: {}", json_success["result"]);
+
     // Ok(json_success)
     let result = json_success["result"].to_owned();
     match result.to_string().as_str() {

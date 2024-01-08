@@ -52,7 +52,7 @@ pub struct MangaInfo {
     pub translated_languages: Vec<Option<String>>,
     pub year: Option<i64>,
     pub description: String,
-    pub chapters: Vec<Result<Chapters, ApiError>>,
+    pub chapters: Vec<Result<Chapter, ApiError>>,
 }
 // #[derive(Debug, Serialize, Deserialize)]
 pub struct Author {
@@ -62,7 +62,7 @@ pub struct Author {
 }
 // the chapters that are listed in the manga info page
 #[derive(Clone)]
-pub struct Chapters {
+pub struct Chapter {
     pub tl_group: Vec<TlGroup>,
     pub chapter_name: Option<String>,
     pub chapter_number: String,
@@ -83,7 +83,7 @@ pub struct TlGroup {
     pub name:  String,
 }
 
-pub struct ChapterPages {
+pub struct ChapterPage {
     pub chapter_name: String,
     pub pages: Vec<String>,
 }

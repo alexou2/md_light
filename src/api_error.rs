@@ -1,4 +1,3 @@
-use actix_web::cookie::time::error;
 use std::fmt;
 use std::num::ParseIntError;
 use std::sync::MutexGuard;
@@ -10,9 +9,10 @@ pub enum ApiError {
     JSON(serde_json::Error),
     StrError(String),
     Box(Box<dyn std::any::Any + Send>),
-    ApiResponseError,
     ParseIntError(ParseIntError),
     FileWriteError(std::io::Error),
+    ApiResponseError,
+    ServerDown,
 }
 
 impl fmt::Display for ApiError {
@@ -25,11 +25,10 @@ impl fmt::Display for ApiError {
             ApiError::JSON(err) => write!(f, "json conversion error: {err}"),
             ApiError::StrError(err) => write!(f, "error while processing strings: {err}"),
             ApiError::Box(_) => write!(f, "unknown box error"),
-            ApiError::ApiResponseError => write!(f, "Got an api response error"),
             ApiError::ParseIntError(err) => write!(f, "ParseInt error: {err}"),
-            ApiError::FileWriteError(err) => {
-                write!(f, "unable to write to file or creating directory: {err}")
-            }
+            ApiError::FileWriteError(err) => write!(f, "unable to write to file or creating directory: {err}"),
+            ApiError::ServerDown => write!(f, "The server is down"),
+            ApiError::ApiResponseError => write!(f, "Got an api response error"),
         }
     }
 }
@@ -79,4 +78,7 @@ impl From<PoisonError<MutexGuard<'_, bool>>> for ApiError {
     fn from(err: PoisonError<MutexGuard<'_, bool>>) -> Self {
         todo!()
     }
+}
+fn foo()-> ApiError{
+    return ApiError::ServerDown;
 }
