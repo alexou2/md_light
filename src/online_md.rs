@@ -1,7 +1,9 @@
+use crate::api_error;
 use crate::api_error::ApiError;
 use crate::md_struct::*;
 use crate::utills::*;
 use actix_web::cookie::time::error;
+use actix_web::dev::Server;
 use actix_web::http::uri;
 use chrono::format::format;
 use reqwest::{header::USER_AGENT, Client};
@@ -11,16 +13,40 @@ use std::sync::{Arc, Mutex};
 use std::{future::Future, thread::JoinHandle, time::Duration};
 
 const BASE_URL: &'static str = "https://api.mangadex.org";
-const LIMIT: [(&str, i32); 1] = [("limit", 100)];
+const LIMIT: [(&str, i32); 1] = [("limit", 500)];
 const CHAPTER_ORDERING: [(&str, &str); 1] = [("order[chapter]", "asc")];
 const INCLUDE_TL_GROUP: [(&str, &str); 1] = [("includes[]", "scanlation_group")];
 
 // sends a get request to the /ping endpoint of the api
-pub async fn test_connection() -> Result<String, reqwest::Error> {
-    Ok(reqwest::get(format!("{}/ping", BASE_URL))
-        .await?
-        .text()
-        .await?)
+pub async fn test_connection() -> Result<ServerStatus, ApiError> {
+    // making a get request to the server
+
+    let resp = request_with_agent(format!("{BASE_URL}/ping")).await;
+    // .await?
+    // .text()
+    // .await?;
+
+    let reachable = resp.is_ok();
+
+    // true only if the server response is "pong", otherwise the server is down
+    let up = if reachable {
+        let resp_content = &resp?.await?.text().await?;
+
+        
+        if resp_content.as_str() == "pong" {
+            true
+        } else {
+            true
+        }
+    } else {
+        false
+    };
+
+    let status = ServerStatus {
+        up: up,
+        reachable: reachable,
+    };
+    Ok(status)
 }
 
 // makes the request to the url with custom user agents, since MD requires them now
@@ -60,7 +86,7 @@ fn get_chapters(url: String) -> Vec<Result<Value, ApiError>> {
     let client = reqwest::blocking::Client::new();
     let mut handles: Vec<JoinHandle<Result<Value, ApiError>>> = vec![]; //a vector containing all of the threads
     let mut result: Vec<Result<Value, ApiError>> = vec![]; //a vector containing the result of all of the requests
-    
+
     // true while there are no errors and not all of the chapters were returned
     let valid_request = Arc::new(Mutex::new(true));
     let mut th = 0; // used to calculate the offset
@@ -68,7 +94,7 @@ fn get_chapters(url: String) -> Vec<Result<Value, ApiError>> {
     //loops utill there are no more chapters to get for the manga
     while *valid_request.lock().unwrap() {
         let uri = url.clone();
-        let offset = [("offset", (100 * th.clone()))];
+        let offset = [("offset", (LIMIT[0].1 * th.clone()))];
         let cli = client.clone();
         let mut valid_req_clone = Arc::clone(&valid_request);
 
@@ -78,7 +104,7 @@ fn get_chapters(url: String) -> Vec<Result<Value, ApiError>> {
         }));
         th += 1;
         // limits the number of threads created per second
-        std::thread::sleep(Duration::from_millis(50))
+        std::thread::sleep(Duration::from_millis(100))
     }
 
     //waiting for the threads to finish
@@ -151,10 +177,9 @@ fn sync_chap(
 
 // gets the informations for the homepage
 pub async fn get_md_homepage_feed() -> Result<MdHomepageFeed, ApiError> {
-
     let popular_future = std::thread::spawn(|| get_popular_manga());
     let new_chap_future = std::thread::spawn(|| get_new_chapters());
-   
+
     // builds the struct for the popular titles+ new chapters
     let homepage_feed = MdHomepageFeed {
         currently_popular: popular_future.join()??,
@@ -557,7 +582,6 @@ pub fn get_manga_chapters(manga_id: &String) -> Vec<Result<Chapter, ApiError>> {
 
     // loops through all of the request
     for chap in chapter_json {
-
         // skips the request if there is an error
         let chap = match chap {
             Ok(e) => e,

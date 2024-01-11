@@ -49,7 +49,7 @@ pub fn get_flag_offline(language: &str) -> &'static str {
         "tr" => TR,
         // _=>format!("{}: {}", unknown, language).as_str().clone(),
         _ => {
-            println!("unknown language: {}", language.on_red());
+            // println!("unknown language: {}", language.on_red());
             UNKNOWN
         }
     };

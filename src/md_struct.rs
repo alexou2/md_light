@@ -1,9 +1,16 @@
-use serde_json::Value;
 use serde_derive::Deserialize;
+use serde_json::Value;
 // use serde_derive::Serialize;
-use serde::{Serialize, Serializer};
 use crate::api_error::ApiError;
 use serde::ser::SerializeStruct;
+use serde::{Serialize, Serializer};
+
+pub struct ServerStatus {
+    /// is the server down for maintenance
+    pub up: bool,
+    /// is the server unreachable
+    pub reachable: bool,
+}
 
 pub struct MdHomepageFeed {
     pub currently_popular: Vec<PopularManga>,
@@ -11,7 +18,6 @@ pub struct MdHomepageFeed {
 }
 pub struct PopularManga {
     pub manga_name: String,
-    // pub description: String,
     pub thumbnail: String,
     pub manga_id: String,
 }
@@ -21,7 +27,6 @@ pub struct NewChapters {
     pub language: String,
     pub chapter_id: String,
     pub manga_id: String,
-    // pub thumbnail: String,
     pub tl_group_id: String,
     pub tl_group_name: String,
     pub page_number: String,
@@ -38,9 +43,7 @@ pub struct ShortMangaInfo {
     pub description: String,
 }
 
-
-
-// used in /manga/{id}
+/// the complete informations about a specific manga
 pub struct MangaInfo {
     pub manga_name: String,
     pub manga_id: String,
@@ -60,7 +63,7 @@ pub struct Author {
     pub author_id: String,
     pub role: String,
 }
-// the chapters that are listed in the manga info page
+/// the chapters that are listed in the manga info page
 #[derive(Clone)]
 pub struct Chapter {
     pub tl_group: Vec<TlGroup>,
@@ -73,14 +76,13 @@ pub struct Chapter {
 pub struct AuthorInfo {
     pub name: String,
     pub id: String,
-    // pub titles: Vec<ShortMangaInfo>,
     pub titles_id: Vec<String>,
 }
 
 #[derive(Clone)]
 pub struct TlGroup {
-    pub id:  String,
-    pub name:  String,
+    pub id: String,
+    pub name: String,
 }
 
 pub struct ChapterPage {
@@ -103,17 +105,6 @@ impl ValueExtensions for Value {
     }
 }
 
-/// structs that will be used to write the files when downloading the manga
-// #[derive(Debug, Serialize, Deserialize)]
-pub struct OfflineData {
-    pub name: String,
-    pub manga_id: String,
-    pub downloaded_lang: String,
-    pub downloaded_at: String, // the date at which the manga was last downloaded
-    pub tags: Vec<String>,
-    pub authors: Vec<Author>,
-    pub original_lang:String,
-    pub status:String,
-    pub description:String,
-    pub downloaded_chap:i32, // the number of downloaded chapters
+pub enum Source {
+    MangaDex,
 }

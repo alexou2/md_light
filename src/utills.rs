@@ -1,8 +1,9 @@
 use actix_web::HttpRequest;
 use chrono::{Datelike, Timelike};
 use colored::*;
-use std::fs::*;
+use std::env::consts;
 use std::path::Path;
+use std::{env, fs::*};
 
 // returns the local time, offset by a month
 pub fn get_offset_time() -> String {
@@ -64,23 +65,6 @@ pub fn get_current_time() -> String {
     formatted_time
 }
 
-pub fn log_error(err: reqwest::Error) {
-    let date = get_current_time().red();
-    const PATH: &'static str = "logs.log";
-    //    create the log file if it doesn't exist
-    if !Path::new(PATH).exists() {
-        File::create(PATH).expect("Unable to create file: logs.log");
-    }
-    // prints the error message
-    println!(
-        r"[{date}] An error occured: {err}
-        Appending to error file..."
-    );
-    // let written_error = format!(r"{date} -- error {err}");
-
-    let file = File::open(PATH);
-    match file {
-        Ok(_) => (),
-        Err(_) => println!("{}", "unable to append error to log file".red()),
-    }
+pub fn check_os() -> &'static str {
+    env::consts::OS
 }

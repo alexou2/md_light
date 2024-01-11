@@ -3,10 +3,11 @@ mod flags;
 mod installer;
 mod manga_templates;
 mod md_struct;
-mod offline_reader;
+mod downloader;
 mod online_md;
 mod tera_templates;
 mod utills;
+mod consts;
 
 use actix_files::Files;
 use actix_web::{
@@ -78,7 +79,6 @@ async fn search(path: HttpRequest) -> HttpResponse {
     let manga_results = online_md::search_manga(Some(query.to_string()), None).await;
     let author_results = online_md::search_author(query.to_string()).await;
 
-
     let search_result = manga_results.and_then(|a| author_results.map(|b| (a, b)));
 
     let html = match search_result {
@@ -141,8 +141,16 @@ async fn get_server_options() -> HttpResponse {
 #[get("/server/ping")]
 async fn ping_md() -> impl Responder {
     match online_md::test_connection().await {
-        Ok(e) => return format!("connection established\n{}", e),
-        Err(v) => return format!("no connection with the server\n{}", v),
+        Ok(status) => {
+            return format!(
+                r"
+        reachable: {}
+        server up: {}
+        ",
+                status.reachable, status.up
+            )
+        }
+        Err(v) => return format!("internal server error: {}", v),
     }
 }
 
@@ -188,7 +196,7 @@ async fn image_proxy(image_url: web::Path<String>) -> Result<HttpResponse> {
                     .body(image_byte)),
                 // returns an empty image in case of an error
                 Err(e) => {
-                    utills::log_error(e);
+                    // utills::log_error(e);
                     Ok(HttpResponse::NotFound().finish())
                 }
             }

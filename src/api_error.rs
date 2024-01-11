@@ -12,11 +12,12 @@ pub enum ApiError {
     ParseIntError(ParseIntError),
     FileWriteError(std::io::Error),
     ApiResponseError,
-    ServerDown,
+    ServerDown(serde_json::Error),
 }
 
 impl fmt::Display for ApiError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+
         match &self {
             ApiError::REQWEST(_) => write!(
                 f,
@@ -27,7 +28,7 @@ impl fmt::Display for ApiError {
             ApiError::Box(_) => write!(f, "unknown box error"),
             ApiError::ParseIntError(err) => write!(f, "ParseInt error: {err}"),
             ApiError::FileWriteError(err) => write!(f, "unable to write to file or creating directory: {err}"),
-            ApiError::ServerDown => write!(f, "The server is down"),
+            ApiError::ServerDown(err) => write!(f, "The server is down: {err}"),
             ApiError::ApiResponseError => write!(f, "Got an api response error"),
         }
     }
@@ -78,7 +79,4 @@ impl From<PoisonError<MutexGuard<'_, bool>>> for ApiError {
     fn from(err: PoisonError<MutexGuard<'_, bool>>) -> Self {
         todo!()
     }
-}
-fn foo()-> ApiError{
-    return ApiError::ServerDown;
 }
