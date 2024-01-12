@@ -3,6 +3,8 @@ use std::num::ParseIntError;
 use std::sync::MutexGuard;
 use std::sync::PoisonError;
 
+use serde_derive::Serialize;
+
 #[derive(Debug)]
 pub enum ApiError {
     REQWEST(reqwest::Error),

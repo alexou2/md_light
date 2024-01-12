@@ -48,6 +48,7 @@ pub struct ShortMangaInfo {
     pub description: String,
 }
 
+// #[derive(Serialize)]
 /// the complete informations about a specific manga
 pub struct MangaInfo {
     pub manga_name: String,
@@ -60,16 +61,18 @@ pub struct MangaInfo {
     pub translated_languages: Vec<Option<String>>,
     pub year: Option<i64>,
     pub description: String,
+    // pub chapters: Vec<Result<Chapter, ApiError>>,
     pub chapters: Vec<Result<Chapter, ApiError>>,
+
 }
-// #[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize)]
 pub struct Author {
     pub author_name: String,
     pub author_id: String,
     pub role: String,
 }
 /// the chapters that are listed in the manga info page
-#[derive(Clone)]
+#[derive(Clone, Serialize)]
 pub struct Chapter {
     pub tl_group: Vec<TlGroup>,
     pub chapter_name: Option<String>,
@@ -84,7 +87,7 @@ pub struct AuthorInfo {
     pub titles_id: Vec<String>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize)]
 pub struct TlGroup {
     pub id: String,
     pub name: String,

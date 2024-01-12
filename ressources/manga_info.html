@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" href="/ressources/styles.css">
+    <script src="/ressources/index.js"></script>
+    <title>{{manga_name}} | MD_Light</title>
+    <link rel="icon" href="/ressources/feather.svg" type="image/x-icon">
+</head>
+
+<body>
+
+    <div class="top_bar"><a class="go_home" href="/"><img class="logo" src="/ressources/logo.svg"></a>
+
+        <form action="/search" method="get">
+            <input autocomplete="off" id="search_box" type="text" name="query" placeholder="Search" required>
+        </form>
+    </div>
+    <div class="manga_info">
+        <div class="col_1">
+            <img src="/proxy/images/{{cover}}">
+            <div class="col_2">
+                <h1>{{manga_name}}</h1>
+                <div class="description">{{description}}</div>
+
+            </div>
+            <div class="author_list">
+                <h3>Authors: </h3>
+                {% for auth in authors %}
+                <div class="author">
+                    <a href="/author/{{auth.author_id}}">{{auth.role}}: {{auth.author_name}}</a>
+                </div>
+                {% endfor %}
+                <div class="chapter_list"></div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

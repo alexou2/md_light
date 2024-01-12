@@ -4,6 +4,12 @@ body {
   color: whitesmoke;
 }
 
+a {
+  color: aqua;
+  text-decoration:none;
+}
+
+
 img.chapter_page {
   display: block;
   margin-left: auto;
@@ -166,7 +172,3 @@ img.feather {
 }
 
 
-a {
-  color: aqua;
-  text-decoration:none;
-}

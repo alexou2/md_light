@@ -48,7 +48,9 @@ async fn get_manga_info(manga_id: web::Path<String>, path: HttpRequest) -> HttpR
 
     // handles the errors by sending the error page
     let html = match manga_info {
-        Ok(e) => manga_templates::render_manga_info_page(e, is_localhost),
+        // Ok(e) => manga_templates::render_manga_info_page(e, is_localhost),
+        Ok(e) => tera_templates::render_manga_info(e),
+
         Err(v) => manga_templates::render_error_page(v.into(), requested_page),
     };
 // let html = "123";
