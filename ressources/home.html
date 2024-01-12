@@ -12,31 +12,29 @@
 <body>
 
     <div class="top_bar"><a class="go_home" href="/"><img class="logo" src="/ressources/logo.svg"></a>
-        <!-- <div class="search_bar"> -->
-        <!-- <input id="search_box" action="search()" type="text" name={{query}} required="">
-            <button
-                type="button" onclick="search()">Search</button></div> -->
 
         <form action="/search" method="get">
-            <input autocomplete="off" id="search_box" type="text" name="query" placeholder="Search" value={{query}}
-                required>
+            <input autocomplete="off" id="search_box" type="text" name="query" placeholder="Search" required>
         </form>
     </div>
-
+    
     <div class="popular">
-        <div class="popular-manga"><a href="http://localhost:8080/manga/e06e6024-9688-4a38-a8b4-6facd3fe1d80"><img
-                    src="Home%20MD_Light_files/03c494d5-915a-46b8-80f1-94a29a6b6723.jpg.256.jpg" loading="lazy">Mankitsu
-                Shitai Jouren-san</a></div>
-      
+        {% for title in popular_manga %}
+        <div class="popular-manga"><a href="/manga/{{title.id}}"><img src="/proxy/images/{{title.cover}}"
+                    loading="lazy">{{title.name}}</a>
+        </div>
+        {% endfor %}
+
+
     </div>
 
 
     <div class="new-release">
         {% for chapter in new_chapters %}
         <div class="new_chapter"><a class="chapter"
-                href="http://localhost:8080/manga/df204d2f-13e4-4c88-9bee-0525d6181004/de49f089-cefd-4549-a654-5970849f76f9">68🇬🇧</a>
+                href="/manga/{{chapter.manga_id}}/{{chapter.chapter_id}}">{{chapter.chapter_name}}{{chapter.language}}</a>
         </div>
-       {% endfor %}
+        {% endfor %}
     </div>
 </body>
 

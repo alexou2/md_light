@@ -1,5 +1,3 @@
-use std::string;
-
 pub use crate::md_struct::*;
 use lazy_static::lazy_static;
 use serde::ser::SerializeStruct;
@@ -8,7 +6,7 @@ use tera::{Context, Tera};
 
 lazy_static! {
     pub static ref TEMPLATES: Tera = {
-        let mut tera = match Tera::new("ressources/*") {
+        let tera = match Tera::new("ressources/*") {
             Ok(t) => t,
             Err(e) => {
                 println!("Parsing error(s): {}", e);
@@ -26,20 +24,31 @@ pub fn render_complete_search(
     query: String,
 ) -> String {
     let mut context = Context::new();
-    context.insert("title", "My Rust App");
+    context.insert("title", "Search | MD_light");
 
     context.insert("manga_result", &search_data.0);
     context.insert("manga_number", &search_data.0.len());
     context.insert("query", &query);
 
+    context.insert("author_number", &search_data.1.len());
 
-context.insert("author_list", &search_data.1);
-
-
+    context.insert("author_list", &search_data.1);
 
     let rendered = TEMPLATES
         .render("search.html", &context)
         .expect("Failed to render template");
 
+    rendered
+}
+pub fn render_homepage(feed: MdHomepageFeed) -> String {
+    let mut context = Context::new();
+
+    context.insert("popular_manga", &feed.currently_popular);
+    context.insert("new_chapters", &feed.new_chapter_releases);
+
+    let rendered = TEMPLATES
+        .render("home.html", &context)
+        // .expect("Failed to render template");
+.unwrap();
     rendered
 }

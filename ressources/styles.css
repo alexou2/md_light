@@ -1,3 +1,9 @@
+body {
+  background-color: black;
+  font-size: 1.2em;
+  color: whitesmoke;
+}
+
 img.chapter_page {
   display: block;
   margin-left: auto;
@@ -5,11 +11,6 @@ img.chapter_page {
   max-width: 100%;
 }
 
-body {
-  background-color: black;
-  font-size: 1.2em;
-  color: whitesmoke;
-}
 
 a.chapter_link:link {
   color: rgb(255, 182, 0);
@@ -20,9 +21,7 @@ a.chapter_link:visited {
   color: grey;
 }
 
-a {
-  color: aqua;
-}
+
 
 .chapter_item {
   display: flex;
@@ -60,18 +59,6 @@ img.profile{
   /* filter: drop-shadow(0 0 1em crimson); */
 }
 
-/* .manga_info {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-}
-
-.author_list {
-  align-self: flex-end;
-} */
-.description {
-  /* max-width: 50%; */
-}
 
 .author_list {
   color: rgb(255, 183, 0);
@@ -176,4 +163,10 @@ div.bottom_bar {
 
 img.feather {
   width: 10em;
+}
+
+
+a {
+  color: aqua;
+  text-decoration:none;
 }

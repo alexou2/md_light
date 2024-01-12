@@ -65,9 +65,9 @@ pub fn render_homepage(feed: MdHomepageFeed, is_localhost: bool) -> String {
             div.popular{
                 @for i in popular_manga{
                     div.popular-manga{
-                        a href = (format!("/manga/{}",i.manga_id)){
-                            img src = (get_correct_image(is_localhost, i.thumbnail))loading="lazy";
-                            {(i.manga_name)}
+                        a href = (format!("/manga/{}",i.id)){
+                            img src = (get_correct_image(is_localhost, i.cover))loading="lazy";
+                            {(i.name)}
                         }
                     }
             }

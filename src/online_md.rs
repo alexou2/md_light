@@ -2,15 +2,11 @@ use crate::api_error;
 use crate::api_error::ApiError;
 use crate::md_struct::*;
 use crate::utills::*;
-use actix_web::cookie::time::error;
-use actix_web::dev::Server;
-use actix_web::http::uri;
-use chrono::format::format;
 use reqwest::{header::USER_AGENT, Client};
-use serde_json::json;
 use serde_json::{from_str, Value};
 use std::sync::{Arc, Mutex};
 use std::{future::Future, thread::JoinHandle, time::Duration};
+use tokio::task;
 
 const BASE_URL: &'static str = "https://api.mangadex.org";
 const LIMIT: [(&str, i32); 1] = [("limit", 500)];
@@ -109,8 +105,8 @@ fn get_chapters(url: String) -> Vec<Result<Value, ApiError>> {
     //waiting for the threads to finish
     for th in handles {
         // if *valid_request.lock().unwrap() {
-            
-            // break;
+
+        // break;
         // }
         let response = th.join();
         match response {
@@ -307,9 +303,9 @@ pub fn get_popular_manga() -> Result<Vec<PopularManga>, ApiError> {
 
             // creating the search result for each popular manga
             let manga_instance = PopularManga {
-                manga_name: title.clone(),
-                thumbnail: thumbnail.clone(),
-                manga_id: manga_id.clone(),
+                name: title.clone(),
+                cover: thumbnail.clone(),
+                id: manga_id.clone(),
             };
 
             popular_manga.push(manga_instance);

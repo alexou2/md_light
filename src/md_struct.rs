@@ -11,16 +11,20 @@ pub struct ServerStatus {
     /// is the server unreachable
     pub reachable: bool,
 }
-
+#[derive(Serialize)]
 pub struct MdHomepageFeed {
     pub currently_popular: Vec<PopularManga>,
     pub new_chapter_releases: Vec<NewChapters>,
 }
+
+#[derive(Serialize)]
 pub struct PopularManga {
-    pub manga_name: String,
-    pub thumbnail: String,
-    pub manga_id: String,
+    pub name: String,
+    pub cover: String,
+    pub id: String,
 }
+
+#[derive(Serialize)]
 pub struct NewChapters {
     pub chapter_name: String,
     pub chapter_number: String,
@@ -31,6 +35,7 @@ pub struct NewChapters {
     pub tl_group_name: String,
     pub page_number: String,
 }
+
 #[derive(Serialize)]
 pub struct ShortMangaInfo {
     pub manga_name: String,

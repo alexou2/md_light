@@ -24,8 +24,14 @@ async fn index(path: HttpRequest) -> HttpResponse {
     let feed = online_md::get_md_homepage_feed().await;
 
     // handles the errors by sending the error page
+    // let html = match feed {
+    //     Ok(e) => manga_templates::render_homepage(e, is_localhost),
+    //     Err(v) => manga_templates::render_error_page(v, "/"),
+    // };
+
+
     let html = match feed {
-        Ok(e) => manga_templates::render_homepage(e, is_localhost),
+        Ok(e) => tera_templates::render_homepage(e),
         Err(v) => manga_templates::render_error_page(v, "/"),
     };
     HttpResponse::build(StatusCode::OK)
