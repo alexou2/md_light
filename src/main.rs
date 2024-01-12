@@ -1,13 +1,13 @@
 mod api_error;
+mod consts;
+mod downloader;
 mod flags;
 mod installer;
 mod manga_templates;
 mod md_struct;
-mod downloader;
 mod online_md;
 mod tera_templates;
 mod utills;
-mod consts;
 
 use actix_files::Files;
 use actix_web::{
@@ -28,7 +28,6 @@ async fn index(path: HttpRequest) -> HttpResponse {
         Ok(e) => manga_templates::render_homepage(e, is_localhost),
         Err(v) => manga_templates::render_error_page(v, "/"),
     };
-
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
         .body(html)
@@ -46,6 +45,19 @@ async fn get_manga_info(manga_id: web::Path<String>, path: HttpRequest) -> HttpR
         Ok(e) => manga_templates::render_manga_info_page(e, is_localhost),
         Err(v) => manga_templates::render_error_page(v.into(), requested_page),
     };
+// let html = "123";
+// let ddl = downloader::DownloadData{
+//     manga_info: manga_info.unwrap(),
+//     source:md_struct::Source::MangaDex,
+//     downloaded_language:"en",
+//     low_quality_images: false,
+//     offset:0
+
+// };
+
+//     downloader::download_manga(Some(ddl));
+
+
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
         .body(html)

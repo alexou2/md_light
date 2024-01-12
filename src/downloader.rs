@@ -11,24 +11,24 @@ use std::fs::{read_dir, write, DirBuilder};
 /// every downloaded chapter with its name, ID, TL group, chapter number, language, a key to find the corresponding and possibly more
 
 pub struct DownloadData {
-    manga_info: MangaInfo,
+    pub manga_info: MangaInfo,
     /// the website that is downloaded from eg: mangaDex
-    source: Source,
-    downloaded_language: &'static str,
+    pub source: Source,
+    pub downloaded_language: &'static str,
     /// the date at which the manga is first downloaded
-    download_date: DateTime<Utc>,
+    // pub download_date: DateTime<Utc>,
     /// the date of the last download for the manga
-    update_date: DateTime<Utc>,
-    low_quality_images: bool,
+    // pub update_date: DateTime<Utc>,
+    pub low_quality_images: bool,
     /// the number of chapters that are skipped at the begining
-    offset: i32,
+    pub offset: i32,
 }
 
 const RESSOURCE_DIR: &'static str = ".md_light";
 
-/// downloads the manga 
+/// downloads the manga
 /// the pages are stored in ~/.md_light/ (linux)
-pub fn download_manga(download_infos: DownloadData) {
+pub fn download_manga(download_infos: Option<DownloadData>) {
     let os = check_os();
     // Checks if the os is compatible first
     match os {
@@ -39,5 +39,11 @@ pub fn download_manga(download_infos: DownloadData) {
         }
     }
 
-    let manga_dir_name = download_infos.manga_info.manga_name;
+    // let manga_dir_name = download_infos.manga_info.manga_name;
+    use std::env;
+
+    match env::home_dir() {
+        Some(path) => println!("Your home directory, probably: {}", path.display()),
+        None => println!("Impossible to get your home dir!"),
+    }
 }

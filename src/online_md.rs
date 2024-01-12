@@ -32,7 +32,6 @@ pub async fn test_connection() -> Result<ServerStatus, ApiError> {
     let up = if reachable {
         let resp_content = &resp?.await?.text().await?;
 
-        
         if resp_content.as_str() == "pong" {
             true
         } else {
@@ -93,24 +92,27 @@ fn get_chapters(url: String) -> Vec<Result<Value, ApiError>> {
 
     //loops utill there are no more chapters to get for the manga
     while *valid_request.lock().unwrap() {
-        let uri = url.clone();
+        let url = url.clone();
         let offset = [("offset", (LIMIT[0].1 * th.clone()))];
-        let cli = client.clone();
+        let client = client.clone();
         let mut valid_req_clone = Arc::clone(&valid_request);
 
         //creates a new thread to fetch manga chapters
         handles.push(std::thread::spawn(move || {
-            sync_chap(uri, offset, cli, &mut valid_req_clone)
+            sync_chap(url, offset, client, &mut valid_req_clone)
         }));
         th += 1;
         // limits the number of threads created per second
-        std::thread::sleep(Duration::from_millis(100))
+        std::thread::sleep(Duration::from_millis(200))
     }
 
     //waiting for the threads to finish
     for th in handles {
+        // if *valid_request.lock().unwrap() {
+            
+            // break;
+        // }
         let response = th.join();
-
         match response {
             Ok(e) => result.push(e),
             Err(_) => (),

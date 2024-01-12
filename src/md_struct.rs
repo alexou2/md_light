@@ -4,7 +4,7 @@ use serde_json::Value;
 use crate::api_error::ApiError;
 use serde::ser::SerializeStruct;
 use serde::{Serialize, Serializer};
-
+/// used when checking the mangadex api status from /server/ping
 pub struct ServerStatus {
     /// is the server down for maintenance
     pub up: bool,
