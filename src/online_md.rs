@@ -1,6 +1,6 @@
 use crate::api_error;
 use crate::api_error::ApiError;
-use crate::flags::Language;
+use crate::language::Language;
 use crate::md_struct::*;
 use crate::utills::*;
 use reqwest::{header::USER_AGENT, Client};

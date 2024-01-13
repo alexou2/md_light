@@ -1,5 +1,5 @@
-use serde::{Serialize, Serializer};
 use core::fmt;
+use serde::{ser::SerializeStruct, Serialize, Serializer};
 
 use colored::Colorize;
 
@@ -14,7 +14,6 @@ const PL: &'static str = "🇵🇱"; //polish
 const UK: &'static str = "🇺🇦"; //ukranian
 const KO: &'static str = "🇰🇷"; //korean
 const AR: &'static str = "🇸🇦"; //arabic
-const UNKNOWN: &'static str = "🚩"; //unknown flag
 const JP: &'static str = "🇯🇵"; //japanese
 const DE: &'static str = "🇩🇪"; //german
 const HI: &'static str = "🇮🇳"; //india
@@ -24,6 +23,8 @@ const RU: &'static str = "🇷🇺"; //russian
 const TH: &'static str = "🇹🇭"; //thailand
 const TR: &'static str = "🇹🇷"; //turkish
 const RO: &'static str = "🇷🇴"; //romanian
+const UNKNOWN: &'static str = "🚩"; //unknown flag
+
 
 #[derive(Debug)]
 pub struct Language {
@@ -45,13 +46,11 @@ impl Serialize for Language {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("CustomType", 2)?;
-        state.serialize_field("lang", &self.field2)?;
-        // state.end()
+        let mut s = serializer.serialize_struct("Language", 1)?;
+        s.serialize_field("lang", get_flag_offline(&self.lang))?;
+        s.end()
     }
 }
-
-
 
 pub fn get_flag_offline(language: &str) -> &'static str {
     let flag = match language {

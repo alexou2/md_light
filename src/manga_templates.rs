@@ -1,5 +1,5 @@
 use crate::api_error::ApiError;
-use crate::flags::*;
+use crate::language::*;
 use crate::md_struct::*;
 use markdown::to_html;
 use maud::*;

@@ -2,7 +2,7 @@ use serde_json::Value;
 // use serde_derive::Serialize;
 use crate::api_error::ApiError;
 use serde::Serialize;
-use crate::flags::Language;
+use crate::language::Language;
 
 /// used when checking the mangadex api status from /server/ping
 pub struct ServerStatus {
