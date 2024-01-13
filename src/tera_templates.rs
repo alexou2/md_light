@@ -41,11 +41,13 @@ pub fn render_complete_search(
 
     rendered
 }
+
 pub fn render_homepage(feed: MdHomepageFeed) -> String {
     let mut context = Context::new();
 
     context.insert("popular_manga", &feed.currently_popular);
     context.insert("new_chapters", &feed.new_chapter_releases);
+
 
     let rendered = TEMPLATES
         .render("home.html", &context)
@@ -53,6 +55,7 @@ pub fn render_homepage(feed: MdHomepageFeed) -> String {
         .unwrap();
     rendered
 }
+
 /// renders the manga without the chapters
 pub fn render_manga_info(manga: MangaInfo) -> String {
     let mut context = Context::new();

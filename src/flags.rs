@@ -1,3 +1,6 @@
+use serde::{Serialize, Serializer};
+use core::fmt;
+
 use colored::Colorize;
 
 const EN: &'static str = "🇬🇧"; //english
@@ -22,6 +25,34 @@ const TH: &'static str = "🇹🇭"; //thailand
 const TR: &'static str = "🇹🇷"; //turkish
 const RO: &'static str = "🇷🇴"; //romanian
 
+#[derive(Debug)]
+pub struct Language {
+    pub lang: String,
+}
+impl fmt::Display for Language {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", &self.lang)
+    }
+}
+impl Language {
+    pub fn as_str(&self) -> &str {
+        &self.lang
+    }
+}
+
+impl Serialize for Language {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("CustomType", 2)?;
+        state.serialize_field("lang", &self.field2)?;
+        // state.end()
+    }
+}
+
+
+
 pub fn get_flag_offline(language: &str) -> &'static str {
     let flag = match language {
         "en" => EN,
@@ -29,19 +60,16 @@ pub fn get_flag_offline(language: &str) -> &'static str {
         "vi" => VI,
         "it" => IT,
         "zh" => ZH,
-        "es" => ES,
-        "es-la" => ES,
+        "es-la" | "es" => ES,
         "br" => BR,
         "pl" => PL,
         "uk" => UK,
         "ko" => KO,
         "ar" => AR,
-        "jp" => JP,
-        "ja" => JP,
+        "ja" | "jp" => JP,
         "de" => DE,
         "hi" => HI,
-        "pt-br" => PT,
-        "pt" => PT,
+        "pt" | "pt-br" => PT,
         "id" => ID,
         "ru" => RU,
         "th" => TH,

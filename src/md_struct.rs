@@ -1,9 +1,9 @@
-use serde_derive::Deserialize;
 use serde_json::Value;
 // use serde_derive::Serialize;
 use crate::api_error::ApiError;
-use serde::ser::SerializeStruct;
-use serde::{Serialize, Serializer};
+use serde::Serialize;
+use crate::flags::Language;
+
 /// used when checking the mangadex api status from /server/ping
 pub struct ServerStatus {
     /// is the server down for maintenance
@@ -28,7 +28,8 @@ pub struct PopularManga {
 pub struct NewChapters {
     pub chapter_name: String,
     pub chapter_number: String,
-    pub language: String,
+    // pub language: String,
+    pub language: Language,
     pub chapter_id: String,
     pub manga_id: String,
     pub tl_group_id: String,
@@ -38,10 +39,10 @@ pub struct NewChapters {
 
 #[derive(Serialize)]
 pub struct ShortMangaInfo {
-    pub manga_name: String,
-    pub manga_id: String,
+    pub name: String,
+    pub id: String,
     // pub tags: Vec<String>,
-    pub thumbnail: String,
+    pub cover: String,
     pub status: String,
     pub original_language: String,
     pub translated_languages: Vec<Value>,
@@ -63,7 +64,6 @@ pub struct MangaInfo {
     pub description: String,
     // pub chapters: Vec<Result<Chapter, ApiError>>,
     pub chapters: Vec<Result<Chapter, ApiError>>,
-
 }
 #[derive(Serialize)]
 pub struct Author {

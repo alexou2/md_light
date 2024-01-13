@@ -1,5 +1,6 @@
 use crate::api_error;
 use crate::api_error::ApiError;
+use crate::flags::Language;
 use crate::md_struct::*;
 use crate::utills::*;
 use reqwest::{header::USER_AGENT, Client};
@@ -251,7 +252,8 @@ pub fn get_new_chapters() -> Result<Vec<NewChapters>, ApiError> {
             let new_chapter_data = NewChapters {
                 chapter_name: chapter_name.to_owned(),
                 chapter_number: chapter_number,
-                language: language.to_owned(),
+                // language: language.to_owned(),
+                language: Language{lang:language.to_owned()},
                 // thumbnail: "N/A".to_string(),
                 manga_id: manga_id,
                 tl_group_id: tl_group_id,
@@ -373,9 +375,9 @@ pub async fn search_manga(
                 .unwrap_or("N/a".to_string());
             // creating the struct instnce containing all of the usefull ionfos about the manga
             let manga_attributes = ShortMangaInfo {
-                manga_name: title.clone(),
-                manga_id: manga_id.clone(),
-                thumbnail: thumbnail,
+                name: title.clone(),
+                id: manga_id.clone(),
+                cover: thumbnail,
                 status: status.clone(),
                 original_language: original_language.clone(),
                 translated_languages: available_languages.clone(),

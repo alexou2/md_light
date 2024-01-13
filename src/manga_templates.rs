@@ -195,9 +195,9 @@ pub fn render_search_page(search_results: Vec<ShortMangaInfo>, is_localhost: boo
             div.search_list.works{
                 @for i in search_results{
                     div.manga_restult.title{
-                        a href = (format!("/manga/{}",i.manga_id)){
-                            img src = (get_correct_image(is_localhost, i.thumbnail))loading="lazy";
-                        div.manga-title{(i.manga_name)}
+                        a href = (format!("/manga/{}",i.id)){
+                            img src = (get_correct_image(is_localhost, i.cover))loading="lazy";
+                        div.manga-title{(i.name)}
                         }
                     }
                 }
@@ -260,9 +260,9 @@ pub fn render_author_manga(titles: Vec<ShortMangaInfo>, is_localhost: bool) -> S
     let template = html!(
             @for manga in titles{
     div.title{
-        a.title-image href = {"/manga/"(manga.manga_id)}{
-            img src = (get_correct_image(is_localhost, manga.thumbnail)) loading="lazy";
-            div.manga-title{(manga.manga_name)}
+        a.title-image href = {"/manga/"(manga.id)}{
+            img src = (get_correct_image(is_localhost, manga.cover)) loading="lazy";
+            div.manga-title{(manga.name)}
         }
     }
 
@@ -309,9 +309,9 @@ pub fn render_complete_search(
             div.search_list.works{
                 @for i in search_results{
                     div.manga_result.title{
-                        a href = (format!("/manga/{}",i.manga_id)){
-                            img src = (get_correct_image(is_localhost, i.thumbnail))loading="lazy";
-                        div.manga-title{(i.manga_name)}
+                        a href = (format!("/manga/{}",i.id)){
+                            img src = (get_correct_image(is_localhost, i.cover))loading="lazy";
+                        div.manga-title{(i.name)}
                         }
                     }
                 }

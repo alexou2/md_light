@@ -27,9 +27,9 @@
     <div class="search_list works">
         {% for manga in manga_result %}
 
-        <div class="manga_result title"><a href="manga/{{manga.manga_id}}"><img
-                    src={{manga.thumbnail}} loading="lazy">
-                <div class="manga-title">{{manga.manga_name}}</div>
+        <div class="manga_result title"><a href="manga/{{manga.id}}"><img
+                    src={{manga.cover}} loading="lazy">
+                <div class="manga-title">{{manga.name}}</div>
             </a></div>
         {% endfor %}
 

@@ -22,13 +22,13 @@
             <img src="/proxy/images/{{cover}}">
             <div class="col_2">
                 <h1>{{manga_name}}</h1>
-                <div class="description">{{description}}</div>
-
+                <div class="description">{{description | safe}}</div>
             </div>
             <div class="author_list">
                 <h3>Authors: </h3>
                 {% for auth in authors %}
                 <div class="author">
+                  <img class="profile" src="/ressources/profile.svg">
                     <a href="/author/{{auth.author_id}}">{{auth.role}}: {{auth.author_name}}</a>
                 </div>
                 {% endfor %}
