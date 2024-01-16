@@ -605,8 +605,10 @@ pub async fn get_manga_chapters(
     language: Option<String>,
     offset: i32,
 ) -> Result<Vec<Result<Chapter, ApiError>>, ApiError> {
+    println!("in function");
     let url = format!("{}/manga/{}/feed", BASE_URL, manga_id);
 
+    println!("url: {}", url);
     // let chapter_json = get_chapters(url); // a list of successful requests and requests errors
     // let resp = request_with_agent(url).await?.await?.text().await?;
     // let chapter_json = parse_json(&resp).await;
@@ -708,7 +710,6 @@ pub async fn get_manga_chapters(
             chapter_name: chapter_name,
             chapter_number: chapter_number,
             language: language,
-
             tl_group: tl_group,
             chapter_id: chapter_id,
         });
@@ -797,7 +798,7 @@ async fn parse_json(response: &String) -> Result<Value, ApiError> {
     };
 
     println!(" result: {}", json_success["result"]);
-
+println!("{}", json_success);
     // Ok(json_success)
     let result = json_success["result"].to_owned();
     match result.to_string().as_str() {

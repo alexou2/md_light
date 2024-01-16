@@ -7,7 +7,18 @@
 
 <div class="chapter_item" id="{{chapter.language}}">
     <a class="chapter_link" href="/manga/{{manga_id}}/{{chapter.chapter_id}}">
-        <div class="chapter"></div>
+        <div class="chapter">
+            {{chapter.chapter_number}} {{chapter.language.lang}}
+            {{chapter.name}}
+            <!-- the list of translators for the chapter -->
+            <div class="tl_group_list">
+                {% for group in chapter.tl_group %}
+                <div class="group">
+                    <a href="/group/{{group.id}}" {{group.name}}></a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
     </a>
 </div>
 

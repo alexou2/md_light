@@ -85,9 +85,9 @@ pub fn render_manga_chapters(
     for ch in chapters {
         chap.push(ch?)
     }
+    context.insert("chapter_list", &chap);
+    context.insert("manga_id", &manga_id);
 
-
-    
     let rendered = TEMPLATES
         .render("manga_chapter.html", &context)
         .expect("Failed to render chapter template");

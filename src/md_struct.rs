@@ -63,7 +63,6 @@ pub struct MangaInfo {
     pub year: Option<i64>,
     pub description: String,
     // pub chapters: Vec<Result<Chapter, ApiError>>,
-    // pub chapters: Vec<Result<Chapter, ApiError>>,
 }
 
 #[derive(Serialize)]

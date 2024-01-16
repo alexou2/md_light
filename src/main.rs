@@ -13,7 +13,7 @@ use actix_files::Files;
 use actix_web::{
     get, http::StatusCode, web, App, HttpRequest, HttpResponse, HttpServer, Responder, Result,
 };
-use clap::{Parser, builder::Str};
+use clap::{builder::Str, Parser};
 use colored::Colorize;
 use local_ip_address::local_ip;
 use reqwest::Client;
@@ -65,20 +65,32 @@ struct chapter_query {
 }
 
 #[get("/manga/chapters/{id}")]
-async fn get_chapters(manga_id: web::Path<String>, path: HttpRequest, infos: web::Query<chapter_query>) -> HttpResponse {
+async fn get_chapters(
+    manga_id: web::Path<String>,
+    path: HttpRequest,
+    infos: web::Query<chapter_query>,
+) -> HttpResponse {
+
+    println!("step0");
+    
     let requested_page = path.path();
     // let is_localhost = utills::check_localhost(&path);
 
+    println!("step1");
+    let chapters =
+        online_md::get_manga_chapters(manga_id.to_string(), infos.language.clone(), infos.offset)
+            .await
+            .unwrap();
+        println!("step2");
 
-    let chapters = online_md::get_manga_chapters(manga_id.to_string(), infos.language.clone(), infos.offset).await.unwrap();
-
-let html = tera_templates::render_manga_chapters(chapters, infos.offset, 120, manga_id.to_string());
+    let html =
+        tera_templates::render_manga_chapters(chapters, infos.offset, 120, manga_id.to_string());
+        println!("step3");
 
     // handles the errors by sending the error page
     let html = match html {
         // Ok(e) => manga_templates::render_manga_info_page(e, is_localhost),
         Ok(e) => e,
-
         Err(v) => manga_templates::render_error_page(v.into(), requested_page),
     };
 
