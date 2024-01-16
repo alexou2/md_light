@@ -293,7 +293,6 @@ pub async fn get_popular_manga() -> Result<Vec<PopularManga>, ApiError> {
         r"https://api.mangadex.org/manga?includes[]=cover_art&includes[]=artist&includes[]=author&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive&hasAvailableChapters=true&createdAtSince={}",
         formatted_time
     );
-    println!("{url}");
     // let url = format!(
     //         r"https://api.mangadex.org/manga?includes[]=cover_art&includes[]=artist&includes[]=author&order[followedCount]=desc&hasAvailableChapters=true&createdAtSince={}",
     //         formatted_time
@@ -304,8 +303,6 @@ pub async fn get_popular_manga() -> Result<Vec<PopularManga>, ApiError> {
     // let resp = request_with_agent_blocking(url)?;
     // let json_resp: Value = serde_json::from_str(&resp)?;
     let json_resp = parse_json(&resp).await?;
-
-    println!("finished request for pop manga");
 
     // transforming the json into an array in order to get all of the search results
     if let Some(response_data) = json_resp["data"].as_array() {
@@ -597,7 +594,6 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
     Ok(manga_info)
 }
 
-
 // gets all of the manga's chapters for the manga info page
 // returns a vector that contains both errors and chapters
 pub async fn get_manga_chapters(
@@ -605,13 +601,7 @@ pub async fn get_manga_chapters(
     language: Option<String>,
     offset: i32,
 ) -> Result<Vec<Result<Chapter, ApiError>>, ApiError> {
-    println!("in function");
     let url = format!("{}/manga/{}/feed", BASE_URL, manga_id);
-
-    println!("url: {}", url);
-    // let chapter_json = get_chapters(url); // a list of successful requests and requests errors
-    // let resp = request_with_agent(url).await?.await?.text().await?;
-    // let chapter_json = parse_json(&resp).await;
 
     let chapter_json = sync_chap(url, offset, language).await?;
 
@@ -627,18 +617,17 @@ pub async fn get_manga_chapters(
     //         }
     //     };
 
-    println!("parsing chapter json");
-        // divides the json data into a list of json elements representing chapters
-        let list = chapter_json["data"]
-            .as_array()
-            .ok_or("unable to convert chapters to array")
-            .unwrap();
+    // divides the json data into a list of json elements representing chapters
+    let list = chapter_json["data"]
+        .as_array()
+        .ok_or("unable to convert chapters to array")
+        .unwrap();
 
-        // json_list.append(&mut list.clone());
+    // json_list.append(&mut list.clone());
 
-        for i in list {
-            json_list.push(i.to_owned());
-        }
+    for i in list {
+        json_list.push(i.to_owned());
+    }
     // }
 
     let mut chapter_list: Vec<Result<Chapter, ApiError>> = Vec::new();
@@ -798,7 +787,6 @@ async fn parse_json(response: &String) -> Result<Value, ApiError> {
     };
 
     println!(" result: {}", json_success["result"]);
-println!("{}", json_success);
     // Ok(json_success)
     let result = json_success["result"].to_owned();
     match result.to_string().as_str() {

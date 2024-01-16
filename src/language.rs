@@ -1,4 +1,5 @@
 use core::fmt;
+use clap::builder::Str;
 use serde::{ser::SerializeStruct, Serialize, Serializer};
 
 use colored::Colorize;
@@ -24,7 +25,7 @@ const TH: &'static str = "🇹🇭"; //thailand
 const TR: &'static str = "🇹🇷"; //turkish
 const RO: &'static str = "🇷🇴"; //romanian
 const UNKNOWN: &'static str = "🌍"; //unknown flag
-const Error: &'static str = "⚠️"; //unknown flag
+const ERROR: &'static str = "⚠️"; //unknown flag
 
 #[derive(Clone, Debug)]
 pub struct Language {
@@ -47,14 +48,17 @@ impl Serialize for Language {
         S: Serializer,
     {
         let mut s = serializer.serialize_struct("Language", 1)?;
-        s.serialize_field("lang", to_flag_str(&self.lang))?;
+        // s.serialize_field("lang", to_flag_str(&self.lang))?;
+        s.serialize_field("lang", &self.lang)?;
+
+        println!("language: {}", &self.lang);
         s.end()
     }
 }
 
-impl std::convert::From<&str> for Language {
-    fn from(lang: &str) -> Self {
-        let flag = to_flag_str(lang);
+impl std::convert::From<String> for Language {
+    fn from(lang: String) -> Self {
+        let flag = to_flag_str(&lang);
         Language {
             lang: flag.to_owned(),
         }
@@ -65,7 +69,7 @@ impl std::convert::From<&Option<String>> for Language {
     fn from(lang: &Option<String>) -> Self {
         let lang = match lang {
             Some(e) => e,
-            None => Error,
+            None => ERROR,
         };
 
         let flag = to_flag_str(lang);
@@ -77,6 +81,7 @@ impl std::convert::From<&Option<String>> for Language {
 
 /// takes a language and returns the flag fot the language
 pub fn to_flag_str(language: &str) -> &'static str {
+    println!("{language}");
     let flag = match language {
         "en" => EN,
         "fr" => FR,
@@ -98,10 +103,10 @@ pub fn to_flag_str(language: &str) -> &'static str {
         "th" => TH,
         "ro" => RO,
         "tr" => TR,
-        "Error" => Error,
+        "Error" => ERROR,
         // _=>format!("{}: {}", unknown, language).as_str().clone(),
         _ => {
-            println!("unknown language: {}", language.on_red());
+            println!("unknown language: {}", language);
             UNKNOWN
         }
     };
