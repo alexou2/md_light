@@ -1,10 +1,15 @@
-{% for division in [0, 1, 2] %}
+<!-- {% for division in [0, 1, 2] %}
 <div class="chap_box" id="{{division.number}}" onclick="fetch_chapter(`{{division.offset}}, {{manga_id}}`)">{{division.number}}</div>
-{% endfor %}
+{% endfor %} -->
 
 
 {% for chapter in chapter_list %}
 
+<div class="chapter_item" id="{{chapter.language}}">
+    <a class="chapter_link" href="/manga/{{manga_id}}/{{chapter.chapter_id}}">
+        <div class="chapter"></div>
+    </a>
+</div>
 
 {% endfor %}
 

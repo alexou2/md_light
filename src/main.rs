@@ -75,12 +75,12 @@ async fn get_chapters(manga_id: web::Path<String>, path: HttpRequest, infos: web
 let html = tera_templates::render_manga_chapters(chapters, infos.offset, 120, manga_id.to_string());
 
     // handles the errors by sending the error page
-    // let html = match manga_info {
-    //     // Ok(e) => manga_templates::render_manga_info_page(e, is_localhost),
-    //     Ok(e) => tera_templates::render_manga_info(e),
+    let html = match html {
+        // Ok(e) => manga_templates::render_manga_info_page(e, is_localhost),
+        Ok(e) => e,
 
-    //     Err(v) => manga_templates::render_error_page(v.into(), requested_page),
-    // };
+        Err(v) => manga_templates::render_error_page(v.into(), requested_page),
+    };
 
     // let html = "234";
     HttpResponse::build(StatusCode::OK)

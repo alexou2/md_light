@@ -1,5 +1,6 @@
 use crate::api_error;
 use crate::api_error::ApiError;
+use crate::language;
 use crate::language::Language;
 use crate::md_struct::*;
 use crate::utills::*;
@@ -661,6 +662,7 @@ pub async fn get_manga_chapters(
 
         let chapter_name = attributes["title"].remove_quotes();
         let language = &attributes["translatedLanguage"].remove_quotes();
+        let language = Language::from(language);
         // .ok_or(format!(
         //     "error while removing quotes in the chapter language {}",
         //     attributes["translatedLanguage"]
@@ -705,7 +707,8 @@ pub async fn get_manga_chapters(
         let chapter_instance = Ok(Chapter {
             chapter_name: chapter_name,
             chapter_number: chapter_number,
-            language: language.to_owned(),
+            language: language,
+
             tl_group: tl_group,
             chapter_id: chapter_id,
         });

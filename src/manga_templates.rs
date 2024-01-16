@@ -76,7 +76,7 @@ pub fn render_homepage(feed: MdHomepageFeed, is_localhost: bool) -> String {
                 @for chapter in new_chapters{
                     div.new_chapter{
                 a.chapter href = (format!("/manga/{manga_id}/{chapter_id}", manga_id = chapter.manga_id, chapter_id = chapter.chapter_id)){
-                    {(chapter.chapter_name) (get_flag_offline(chapter.language.as_str()))}
+                    {(chapter.chapter_name) (to_flag_str(chapter.language.as_str()))}
                 };
             }
                 }

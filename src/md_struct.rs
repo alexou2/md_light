@@ -49,7 +49,7 @@ pub struct ShortMangaInfo {
     pub description: String,
 }
 
-// #[derive(Serialize)]
+#[derive(Serialize)]
 /// the complete informations about a specific manga
 pub struct MangaInfo {
     pub manga_name: String,
@@ -65,19 +65,21 @@ pub struct MangaInfo {
     // pub chapters: Vec<Result<Chapter, ApiError>>,
     // pub chapters: Vec<Result<Chapter, ApiError>>,
 }
+
 #[derive(Serialize)]
 pub struct Author {
     pub author_name: String,
     pub author_id: String,
     pub role: String,
 }
+
 /// the chapters that are listed in the manga info page
 #[derive(Clone, Serialize)]
 pub struct Chapter {
     pub tl_group: Vec<TlGroup>,
     pub chapter_name: Option<String>,
     pub chapter_number: String,
-    pub language: Option<String>,
+    pub language: Language,
     pub chapter_id: String,
 }
 #[derive(Serialize)]
@@ -115,4 +117,5 @@ impl ValueExtensions for Value {
 
 pub enum Source {
     MangaDex,
+    Comick
 }

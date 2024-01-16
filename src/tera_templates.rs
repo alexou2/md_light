@@ -1,10 +1,7 @@
 use crate::api_error::ApiError;
 pub use crate::md_struct::*;
-use clap::builder::Str;
 use lazy_static::lazy_static;
 use markdown::to_html;
-use serde::ser::SerializeStruct;
-use serde_json::value::{to_value, Value};
 use tera::{Context, Tera};
 
 lazy_static! {
@@ -71,16 +68,29 @@ pub fn render_manga_info(manga: MangaInfo) -> String {
 
     let rendered = TEMPLATES
         .render("manga_info.html", &context)
-        .expect("Failed to render template");
+        .expect("Failed to render manga info template");
 
     rendered
 }
 /// renders the chapter list of a manga
-pub fn render_manga_chapters(chapters: Vec<Result<Chapter, ApiError>>, offset: i32, total: i32, manga_id: String) {
+pub fn render_manga_chapters(
+    chapters: Vec<Result<Chapter, ApiError>>,
+    offset: i32,
+    total: i32,
+    manga_id: String,
+) -> Result<String, ApiError> {
+    let mut context = Context::new();
+
     let mut chap = vec![];
     for ch in chapters {
-        chap.push(ch.unwrap())
+        chap.push(ch?)
     }
 
 
+    
+    let rendered = TEMPLATES
+        .render("manga_chapter.html", &context)
+        .expect("Failed to render chapter template");
+
+    Ok(rendered)
 }

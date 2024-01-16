@@ -28,16 +28,14 @@
                 <h3>Authors: </h3>
                 {% for auth in authors %}
                 <div class="author">
-                  <img class="profile" src="/ressources/profile.svg">
+                    <img class="profile" src="/ressources/profile.svg">
                     <a href="/author/{{auth.author_id}}">{{auth.role}}: {{auth.author_name}}</a>
                 </div>
                 {% endfor %}
                 <!-- chapters will go here -->
                 <div class="chapter_list" id="chapter_list">
                     <script>
-                        fetch_chapter("0, {{manga_id}}");
-
-                        
+                        fetch_chapter("0, {{manga_id}}")                        
                     </script>
                 </div>
             </div>

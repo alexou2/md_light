@@ -23,10 +23,10 @@ const RU: &'static str = "🇷🇺"; //russian
 const TH: &'static str = "🇹🇭"; //thailand
 const TR: &'static str = "🇹🇷"; //turkish
 const RO: &'static str = "🇷🇴"; //romanian
-const UNKNOWN: &'static str = "🚩"; //unknown flag
+const UNKNOWN: &'static str = "🌍"; //unknown flag
+const Error: &'static str = "⚠️"; //unknown flag
 
-
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Language {
     pub lang: String,
 }
@@ -47,12 +47,36 @@ impl Serialize for Language {
         S: Serializer,
     {
         let mut s = serializer.serialize_struct("Language", 1)?;
-        s.serialize_field("lang", get_flag_offline(&self.lang))?;
+        s.serialize_field("lang", to_flag_str(&self.lang))?;
         s.end()
     }
 }
 
-pub fn get_flag_offline(language: &str) -> &'static str {
+impl std::convert::From<&str> for Language {
+    fn from(lang: &str) -> Self {
+        let flag = to_flag_str(lang);
+        Language {
+            lang: flag.to_owned(),
+        }
+    }
+}
+
+impl std::convert::From<&Option<String>> for Language {
+    fn from(lang: &Option<String>) -> Self {
+        let lang = match lang {
+            Some(e) => e,
+            None => Error,
+        };
+
+        let flag = to_flag_str(lang);
+        Language {
+            lang: flag.to_owned(),
+        }
+    }
+}
+
+/// takes a language and returns the flag fot the language
+pub fn to_flag_str(language: &str) -> &'static str {
     let flag = match language {
         "en" => EN,
         "fr" => FR,
@@ -74,9 +98,10 @@ pub fn get_flag_offline(language: &str) -> &'static str {
         "th" => TH,
         "ro" => RO,
         "tr" => TR,
+        "Error" => Error,
         // _=>format!("{}: {}", unknown, language).as_str().clone(),
         _ => {
-            // println!("unknown language: {}", language.on_red());
+            println!("unknown language: {}", language.on_red());
             UNKNOWN
         }
     };
