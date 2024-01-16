@@ -64,28 +64,22 @@ struct chapter_query {
     language: Option<String>,
 }
 
-#[get("/manga/chapters/{id}")]
+#[get("/chapters/{id}")]
 async fn get_chapters(
     manga_id: web::Path<String>,
     path: HttpRequest,
     infos: web::Query<chapter_query>,
 ) -> HttpResponse {
-
-    println!("step0");
-    
     let requested_page = path.path();
     // let is_localhost = utills::check_localhost(&path);
 
-    println!("step1");
     let chapters =
         online_md::get_manga_chapters(manga_id.to_string(), infos.language.clone(), infos.offset)
             .await
             .unwrap();
-        println!("step2");
 
     let html =
         tera_templates::render_manga_chapters(chapters, infos.offset, 120, manga_id.to_string());
-        println!("step3");
 
     // handles the errors by sending the error page
     let html = match html {
@@ -123,7 +117,6 @@ async fn get_chapter(chapter: web::Path<(String, String)>, path: HttpRequest) ->
 async fn search(path: HttpRequest) -> HttpResponse {
     let is_localhost = utills::check_localhost(&path);
     let query = path.query_string().replace("query=", "");
-    println!("{:?}", query);
     // let query: web::Path<String> = todo!();
     let manga_results = online_md::search_manga(Some(query.to_string()), None).await;
     let author_results = online_md::search_author(query.to_string()).await;
@@ -162,8 +155,7 @@ async fn get_author(author_id: web::Path<String>, path: HttpRequest) -> HttpResp
 #[get("/author/{author_id}/feed")]
 async fn get_author_feed(author_id: web::Path<String>, path: HttpRequest) -> HttpResponse {
     let is_localhost = utills::check_localhost(&path);
-    // println!("path {}", path.query_string().split(",").collect());
-    // write("t.txt", path.query_string());
+
     let manga_list =
         online_md::search_manga(None, Some([("authorOrArtist", author_id.to_string())])).await;
 
