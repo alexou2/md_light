@@ -230,8 +230,8 @@ pub async fn get_new_chapters() -> Result<Vec<NewChapters>, ApiError> {
                 .remove_quotes()
                 .unwrap_or(chapter_number.clone()); // sets the chapter name to the chapter number if the real chapter name is null
             let language = &attributes["translatedLanguage"]
-                .remove_quotes()
-                .ok_or("error while removing quotes in language")?;
+                .remove_quotes();
+                // .ok_or("error while removing quotes in language")?;
             let page_number = attributes["pages"]
                 .remove_quotes()
                 .ok_or("error while removing quotes in page")?;
@@ -267,9 +267,7 @@ pub async fn get_new_chapters() -> Result<Vec<NewChapters>, ApiError> {
                 chapter_name: chapter_name.to_owned(),
                 chapter_number: chapter_number,
                 // language: language.to_owned(),
-                language: Language {
-                    lang: language.to_owned(),
-                },
+                language: Language::from(language),
                 // thumbnail: "N/A".to_string(),
                 manga_id: manga_id,
                 tl_group_id: tl_group_id,

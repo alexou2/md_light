@@ -32,7 +32,7 @@
     <div class="new-release">
         {% for chapter in new_chapters %}
         <div class="new_chapter"><a class="chapter"
-                href="/manga/{{chapter.manga_id}}/{{chapter.chapter_id}}">{{chapter.chapter_name}}{{chapter.language.lang}}</a>
+                href="/manga/{{chapter.manga_id}}/{{chapter.chapter_id}}">{{chapter.chapter_name}} {{chapter.language.lang}}</a>
         </div>
         {% endfor %}
     </div>
