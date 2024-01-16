@@ -35,6 +35,14 @@ impl fmt::Display for ApiError {
         }
     }
 }
+
+// impl std::convert::From<> for ApiError{
+//     fn from<T>(err: &str) -> Self {
+// todo!()
+//     }
+// }
+
+
 impl std::convert::From<&str> for ApiError {
     fn from(err: &str) -> Self {
         ApiError::StrError(err.to_string())

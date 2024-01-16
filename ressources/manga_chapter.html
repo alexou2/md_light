@@ -1,0 +1,16 @@
+{% for division in [0, 1, 2] %}
+<div class="chap_box" id="{{division.number}}" onclick="fetch_chapter(`{{division.offset}}`)">{{division.number}}</div>
+{% endfor %}
+
+
+{% for chapter in chapter_list %}
+
+
+{% endfor %}
+
+<style>
+    .chap_box{
+        background-color: aqua;
+    }
+    
+</style>

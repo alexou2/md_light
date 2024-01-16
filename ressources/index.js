@@ -1,36 +1,36 @@
 async function getAuhorChapters(authorID) {
-    let mangaList = await fetch(`/author/${authorID}/feed`,);
-    let manga = await mangaList.text();
-    console.log(await mangaList)
-    changeAuthorManga(manga)
+  let mangaList = await fetch(`/author/${authorID}/feed`,);
+  let manga = await mangaList.text();
+  console.log(await mangaList)
+  changeAuthorManga(manga)
 
 }
 // loads the mangas created by the author
 function changeAuthorManga(content) {
-    console.log("content", content)
-    let manga_div = document.getElementById("works")
-    // console.log(manga_div.innerHTML);
-    manga_div.innerHTML = content
+  console.log("content", content)
+  let manga_div = document.getElementById("works")
+  // console.log(manga_div.innerHTML);
+  manga_div.innerHTML = content
 }
 //gets the titles from the author
 async function get_feed(author) {
-    let mangaList = await fetch(`/author/feed?${author}`,)
-    let manga = await mangaList.text();
-    changeAuthorManga(manga)
+  let mangaList = await fetch(`/author/feed?${author}`,)
+  let manga = await mangaList.text();
+  changeAuthorManga(manga)
 }
 
 // changes the page link to seatch for a manga
 function search() {
-    let input = document.getElementById("search_box").value;
+  let input = document.getElementById("search_box").value;
 
-    if (input != "") {
-        input = `/search/${input}`
-        console.log(input)
-        window.location.href = input
+  if (input != "") {
+    input = `/search/${input}`
+    console.log(input)
+    window.location.href = input
 
-    } else {
-        alert("empty search query")
-    }
+  } else {
+    alert("empty search query")
+  }
 }
 
 // function to go fullscreen
@@ -54,4 +54,9 @@ function goFullscreen() {
   } else if (document.msExitFullscreen) { /* IE11 */
     document.msExitFullscreen();
   }
+}
+function fetch_chapter(offset, mangaID) {
+  let html = fetch(`/manga/chapters/${mangaID}?offset=${offset}`);
+  let chapterPlacement = Element.getElementById("chapter_list");
+  chapterPlacement.innerHTML = html
 }

@@ -1,4 +1,6 @@
+use crate::api_error::ApiError;
 pub use crate::md_struct::*;
+use clap::builder::Str;
 use lazy_static::lazy_static;
 use markdown::to_html;
 use serde::ser::SerializeStruct;
@@ -48,7 +50,6 @@ pub fn render_homepage(feed: MdHomepageFeed) -> String {
     context.insert("popular_manga", &feed.currently_popular);
     context.insert("new_chapters", &feed.new_chapter_releases);
 
-
     let rendered = TEMPLATES
         .render("home.html", &context)
         // .expect("Failed to render template");
@@ -66,6 +67,7 @@ pub fn render_manga_info(manga: MangaInfo) -> String {
     let html = to_html(&manga.description);
     context.insert("description", &html);
     context.insert("authors", &manga.author);
+    context.insert("manga_id", &manga.manga_id);
 
     let rendered = TEMPLATES
         .render("manga_info.html", &context)
@@ -74,4 +76,11 @@ pub fn render_manga_info(manga: MangaInfo) -> String {
     rendered
 }
 /// renders the chapter list of a manga
-pub fn render_manga_chapters(chapters: Vec<Chapter>, offset: i32) {}
+pub fn render_manga_chapters(chapters: Vec<Result<Chapter, ApiError>>, offset: i32, total: i32, manga_id: String) {
+    let mut chap = vec![];
+    for ch in chapters {
+        chap.push(ch.unwrap())
+    }
+
+
+}

@@ -1,8 +1,8 @@
 mod api_error;
 mod consts;
 mod downloader;
-mod language;
 mod installer;
+mod language;
 mod manga_templates;
 mod md_struct;
 mod online_md;
@@ -13,7 +13,7 @@ use actix_files::Files;
 use actix_web::{
     get, http::StatusCode, web, App, HttpRequest, HttpResponse, HttpServer, Responder, Result,
 };
-use clap::Parser;
+use clap::{Parser, builder::Str};
 use colored::Colorize;
 use local_ip_address::local_ip;
 use reqwest::Client;
@@ -29,7 +29,6 @@ async fn index(path: HttpRequest) -> HttpResponse {
     //     Err(v) => manga_templates::render_error_page(v, "/"),
     // };
 
-
     let html = match feed {
         Ok(e) => tera_templates::render_homepage(e),
         Err(v) => manga_templates::render_error_page(v, "/"),
@@ -44,28 +43,46 @@ async fn get_manga_info(manga_id: web::Path<String>, path: HttpRequest) -> HttpR
     let requested_page = path.path();
     let is_localhost = utills::check_localhost(&path);
 
-    let manga_info = online_md::get_manga_info(manga_id.to_string()).await;
+    let manga_info = online_md::get_manga_info(manga_id.to_string());
 
     // handles the errors by sending the error page
-    let html = match manga_info {
+    let html = match manga_info.await {
         // Ok(e) => manga_templates::render_manga_info_page(e, is_localhost),
         Ok(e) => tera_templates::render_manga_info(e),
 
         Err(v) => manga_templates::render_error_page(v.into(), requested_page),
     };
-// let html = "123";
-// let ddl = downloader::DownloadData{
-//     manga_info: manga_info.unwrap(),
-//     source:md_struct::Source::MangaDex,
-//     downloaded_language:"en",
-//     low_quality_images: false,
-//     offset:0
 
-// };
+    HttpResponse::build(StatusCode::OK)
+        .content_type("text/html; charset=utf-8")
+        .body(html)
+}
 
-//     downloader::download_manga(Some(ddl));
+#[derive(serde::Deserialize)]
+struct chapter_query {
+    offset: i32,
+    language: Option<String>,
+}
+
+#[get("/manga/chapters/{id}")]
+async fn get_chapters(manga_id: web::Path<String>, path: HttpRequest, infos: web::Query<chapter_query>) -> HttpResponse {
+    let requested_page = path.path();
+    // let is_localhost = utills::check_localhost(&path);
 
 
+    let chapters = online_md::get_manga_chapters(manga_id.to_string(), infos.language.clone(), infos.offset).await.unwrap();
+
+let html = tera_templates::render_manga_chapters(chapters, infos.offset, 120, manga_id.to_string());
+
+    // handles the errors by sending the error page
+    // let html = match manga_info {
+    //     // Ok(e) => manga_templates::render_manga_info_page(e, is_localhost),
+    //     Ok(e) => tera_templates::render_manga_info(e),
+
+    //     Err(v) => manga_templates::render_error_page(v.into(), requested_page),
+    // };
+
+    // let html = "234";
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
         .body(html)
@@ -285,6 +302,7 @@ async fn main() -> std::io::Result<()> {
             .service(ping_md)
             .service(get_author_feed)
             .service(get_author)
+            .service(get_chapters)
             .service(Files::new("/", "/ressources"))
     });
 

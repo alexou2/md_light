@@ -32,7 +32,12 @@
                     <a href="/author/{{auth.author_id}}">{{auth.role}}: {{auth.author_name}}</a>
                 </div>
                 {% endfor %}
-                <div class="chapter_list"></div>
+                <!-- chapters will go here -->
+                <div class="chapter_list" id="chapter_list">
+                    <script>
+                        getch_chapters("0, {{manga_id}}")
+                    </script>
+                </div>
             </div>
         </div>
     </div>
