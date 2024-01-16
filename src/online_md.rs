@@ -623,6 +623,8 @@ pub async fn get_manga_chapters(
     //             continue;
     //         }
     //     };
+
+    println!("parsing chapter json");
         // divides the json data into a list of json elements representing chapters
         let list = chapter_json["data"]
             .as_array()

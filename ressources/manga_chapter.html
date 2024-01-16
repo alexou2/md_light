@@ -1,5 +1,5 @@
 {% for division in [0, 1, 2] %}
-<div class="chap_box" id="{{division.number}}" onclick="fetch_chapter(`{{division.offset}}`)">{{division.number}}</div>
+<div class="chap_box" id="{{division.number}}" onclick="fetch_chapter(`{{division.offset}}, {{manga_id}}`)">{{division.number}}</div>
 {% endfor %}
 
 
@@ -9,8 +9,16 @@
 {% endfor %}
 
 <style>
-    .chap_box{
+    .chap_box {
         background-color: aqua;
     }
-    
 </style>
+
+<script>
+    function fetch_chapter(offset, mangaID) {
+        console.log("fetching chapters")
+        let html = fetch(`/manga/chapters/${mangaID}?offset=${offset}`).await
+        let chapterPlacement = Element.getElementById("chapter_list");
+        chapterPlacement.innerHTML = html
+    }
+</script>

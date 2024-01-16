@@ -56,7 +56,7 @@ function goFullscreen() {
   }
 }
 function fetch_chapter(offset, mangaID) {
-  let html = fetch(`/manga/chapters/${mangaID}?offset=${offset}`);
-  let chapterPlacement = Element.getElementById("chapter_list");
+  let html = fetch(`/manga/chapters/${mangaID}?offset=${offset}`).await;
+  let chapterPlacement = document.getElementById("chapter_list");
   chapterPlacement.innerHTML = html
 }
