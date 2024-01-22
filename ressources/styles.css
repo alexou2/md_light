@@ -33,8 +33,6 @@ a.chapter_link:link {
 
 
 .chapter_item {
-  /* display: flex; */
-  /* align-content: basseline; */
   justify-content: space-between;
   margin: 1em;
 }
@@ -52,6 +50,7 @@ img.profile {
   height: 1.5em;
   vertical-align: middle;
 }
+
 .profile{
   margin: .5em;
 }
@@ -108,8 +107,8 @@ img.profile {
 }
 
 .popular-manga {
-  border-bottom: 1px solid white;
-
+  /* border-bottom: 1px solid white; */
+margin: .6em;
 }
 
 /*turn on or off to change the popular manga ui design*/
@@ -117,10 +116,12 @@ img.profile {
   margin-right: 100%; 
   padding: 1rem;
   scroll-snap-align: start;
+
 } */
 
 .popular-manga>a>img {
   border-radius: .3em;
+  height: 20em;
 }
 
 img.cover_art {
@@ -154,7 +155,10 @@ margin-right: auto;
 
 }
 
-
+.manga_title{
+  margin: 1em;
+  font-size: 3em;
+}
 
 img.manga_cover{
   border-radius: 3%;
