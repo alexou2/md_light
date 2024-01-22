@@ -27,7 +27,7 @@ pub fn get_random(args: &HashMap<String, Value>) -> tera::Result<Value> {
 
 lazy_static! {
     pub static ref TEMPLATES: Tera = {
-        let mut tera = match Tera::new("ressources/*") {
+        let mut tera = match Tera::new("templates/*") {
             Ok(t) => t,
             Err(e) => {
                 println!("Parsing error(s): {}", e);
