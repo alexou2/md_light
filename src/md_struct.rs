@@ -1,8 +1,8 @@
 use serde_json::Value;
 // use serde_derive::Serialize;
 use crate::api_error::ApiError;
-use serde::Serialize;
 use crate::language::Language;
+use serde::Serialize;
 
 /// used when checking the mangadex api status from /server/ping
 pub struct ServerStatus {
@@ -82,6 +82,13 @@ pub struct Chapter {
     pub chapter_id: String,
     pub total_chapters: i32,
 }
+
+#[derive(Clone, Serialize)]
+pub struct MangaChapters {
+    chapters: Vec<Chapter>,
+    pub total: i32,
+}
+
 #[derive(Serialize)]
 pub struct AuthorInfo {
     pub name: String,
@@ -117,5 +124,5 @@ impl ValueExtensions for Value {
 
 pub enum Source {
     MangaDex,
-    Comick
+    Comick,
 }

@@ -4,6 +4,8 @@ use crate::language;
 use crate::language::Language;
 use crate::md_struct::*;
 use crate::utills::*;
+use lazy_static::lazy_static;
+
 use chrono::offset;
 use clap::builder::Resettable;
 use clap::builder::Str;
@@ -19,6 +21,10 @@ const BASE_URL: &'static str = "https://api.mangadex.org";
 const LIMIT: [(&str, i32); 1] = [("limit", 500)];
 const CHAPTER_ORDERING: [(&str, &str); 1] = [("order[chapter]", "asc")];
 const INCLUDE_TL_GROUP: [(&str, &str); 1] = [("includes[]", "scanlation_group")];
+
+lazy_static! {
+    static ref CLIENT: Client = Client::new();
+}
 
 // sends a get request to the /ping endpoint of the api
 pub async fn test_connection() -> Result<ServerStatus, ApiError> {
@@ -55,11 +61,10 @@ pub async fn test_connection() -> Result<ServerStatus, ApiError> {
 pub async fn request_with_agent(
     url: String,
 ) -> Result<impl Future<Output = Result<reqwest::Response, reqwest::Error>>, ApiError> {
-    // let client: Client = reqwest::Client::new();
     // initializes a new client if none is passed as argument
-    let client = reqwest::Client::new();
+    // let client = reqwest::Client::new();
 
-    let response = client
+    let response = CLIENT
         .get(url)
         .header(reqwest::header::USER_AGENT, USER_AGENT)
         .send();
@@ -67,20 +72,20 @@ pub async fn request_with_agent(
     Ok(response)
 }
 
-pub fn request_with_agent_blocking(url: String) -> Result<String, ApiError> {
-    // let client: Client = reqwest::Client::new();
-    // initializes a new client if none is passed as argument
-    let client = reqwest::blocking::Client::new();
+// pub fn request_with_agent_blocking(url: String) -> Result<String, ApiError> {
+//     // let client: Client = reqwest::Client::new();
+//     // initializes a new client if none is passed as argument
+//     let client = reqwest::blocking::Client::new();
 
-    let response = client
-        .get(url)
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .query(&INCLUDE_TL_GROUP)
-        .send()?
-        .text()?;
+//     let response = client
+//         .get(url)
+//         .header(reqwest::header::USER_AGENT, USER_AGENT)
+//         .query(&INCLUDE_TL_GROUP)
+//         .send()?
+//         .text()?;
 
-    Ok(response)
-}
+//     Ok(response)
+// }
 
 // uses threads to fetch all of the chapters for a manga
 // async fn get_chapters(url: String) -> Vec<Result<Value, ApiError>> {
@@ -141,9 +146,9 @@ async fn sync_chap(
     // if *valid_req.lock()? == false {
     //     return Err(ApiError::ApiResponseError);
     // }
-    let client = reqwest::Client::builder().build()?;
+    // let client = reqwest::Client::builder().build()?;
 
-    let mut response = client
+    let mut response = CLIENT
         .get(url)
         .header(reqwest::header::USER_AGENT, USER_AGENT)
         .query(&LIMIT)
@@ -229,9 +234,8 @@ pub async fn get_new_chapters() -> Result<Vec<NewChapters>, ApiError> {
             let chapter_name = &attributes["title"]
                 .remove_quotes()
                 .unwrap_or(chapter_number.clone()); // sets the chapter name to the chapter number if the real chapter name is null
-            let language = &attributes["translatedLanguage"]
-                .remove_quotes();
-                // .ok_or("error while removing quotes in language")?;
+            let language = &attributes["translatedLanguage"].remove_quotes();
+            // .ok_or("error while removing quotes in language")?;
             let page_number = attributes["pages"]
                 .remove_quotes()
                 .ok_or("error while removing quotes in page")?;
@@ -342,9 +346,9 @@ pub async fn search_manga(
         BASE_URL
     ); // formatting the correct url for the api endpoint
     let title_param = [("title", title)]; // setting the parameters of the search
-    let client: reqwest::Client = reqwest::Client::new();
+    // let client: reqwest::Client = reqwest::Client::new();
     // does the request using custom parameters
-    let resp = client
+    let resp = CLIENT
         .get(url)
         .query(&title_param)
         .query(&params)
@@ -626,7 +630,8 @@ pub async fn get_manga_chapters(
         json_list.push(i.to_owned());
     }
     // }
-    let ch_number = from_str::<i32>(&chapter_json["total"].to_string()).expect("cant't get total chapter number");
+    let ch_number = from_str::<i32>(&chapter_json["total"].to_string())
+        .expect("cant't get total chapter number");
 
     let mut chapter_list: Vec<Result<Chapter, ApiError>> = Vec::new();
     // let chapter_json = data.as_array().ok_or("there are no chapters")?; // transforming the json into an array

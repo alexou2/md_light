@@ -7,7 +7,6 @@ use serde_json::{from_value, json};
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use tera::try_get_value;
-#[macro_use]
 use tera::{Context, Function, Tera};
 
 // fn custom_function(text: &HashMap<String, Value>) -> Result<String, tera::Error> {
