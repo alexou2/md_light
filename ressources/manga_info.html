@@ -24,14 +24,11 @@
                 <h1 class="manga_title">{{manga_name}}</h1>
             </div>
             <div class="row_2">
-                <div class="description">
-                    <div class="description_text">{{description | safe}}</div>
-                </div>
+
 
                 <!-- the list of authors/ artists -->
 
                 <div class="author_list">
-
                     <h3>Authors: </h3>
                     {% for auth in authors %}
                     <div class="author" id="{{auth.role}}">
@@ -40,9 +37,13 @@
                     </div>
                     {% endfor %}
                 </div>
+
+
+                <div class="description">
+                    <div class="description_text">{{description | safe}}</div>
+                </div>
             </div>
         </div>
-        <h3>Chapters</h3>
         <!-- chapters will go here -->
         <div class="chapter_list" id="chapter_list">
             <script>

@@ -10,7 +10,7 @@ a {
   text-decoration: none;
 }
 
-.manga_content{
+.manga_content {
   /* display: flex; */
 }
 
@@ -51,7 +51,7 @@ img.profile {
   vertical-align: middle;
 }
 
-.profile{
+.profile {
   margin: .5em;
 }
 
@@ -86,7 +86,7 @@ img.profile {
 .title {
   width: 15em;
   text-align: center;
-  margin: 1em;
+  /* margin: 1em; */
   transition: transform .3s;
   font-size: 1.15em;
 }
@@ -108,7 +108,7 @@ img.profile {
 
 .popular-manga {
   /* border-bottom: 1px solid white; */
-margin: .6em;
+  margin: .6em;
 }
 
 /*turn on or off to change the popular manga ui design*/
@@ -122,6 +122,8 @@ margin: .6em;
 .popular-manga>a>img {
   border-radius: .3em;
   height: 20em;
+  max-width: 20em;
+  object-fit: cover;
 }
 
 img.cover_art {
@@ -142,29 +144,50 @@ img.cover_art {
   align-self: center;
 }
 
+.manga_info {
+
+  margin-left: 3em;
+  margin-right: 3em;
+}
 
 .row_1 {
   display: flex;
   /* vertical-align: middle; */
-/* align-items: center; */
-/* text-align: center; */
-align-content: center;
-margin-left: auto;
-margin-right: auto;
- /* flex-wrap: nowrap; */
+  /* align-items: center; */
+  /* text-align: center; */
+  align-content: center;
+
+  /* flex-wrap: nowrap; */
 
 }
 
-.manga_title{
-  margin: 1em;
+.row_2 {
+  display: flex;
+  margin-top: 1em;
+  /* flex-wrap: wrap-reverse; */
+  /* flex-wrap: wrap-reverse; */
+}
+
+.author {
+  width: max-content;
+}
+
+.manga_title {
+  margin-left: 1em;
   font-size: 3em;
 }
 
-img.manga_cover{
+
+
+img.manga_cover:hover {
+  transform: scale(1.2);
+}
+img.manga_cover {
   border-radius: 3%;
+  transition: .5s;
 }
 
-.description{
+.description {
   margin-left: 1em;
   /* width: max-content; */
 }
@@ -190,15 +213,22 @@ img.feather {
 
 /* loading spinner animation */
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
-.loading{
-    border: 16px solid #f3f3f3;
+
+.loading {
+  border: 16px solid #f3f3f3;
   border-radius: 50%;
   border-top: 16px solid #3498db;
   width: 120px;
   height: 120px;
-  -webkit-animation: spin 2s linear infinite; /* Safari */
+  -webkit-animation: spin 2s linear infinite;
+  /* Safari */
   animation: spin 2s linear infinite;
 }

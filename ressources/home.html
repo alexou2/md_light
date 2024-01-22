@@ -17,7 +17,8 @@
             <input autocomplete="off" id="search_box" type="text" name="query" placeholder="Search" required>
         </form>
     </div>
-    
+    <h1>Popular</h1>
+
     <div class="popular">
         {% for title in popular_manga %}
         <div class="popular-manga"><a href="/manga/{{title.id}}"><img src="/proxy/images/{{title.cover}}"
@@ -28,11 +29,13 @@
 
     </div>
 
-
     <div class="new-release">
+        <h1>New Releases</h1>
+
         {% for chapter in new_chapters %}
         <div class="new_chapter"><a class="chapter"
-                href="/manga/{{chapter.manga_id}}/{{chapter.chapter_id}}">{{chapter.chapter_name}} {{chapter.language.lang}}</a>
+                href="/manga/{{chapter.manga_id}}/{{chapter.chapter_id}}">{{chapter.chapter_name}}
+                {{chapter.language.lang}}</a>
         </div>
         {% endfor %}
     </div>
