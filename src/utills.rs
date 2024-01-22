@@ -5,14 +5,9 @@ use std::env::consts;
 use std::path::Path;
 use std::{env, fs::*};
 
-// returns the local time, offset by a month
+/// returns the local time, offset by a month for the homepage feed
 pub fn get_offset_time() -> String {
     let current_time = chrono::Local::now();
-
-    // let mut year = current_time.year();
-    // let mut month = current_time.month();
-    // let mut day = current_time.day();
-    // set the month to devaber of previous year if the current month is january
 
     // offsets the time to get the same feed as mangadex's popular titles
     let offset_time = current_time
@@ -28,26 +23,20 @@ pub fn get_offset_time() -> String {
         offset_time.day(),
         offset_time.hour(),
         offset_time.minute(),
-        offset_time.second() // 0,
-                             // 0,
-                             // 0
+        offset_time.second()
     );
-    println!("date-1month = {}", formatted_time);
     formatted_time
 }
 
-// checks if the request comes from the localhost ip or another one
+/// checks if the request comes from 172.0.0.1 (localhost)
 pub fn check_localhost(path: &HttpRequest) -> bool {
-    let is_localhost = path
-        .connection_info()
-        .peer_addr()
-        .expect("unable to get client ID")
-        == "127.0.0.1"
-        || path
-            .connection_info()
-            .peer_addr()
-            .expect("unable to get client ID")
-            == "localhost";
+    let binding = path.connection_info();
+    let ip = binding.peer_addr().expect("unable to get client IP");
+    
+    let is_localhost = match ip {
+        "172.0.0.1" | "localhost" => true,
+        _ => false,
+    };
     is_localhost
 }
 

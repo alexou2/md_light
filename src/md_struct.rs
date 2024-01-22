@@ -80,6 +80,7 @@ pub struct Chapter {
     pub chapter_number: String,
     pub language: Language,
     pub chapter_id: String,
+    pub total_chapters: i32,
 }
 #[derive(Serialize)]
 pub struct AuthorInfo {

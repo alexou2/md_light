@@ -17,30 +17,39 @@
             <input autocomplete="off" id="search_box" type="text" name="query" placeholder="Search" required>
         </form>
     </div>
-    <div class="manga_info">
-        <div class="col_1">
-            <img src="/proxy/images/{{cover}}">
-            <div class="col_2">
-                <h1>{{manga_name}}</h1>
-                <div class="description">{{description | safe}}</div>
+    <div class="manga_content">
+        <div class="manga_info">
+            <div class="row_1">
+                <img class="manga_cover" src="/proxy/images/{{cover| proxy_url}}">
+                <h1 class="manga_title">{{manga_name}}</h1>
             </div>
-            <div class="author_list">
-                <h3>Authors: </h3>
-                {% for auth in authors %}
-                <div class="author">
-                    <img class="profile" src="/ressources/profile.svg">
-                    <a href="/author/{{auth.author_id}}">{{auth.role}}: {{auth.author_name}}</a>
+            <div class="row_2">
+                <div class="description">
+                    <div class="description_text">{{description | safe}}</div>
                 </div>
-                {% endfor %}
-                <!-- chapters will go here -->
-                <div class="chapter_list" id="chapter_list">
-                    <script>
-                        console.log("{{manga_id}}")
-                        fetch_chapter("{{manga_id}}", 0)                        
-                    </script>
+
+                <!-- the list of authors/ artists -->
+
+                <div class="author_list">
+
+                    <h3>Authors: </h3>
+                    {% for auth in authors %}
+                    <div class="author" id="{{auth.role}}">
+                        <img class="profile" src="/ressources/profile.svg">
+                        <a href="/author/{{auth.author_id}}">{{auth.role |title}}: {{auth.author_name}}</a>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
+        <h3>Chapters</h3>
+        <!-- chapters will go here -->
+        <div class="chapter_list" id="chapter_list">
+            <script>
+                fetch_chapter("{{manga_id}}", 0)                        
+            </script>
+        </div>
+
     </div>
 
 </body>

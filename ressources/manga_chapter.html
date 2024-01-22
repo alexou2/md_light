@@ -1,3 +1,49 @@
+<div class="offset">
+
+
+    {% for i in range(end= current) %}
+    <button class="chap_box" id="before" onclick="fetch_chapter(`{{manga_id}}`, '{{(loop.index-1)*100}}')" >{{(loop.index)}}</button>
+    {% endfor %}
+
+    <button class="chap_box" id="current">{{current+1}}</button>
+
+    {% for i in range(start=current+1, end = total) %}
+    <button class="chap_box" onclick="fetch_chapter(`{{manga_id}}`, '{{(loop.index+current)*100}}')">{{ loop.index+current+1}}</button>
+    {% endfor %}
+
+
+
+
+
+</div>
+
+<style>
+    .offset {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .chap_box {
+        background-color: aqua;
+        border: 10px;
+        border-radius: 10%;
+        cursor: pointer;
+        width: 2em;
+        height: 2em;
+        font-size: 1.5em;
+        text-align: center;
+        margin: 1em;
+    }
+#before{
+    background-color: blueviolet;
+}
+    #current {
+        background-color: orange;
+
+    }
+</style>
+
 
 {% for chapter in chapter_list %}
 
@@ -20,17 +66,15 @@
 
 {% endfor %}
 
-<style>
-    .chap_box {
-        background-color: aqua;
-    }
-</style>
 
-<script>
-    function fetch_chapter(offset, mangaID) {
-        console.log("fetching chapters")
-        let html = fetch(`chapters/${mangaID}?offset=${offset}`).await
-        let chapterPlacement = Element.getElementById("chapter_list");
-        chapterPlacement.innerHTML = html
+<!-- <script>
+    async function fetch_chapter(mangaID, offset) {
+        console.log(`url:   /chapters/${mangaID}?offset=${offset}`);
+
+        let html = await fetch(`/chapters/${mangaID}?offset=${offset}`);
+        console.log(html)
+        let chapterPlacement = document.getElementById("chapter_list");
+        let resp = await html.text()
+        chapterPlacement.innerHTML = resp
     }
-</script>
+</script> -->

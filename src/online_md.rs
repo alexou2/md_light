@@ -514,7 +514,6 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
     let author_json = data["relationships"]
         .as_array()
         .ok_or("authors is not an array")?;
-
     // gets the list pf authors involved in the manga
     for author in author_json {
         // breaks the loop if the data isn't about an author/drawer
@@ -627,6 +626,7 @@ pub async fn get_manga_chapters(
         json_list.push(i.to_owned());
     }
     // }
+    let ch_number = from_str::<i32>(&chapter_json["total"].to_string()).expect("cant't get total chapter number");
 
     let mut chapter_list: Vec<Result<Chapter, ApiError>> = Vec::new();
     // let chapter_json = data.as_array().ok_or("there are no chapters")?; // transforming the json into an array
@@ -699,6 +699,7 @@ pub async fn get_manga_chapters(
             language: language,
             tl_group: tl_group,
             chapter_id: chapter_id,
+            total_chapters: ch_number,
         });
         chapter_list.push(chapter_instance)
     }

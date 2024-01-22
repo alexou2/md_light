@@ -21,6 +21,7 @@ use reqwest::Client;
 #[get("/")]
 async fn index(path: HttpRequest) -> HttpResponse {
     let is_localhost = utills::check_localhost(&path);
+   
     let feed = online_md::get_md_homepage_feed().await;
 
     // handles the errors by sending the error page
@@ -71,7 +72,7 @@ async fn get_chapters(
     infos: web::Query<chapter_query>,
 ) -> HttpResponse {
     let requested_page = path.path();
-    // let is_localhost = utills::check_localhost(&path);
+    let is_localhost = utills::check_localhost(&path);
 
     let chapters =
         online_md::get_manga_chapters(manga_id.to_string(), infos.language.clone(), infos.offset)
@@ -79,7 +80,7 @@ async fn get_chapters(
             .unwrap();
 
     let html =
-        tera_templates::render_manga_chapters(chapters, infos.offset, 120, manga_id.to_string());
+        tera_templates::render_manga_chapters(chapters, infos.offset, manga_id.to_string(), is_localhost);
 
     // handles the errors by sending the error page
     let html = match html {
@@ -341,7 +342,7 @@ pub struct Args {
     pub secure: bool,
 
     /// Manually set the port for the server
-    #[arg(short, long = "PORT", default_value_t = 8080)]
+    #[arg(short, long, default_value_t = 8080)]
     pub port: u16,
 
     /// Uses the recommended server options

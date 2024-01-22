@@ -81,7 +81,6 @@ impl std::convert::From<&Option<String>> for Language {
 
 /// takes a language and returns the flag fot the language
 pub fn to_flag_str(language: &str) -> &'static str {
-    println!("{language}");
     let flag = match language {
         "en" => EN,
         "fr" => FR,
