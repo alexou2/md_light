@@ -33,7 +33,7 @@ a.chapter_link:link {
 
 
 .chapter_item {
-  justify-content: space-between;
+  /* justify-content: space-between; */
   margin: 1em;
 }
 
@@ -183,6 +183,9 @@ img.manga_cover:hover {
   transform: scale(1.2);
 }
 img.manga_cover {
+  object-fit:contain;
+
+
   border-radius: 3%;
   transition: .5s;
 }
