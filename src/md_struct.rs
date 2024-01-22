@@ -101,9 +101,9 @@ pub struct TlGroup {
     pub id: String,
     pub name: String,
 }
-
+#[derive(Clone, Serialize)]
 pub struct ChapterPage {
-    pub chapter_name: String,
+    pub name: String,
     pub pages: Vec<String>,
 }
 

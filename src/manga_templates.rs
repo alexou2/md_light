@@ -159,11 +159,11 @@ pub fn render_chapter(chapter_info: ChapterPage, is_localhost: bool, manga_id: S
             (DOCTYPE)
             link rel="stylesheet" href="/ressources/styles.css";
             script src = {"/ressources/index.js"}{}
-            title  {(chapter_info.chapter_name)" | MD_Light"}
+            title  {(chapter_info.name)" | MD_Light"}
 
             body {
                 (get_top_bar())
-            h1 {(chapter_info.chapter_name)}
+            h1 {(chapter_info.name)}
             div.page_list ondblclick = "goFullscreen()";{
                 @for i in chapter_info.pages{
 

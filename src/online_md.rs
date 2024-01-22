@@ -709,7 +709,7 @@ pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterPage, ApiErr
         page_list.push(page_link)
     }
     let chapter = ChapterPage {
-        chapter_name: "ch".to_string(),
+        name: "ch".to_string(),
         pages: page_list,
     };
     Ok(chapter)

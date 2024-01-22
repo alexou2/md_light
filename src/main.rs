@@ -19,6 +19,7 @@ use colored::Colorize;
 use local_ip_address::local_ip;
 use query_struct::*;
 use reqwest::Client;
+use tera_templates::render_chapter_view;
 
 #[get("/")]
 async fn index(path: HttpRequest) -> HttpResponse {
@@ -110,7 +111,8 @@ async fn get_chapter(chapter: web::Path<(String, String)>, path: HttpRequest) ->
 
     let chapter_info = online_md::get_chapter_pages(chapter_id.clone()).await;
     let html = match chapter_info {
-        Ok(e) => manga_templates::render_chapter(e, is_localhost, manga_id),
+        // Ok(e) => manga_templates::render_chapter(e, is_localhost, manga_id),
+        Ok(e)=> render_chapter_view(e, is_localhost),
         Err(v) => manga_templates::render_error_page(v.into(), path.path()),
     };
     HttpResponse::build(StatusCode::OK)

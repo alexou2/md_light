@@ -120,6 +120,34 @@ pub fn render_manga_chapters(
 
     Ok(rendered)
 }
+
+pub fn render_chapter_view(chapter: ChapterPage, is_localhost: bool)-> String{
+    let mut context = Context::new();
+
+    context.insert("is_localhost", &is_localhost);
+    context.insert("chapter", &chapter);
+
+    let rendered = TEMPLATES
+        .render("read_chapter.html", &context)
+        .expect("Failed to render chapter template");
+
+    rendered
+}
+
+pub fn render_author(author_info: AuthorInfo, is_localhost: bool)-> String{
+    let mut context = Context::new();
+
+    context.insert("is_localhost", &is_localhost);
+    context.insert("author", &author_info);
+
+    let rendered = TEMPLATES
+        .render("author.html", &context)
+        .expect("Failed to render chapter template");
+
+    rendered
+}
+
+
 /// transforms the offset to an index ex: 501 => 6
 fn round_idx(x: i32) -> i32 {
     let x: f32 = x as f32;

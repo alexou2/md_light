@@ -20,9 +20,9 @@
     
     <h1 class="author_name">{{author.name}}</h1>
     <div class="works" id="works">
-        {% for manga in titles %}
+        {% for title in titles %}
         <div class="title">
-            <a class="title-image" href="/manga/{{manga.id}}"><img src="/proxy/images/{{manga.cover}}">
+            <a class="title-image" href="/manga/{{title.id}}"><img src="/proxy/images/{{title.cover}}">
                 <div class="manga-title">{{manga.name}}</div>
             </a>
         </div>
