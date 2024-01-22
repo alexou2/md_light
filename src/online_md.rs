@@ -297,7 +297,7 @@ pub async fn get_popular_manga() -> Result<Vec<PopularManga>, ApiError> {
     Ok(popular_manga)
 }
 
-// searches for a manga
+/// searches for a manga
 pub async fn search_manga(
     title: Option<String>,
     params: Option<[(&str, String); 1]>,
@@ -309,8 +309,7 @@ pub async fn search_manga(
         BASE_URL
     ); // formatting the correct url for the api endpoint
     let title_param = [("title", title)]; // setting the parameters of the search
-                                          // let client: reqwest::Client = reqwest::Client::new();
-                                          // does the request using custom parameters
+
     let resp = CLIENT
         .get(url)
         .query(&title_param)
@@ -369,7 +368,7 @@ pub async fn search_manga(
     Ok(search_results)
 }
 
-// searches for an author
+/// searches for an author
 pub async fn search_author(query: String) -> Result<Vec<AuthorInfo>, ApiError> {
     let url = format!("{BASE_URL}/author?name={query}");
 
@@ -564,7 +563,8 @@ pub async fn get_manga_chapters(
     manga_id: String,
     language: Option<String>,
     offset: i32,
-) -> Result<Vec<Result<Chapter, ApiError>>, ApiError> {
+// ) -> Result<Vec<Result<Chapter, ApiError>>, ApiError> {
+) -> Result<MangaChapters, ApiError> {
     let url = format!("{}/manga/{}/feed", BASE_URL, manga_id);
 
     let chapter_json = sync_chap(url, offset, language).await?;
@@ -667,11 +667,16 @@ pub async fn get_manga_chapters(
             language: language,
             tl_group: tl_group,
             chapter_id: chapter_id,
-            total_chapters: ch_number,
         });
         chapter_list.push(chapter_instance)
     }
-    Ok(chapter_list)
+
+    let ret = MangaChapters{
+        chapters: chapter_list,
+        total: ch_number,
+    };
+
+    Ok(ret)
 }
 
 pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterPage, ApiError> {

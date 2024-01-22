@@ -97,7 +97,7 @@ pub fn render_manga_info(manga: MangaInfo) -> String {
 }
 /// renders the chapter list of a manga
 pub fn render_manga_chapters(
-    chapters: Vec<Result<Chapter, ApiError>>,
+    chapters: MangaChapters,
     offset: i32,
     manga_id: String,
     is_localhost: bool,
@@ -105,13 +105,13 @@ pub fn render_manga_chapters(
     let mut context = Context::new();
 
     let mut chap = vec![];
-    for ch in chapters {
+    for ch in chapters.chapters {
         chap.push(ch?)
     }
     context.insert("chapter_list", &chap);
     context.insert("manga_id", &manga_id);
     context.insert("current", &round_idx(offset));
-    context.insert("total", &round_idx(chap[0].total_chapters));
+    context.insert("total", &round_idx(chapters.total));
     context.insert("is_localhost", &is_localhost);
 
     let rendered = TEMPLATES

@@ -2,13 +2,15 @@
 
 
     {% for i in range(end= current) %}
-    <button class="chap_box" id="before" onclick="fetch_chapter(`{{manga_id}}`, '{{(loop.index-1)*100}}')" >{{(loop.index)}}</button>
+    <button class="chap_box" id="before"
+        onclick="fetch_chapter(`{{manga_id}}`, '{{(loop.index-1)*100}}')">{{(loop.index)}}</button>
     {% endfor %}
 
     <button class="chap_box" id="current">{{current+1}}</button>
 
     {% for i in range(start=current+1, end = total) %}
-    <button class="chap_box" onclick="fetch_chapter(`{{manga_id}}`, '{{(loop.index+current)*100}}')">{{ loop.index+current+1}}</button>
+    <button class="chap_box" onclick="fetch_chapter(`{{manga_id}}`, '{{(loop.index+current)*100}}')">{{
+        loop.index+current+1}}</button>
     {% endfor %}
 
 
@@ -35,38 +37,67 @@
         text-align: center;
         margin: 1em;
     }
-#before{
-    background-color: blueviolet;
-}
+
+    #before {
+        background-color: blueviolet;
+    }
+
     #current {
         background-color: orange;
 
     }
 </style>
 
+<div id="chapter">
+    {% for chapter in chapter_list %}
 
-{% for chapter in chapter_list %}
-
-<div class="chapter_item" id="{{chapter.language}}">
-    <a class="chapter_link" href="/manga/{{manga_id}}/{{chapter.chapter_id}}">
-        <div class="chapter">
-            {{chapter.chapter_number}} {{chapter.language.lang}}
-            {{chapter.chapter_name}}
-            <!-- the list of translators for the chapter -->
-            <div class="tl_group_list">
-                {% for group in chapter.tl_group %}
-                <div class="group">
-                    <a href="/group/{{group.id}}" {{group.name}}></a>
+    <div class="chapter_item" id="chapter_item" id="{{chapter.language}}">
+        <a class="chapter_link" href="/manga/{{manga_id}}/{{chapter.chapter_id}}">
+            <div class="chapter">
+                {{chapter.chapter_number}} {{chapter.language.lang}}
+                {{chapter.chapter_name}}
+                <!-- the list of translators for the chapter -->
+                <div class="tl_group_list">
+                    {% for group in chapter.tl_group %}
+                    <div class="group">
+                        <a href="/group/{{group.id}}" {{group.name}}></a>
+                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
             </div>
-        </div>
-    </a>
+        </a>
+    </div>
+
+    {% endfor %}
 </div>
 
-{% endfor %}
 
 
+
+
+<style>
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+
+    .loading {
+        border: 16px solid #f3f3f3;
+        border-radius: 50%;
+        border-top: 16px solid #3498db;
+        width: 120px;
+        height: 120px;
+        -webkit-animation: spin 2s linear infinite;
+        /* Safari */
+        animation: spin 2s linear infinite;
+    }
+</style>
 <!-- <script>
     async function fetch_chapter(mangaID, offset) {
         console.log(`url:   /chapters/${mangaID}?offset=${offset}`);

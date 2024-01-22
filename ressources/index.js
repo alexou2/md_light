@@ -57,8 +57,10 @@ function goFullscreen() {
 }
 async function fetch_chapter(mangaID, offset) {
   let chapterPlacement = document.getElementById("chapter_list");
-chapterPlacement.innerHTML = ""
-
+  try{
+  document.getElementById("chapter").innerHTML = `<div class="loading"></div>`
+// chapterPlacement.innerHTML = ""
+  }catch{}
   console.log(`url:   /chapters/${mangaID}?offset=${offset}`);
   let html = await fetch(`/chapters/${mangaID}?offset=${offset}`);
   let resp = await html.text()
