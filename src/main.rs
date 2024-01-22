@@ -6,6 +6,7 @@ mod language;
 mod manga_templates;
 mod md_struct;
 mod online_md;
+mod query_struct;
 mod tera_templates;
 mod utills;
 
@@ -16,12 +17,13 @@ use actix_web::{
 use clap::{builder::Str, Parser};
 use colored::Colorize;
 use local_ip_address::local_ip;
+use query_struct::*;
 use reqwest::Client;
 
 #[get("/")]
 async fn index(path: HttpRequest) -> HttpResponse {
     let is_localhost = utills::check_localhost(&path);
-   
+
     let feed = online_md::get_md_homepage_feed().await;
 
     // handles the errors by sending the error page
@@ -59,17 +61,17 @@ async fn get_manga_info(manga_id: web::Path<String>, path: HttpRequest) -> HttpR
         .body(html)
 }
 
-#[derive(serde::Deserialize)]
-struct chapter_query {
-    offset: i32,
-    language: Option<String>,
-}
+// #[derive(serde::Deserialize)]
+// struct chapter_query {
+//     offset: i32,
+//     language: Option<String>,
+// }
 
 #[get("/chapters/{id}")]
 async fn get_chapters(
     manga_id: web::Path<String>,
     path: HttpRequest,
-    infos: web::Query<chapter_query>,
+    infos: web::Query<ChapterQuery>,
 ) -> HttpResponse {
     let requested_page = path.path();
     let is_localhost = utills::check_localhost(&path);
@@ -79,8 +81,12 @@ async fn get_chapters(
             .await
             .unwrap();
 
-    let html =
-        tera_templates::render_manga_chapters(chapters, infos.offset, manga_id.to_string(), is_localhost);
+    let html = tera_templates::render_manga_chapters(
+        chapters,
+        infos.offset,
+        manga_id.to_string(),
+        is_localhost,
+    );
 
     // handles the errors by sending the error page
     let html = match html {
@@ -113,20 +119,20 @@ async fn get_chapter(chapter: web::Path<(String, String)>, path: HttpRequest) ->
 }
 
 // searches for a manga
-// #[get("/search/{query}")]
 #[get("/search")]
-async fn search(path: HttpRequest) -> HttpResponse {
+async fn search(path: HttpRequest, params: web::Query<SearchQuery>) -> HttpResponse {
     let is_localhost = utills::check_localhost(&path);
-    let query = path.query_string().replace("query=", "");
-    // let query: web::Path<String> = todo!();
-    let manga_results = online_md::search_manga(Some(query.to_string()), None).await;
-    let author_results = online_md::search_author(query.to_string()).await;
+    let search_query = &params.query;
+
+    
+    let manga_results = online_md::search_manga(Some(search_query.to_string()), None).await;
+    let author_results = online_md::search_author(search_query.to_string()).await;
 
     let search_result = manga_results.and_then(|a| author_results.map(|b| (a, b)));
 
     let html = match search_result {
         // Ok(e) => manga_templates::render_complete_search(e, is_localhost, query.to_string()),
-        Ok(e) => tera_templates::render_complete_search(e, query.to_string()),
+        Ok(e) => tera_templates::render_complete_search(e, search_query.to_string()),
         Err(v) => manga_templates::render_error_page(v, path.path()),
     };
 
