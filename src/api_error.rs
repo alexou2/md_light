@@ -3,7 +3,6 @@ use std::num::ParseIntError;
 use std::sync::MutexGuard;
 use std::sync::PoisonError;
 
-use serde_derive::Serialize;
 
 #[derive(Debug)]
 pub enum ApiError {
@@ -86,7 +85,7 @@ impl std::convert::From<std::io::Error> for ApiError {
     }
 }
 impl From<PoisonError<MutexGuard<'_, bool>>> for ApiError {
-    fn from(err: PoisonError<MutexGuard<'_, bool>>) -> Self {
+    fn from(_: PoisonError<MutexGuard<'_, bool>>) -> Self {
         todo!()
     }
 }

@@ -121,8 +121,3 @@ impl ValueExtensions for Value {
         }
     }
 }
-
-pub enum Source {
-    MangaDex,
-    Comick,
-}

@@ -6,7 +6,7 @@ use lazy_static::lazy_static;
 
 use reqwest::{header::USER_AGENT, Client};
 use serde_json::{from_str, Value};
-use std::{future::Future, thread::JoinHandle, time::Duration};
+use std::future::Future;
 
 const BASE_URL: &'static str = "https://api.mangadex.org";
 const LIMIT: [(&str, i32); 1] = [("limit", 500)];
@@ -563,7 +563,7 @@ pub async fn get_manga_chapters(
     manga_id: String,
     language: Option<String>,
     offset: i32,
-// ) -> Result<Vec<Result<Chapter, ApiError>>, ApiError> {
+    // ) -> Result<Vec<Result<Chapter, ApiError>>, ApiError> {
 ) -> Result<MangaChapters, ApiError> {
     let url = format!("{}/manga/{}/feed", BASE_URL, manga_id);
 
@@ -671,7 +671,7 @@ pub async fn get_manga_chapters(
         chapter_list.push(chapter_instance)
     }
 
-    let ret = MangaChapters{
+    let ret = MangaChapters {
         chapters: chapter_list,
         total: ch_number,
     };

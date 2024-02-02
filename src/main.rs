@@ -1,5 +1,5 @@
 mod api_error;
-mod consts;
+mod cli_options;
 mod downloader;
 mod installer;
 mod language;
@@ -14,12 +14,37 @@ use actix_files::Files;
 use actix_web::{
     get, http::StatusCode, web, App, HttpRequest, HttpResponse, HttpServer, Responder, Result,
 };
-use clap::{builder::Str, Parser};
+use clap::Parser;
+use cli_options::CliArgs;
 use colored::Colorize;
+use lazy_static::lazy_static;
 use local_ip_address::local_ip;
 use query_struct::*;
 use reqwest::Client;
 use tera_templates::render_chapter_view;
+
+lazy_static! {
+    /// the startup arguments for the server
+    static ref CONFIG: CliArgs = get_startup_config();
+}
+
+/// loads the config file if the user used --conf
+fn get_startup_config() -> CliArgs {
+    let mut args = CliArgs::parse();
+    if args.config {
+        let config_file = std::fs::read_to_string("~/.config/md_light/mdl.conf");
+        match config_file {
+            Ok(e) => args = parse_config_file(e),
+            Err(_) => println!("Unable to load the confi file. Starting with the other arguments"),
+        }
+    }
+    return args;
+}
+
+fn parse_config_file(content: String) -> CliArgs {
+    let config = toml::from_str(&content).unwrap();
+    config
+}
 
 #[get("/")]
 async fn index(path: HttpRequest) -> HttpResponse {
@@ -37,6 +62,7 @@ async fn index(path: HttpRequest) -> HttpResponse {
         Ok(e) => tera_templates::render_homepage(e),
         Err(v) => manga_templates::render_error_page(v, "/"),
     };
+
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
         .body(html)
@@ -112,7 +138,7 @@ async fn get_chapter(chapter: web::Path<(String, String)>, path: HttpRequest) ->
     let chapter_info = online_md::get_chapter_pages(chapter_id.clone()).await;
     let html = match chapter_info {
         // Ok(e) => manga_templates::render_chapter(e, is_localhost, manga_id),
-        Ok(e)=> render_chapter_view(e, is_localhost),
+        Ok(e) => render_chapter_view(e, is_localhost),
         Err(v) => manga_templates::render_error_page(v.into(), path.path()),
     };
     HttpResponse::build(StatusCode::OK)
@@ -125,8 +151,8 @@ async fn get_chapter(chapter: web::Path<(String, String)>, path: HttpRequest) ->
 async fn search(path: HttpRequest, params: web::Query<SearchQuery>) -> HttpResponse {
     let is_localhost = utills::check_localhost(&path);
     let search_query = &params.query;
+    println!("search for: {}", search_query);
 
-    
     let manga_results = online_md::search_manga(Some(search_query.to_string()), None).await;
     let author_results = online_md::search_author(search_query.to_string()).await;
 
@@ -207,7 +233,7 @@ async fn ping_md() -> impl Responder {
 // kills the server
 #[get("/server/kill")]
 async fn kill_server(path: HttpRequest) -> impl Responder {
-    let restrict = Args::parse().secure;
+    let restrict = CliArgs::parse().secure;
     // allows killing the server only if the restrict option is on and the client is the host or if the  restrict option is false
     if (restrict && utills::check_localhost(&path)) || (!restrict) {
         println!("The server was killed with exit code 1");
@@ -245,7 +271,7 @@ async fn image_proxy(image_url: web::Path<String>) -> Result<HttpResponse> {
                     // .content_type(resp.headers().get("content-type").unwrap())
                     .body(image_byte)),
                 // returns an empty image in case of an error
-                Err(e) => {
+                Err(_) => {
                     // utills::log_error(e);
                     Ok(HttpResponse::NotFound().finish())
                 }
@@ -261,7 +287,7 @@ async fn image_proxy(image_url: web::Path<String>) -> Result<HttpResponse> {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // the launch options
-    let mut args = Args::parse();
+    let mut args = CliArgs::parse();
 
     // sets the recommended options if launched with `--recommended`
     if args.recommended {
@@ -282,20 +308,20 @@ async fn main() -> std::io::Result<()> {
         recom = args.recommended,
         sec = args.secure
     );
-
-    // downloads the resources for the frontend, then exits
-    if args.install {
-        let installer = installer::install_ressources().await;
-        match installer {
-            Ok(_) => {
-                println!("installation successful, now exiting");
-                std::process::exit(0);
-            }
-            Err(e) => {
-                println!("error while installing the files: {}", e);
-                std::process::exit(1);
-            }
-        };
+    println!("{:?}", args.command.is_some());
+    // creates the config file
+    if args.command.is_some() {
+        installer::init(&mut args);
+        // match installer {
+        //     Ok(_) => {
+        //         println!("installation successful, now exiting");
+        //         std::process::exit(0);
+        //     }
+        //     Err(e) => {
+        //         println!("error while installing the files: {}", e);
+        //         std::process::exit(1);
+        //     }
+        // };
     }
 
     //sets the server port
@@ -324,36 +350,8 @@ async fn main() -> std::io::Result<()> {
     if args.lan {
         let lan_addr = local_ip().unwrap();
         server = server.bind((lan_addr, port))?;
+        println!("ip address: {}", lan_addr)
     }
 
     server.run().await
-}
-
-/// A web server that uses the mangadex api with a lighweight frontend for potato devices
-#[derive(Parser, Debug)]
-#[command(author = "_alexou_", version = "0.1.2", about , long_about = None)]
-pub struct Args {
-    /// Creates all of the necessary files and folders for the frontend
-    #[arg(short, long)]
-    pub install: bool,
-
-    /// Allows other lan devices to connect to the server (you will need to open the port on your device)
-    #[arg(short, long)]
-    pub lan: bool,
-
-    /// Uses the lower quality images from mangadex instead of the high quality ones
-    #[arg(short, long)]
-    pub datasaver: bool,
-
-    /// Restricts functionnalities for non-admin users
-    #[arg(short, long)]
-    pub secure: bool,
-
-    /// Manually set the port for the server
-    #[arg(short, long, default_value_t = 8080)]
-    pub port: u16,
-
-    /// Uses the recommended server options
-    #[arg(short, long)]
-    pub recommended: bool,
 }

@@ -1,5 +1,4 @@
 use crate::md_struct::*;
-use crate::utills::check_os;
 use chrono::{DateTime, Datelike, Timelike, Utc};
 use std::fs::{read_dir, write, DirBuilder};
 /// these are the naming conventions that will be used to store the manga and its chapters
@@ -13,7 +12,7 @@ use std::fs::{read_dir, write, DirBuilder};
 pub struct DownloadData {
     pub manga_info: MangaInfo,
     /// the website that is downloaded from eg: mangaDex
-    pub source: Source,
+    // pub source: Source,
     pub downloaded_language: &'static str,
     /// the date at which the manga is first downloaded
     // pub download_date: DateTime<Utc>,
@@ -29,7 +28,8 @@ const RESSOURCE_DIR: &'static str = ".md_light";
 /// downloads the manga
 /// the pages are stored in ~/.md_light/ (linux)
 pub fn download_manga(download_infos: Option<DownloadData>) {
-    let os = check_os();
+    // let os = check_os();
+    let os = todo!();
     // Checks if the os is compatible first
     match os {
         "linux" | "Linux" => (),

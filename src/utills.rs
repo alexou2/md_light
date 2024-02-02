@@ -1,9 +1,5 @@
 use actix_web::HttpRequest;
 use chrono::{Datelike, Timelike};
-use colored::*;
-use std::env::consts;
-use std::path::Path;
-use std::{env, fs::*};
 
 /// returns the local time, offset by a month for the homepage feed
 pub fn get_offset_time() -> String {
@@ -52,8 +48,4 @@ pub fn get_current_time() -> String {
         current_time.second()
     );
     formatted_time
-}
-
-pub fn check_os() -> &'static str {
-    env::consts::OS
 }

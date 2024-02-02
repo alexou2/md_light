@@ -1,8 +1,6 @@
 use core::fmt;
-use clap::builder::Str;
 use serde::{ser::SerializeStruct, Serialize, Serializer};
 
-use colored::Colorize;
 
 const EN: &'static str = "🇬🇧"; //english
 const FR: &'static str = "🇲🇫"; //french

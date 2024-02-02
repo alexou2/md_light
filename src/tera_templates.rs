@@ -21,7 +21,7 @@ pub fn proxy_url(value: &Value, _: &HashMap<String, Value>) -> tera::Result<Valu
     // println!("{}, {}", url, localhost);
     Ok(to_value(url).unwrap())
 }
-pub fn get_random(args: &HashMap<String, Value>) -> tera::Result<Value> {
+pub fn get_random(_: &HashMap<String, Value>) -> tera::Result<Value> {
     Ok("12".into())
 }
 
