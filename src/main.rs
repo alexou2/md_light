@@ -15,7 +15,7 @@ use actix_web::{
     get, http::StatusCode, web, App, HttpRequest, HttpResponse, HttpServer, Responder, Result,
 };
 use clap::Parser;
-use cli_options::CliArgs;
+use cli_options::*;
 use colored::Colorize;
 use lazy_static::lazy_static;
 use local_ip_address::local_ip;
@@ -23,28 +23,6 @@ use query_struct::*;
 use reqwest::Client;
 use tera_templates::render_chapter_view;
 
-lazy_static! {
-    /// the startup arguments for the server
-    static ref CONFIG: CliArgs = get_startup_config();
-}
-
-/// loads the config file if the user used --conf
-fn get_startup_config() -> CliArgs {
-    let mut args = CliArgs::parse();
-    if args.config {
-        let config_file = std::fs::read_to_string("~/.config/md_light/mdl.conf");
-        match config_file {
-            Ok(e) => args = parse_config_file(e),
-            Err(_) => println!("Unable to load the confi file. Starting with the other arguments"),
-        }
-    }
-    return args;
-}
-
-fn parse_config_file(content: String) -> CliArgs {
-    let config = toml::from_str(&content).unwrap();
-    config
-}
 
 #[get("/")]
 async fn index(path: HttpRequest) -> HttpResponse {
@@ -233,7 +211,8 @@ async fn ping_md() -> impl Responder {
 // kills the server
 #[get("/server/kill")]
 async fn kill_server(path: HttpRequest) -> impl Responder {
-    let restrict = CliArgs::parse().secure;
+    // let restrict = CliArgs::parse().secure;
+    let restrict =  CONFIG.secure;
     // allows killing the server only if the restrict option is on and the client is the host or if the  restrict option is false
     if (restrict && utills::check_localhost(&path)) || (!restrict) {
         println!("The server was killed with exit code 1");
@@ -287,14 +266,10 @@ async fn image_proxy(image_url: web::Path<String>) -> Result<HttpResponse> {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // the launch options
-    let mut args = CliArgs::parse();
+    // let mut args = CliArgs::parse();
 
     // sets the recommended options if launched with `--recommended`
-    if args.recommended {
-        args.lan = true;
-        args.secure = true;
-    }
-
+    
     // prints the options the server will start with
     println!(
         r"Startup options:
@@ -303,15 +278,26 @@ async fn main() -> std::io::Result<()> {
     Recommended settings:{recom},
     Secure: {sec}
     ",
-        lan = args.lan,
-        port = args.port,
-        recom = args.recommended,
-        sec = args.secure
+        lan = CONFIG.lan,
+        port = CONFIG.port,
+        recom = CONFIG.recommended,
+        sec = CONFIG.secure
     );
-    println!("{:?}", args.command.is_some());
+    println!("{:?}", CONFIG.command.is_some());
     // creates the config file
-    if args.command.is_some() {
-        installer::init(&mut args);
+    if CONFIG.command.is_some() {
+        // creates a mutable version of the startup argments
+        let mut config_args = CliArgs{
+            install: CONFIG.install,
+            lan: CONFIG.lan,
+            datasaver:CONFIG.datasaver,
+            secure: CONFIG.secure,
+            port: CONFIG.port,
+            recommended: CONFIG.recommended,
+            config:CONFIG.config,
+            command: CONFIG.command.clone()
+        };
+        installer::init(&mut config_args);
         // match installer {
         //     Ok(_) => {
         //         println!("installation successful, now exiting");
@@ -325,7 +311,7 @@ async fn main() -> std::io::Result<()> {
     }
 
     //sets the server port
-    let port = args.port;
+    let port = CONFIG.port;
 
     println!("Server running at port {}", &port);
     // creates the server
@@ -347,7 +333,7 @@ async fn main() -> std::io::Result<()> {
 
     // the ip addreses used to access the server
     server = server.bind(("127.0.0.1", port))?;
-    if args.lan {
+    if CONFIG.lan {
         let lan_addr = local_ip().unwrap();
         server = server.bind((lan_addr, port))?;
         println!("ip address: {}", lan_addr)

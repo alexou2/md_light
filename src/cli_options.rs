@@ -1,5 +1,47 @@
 use clap::{Parser, Subcommand};
 use serde::{Deserialize, Serialize};
+use lazy_static::lazy_static;
+
+
+
+lazy_static! {
+    /// the startup arguments for the server
+   pub static ref CONFIG: CliArgs = get_startup_config();
+}
+
+/// loads the config file if the user used --conf
+fn get_startup_config() -> CliArgs {
+    let mut args = CliArgs::parse();
+    
+    if args.recommended {
+        args.lan = true;
+        args.secure = true;
+    }
+
+    if args.config {
+        println!("Reading the config file...");
+        let mut file_path = dirs::config_local_dir().unwrap();
+        file_path.push("md_light");
+        file_path.push("mdl.conf");
+
+        let config_file = std::fs::read_to_string(file_path);
+        match config_file {
+            Ok(e) => {
+                args = parse_config_file(e);
+                println!("reading the file: OK");
+            }
+            Err(_) => println!("Unable to load the config file. Starting with the other arguments"),
+        }
+    }
+    return args;
+}
+/// parses the config file 
+fn parse_config_file(content: String) -> CliArgs {
+    let config = toml::from_str(&content).unwrap();
+    config
+}
+
+
 
 /// A web server that uses the mangadex api with a lighweight frontend for potato devices
 #[derive(Parser, Serialize, Debug, Deserialize)]
@@ -38,7 +80,7 @@ pub struct CliArgs {
     pub command: Option<Commands>,
 }
 
-#[derive(Subcommand, Debug, Serialize, Deserialize)]
+#[derive(Subcommand, Debug, Serialize, Deserialize, Clone)]
 pub enum Commands {
     /// Creates the config and service files for the server. The other parameters used will also be the default params for the config file
     Init,
