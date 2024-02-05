@@ -21,8 +21,14 @@
 
     <div class="popular">
         {% for title in popular_manga %}
-        <div class="popular-manga"><a href="/manga/{{title.id}}"><img src="/proxy/images/{{title.cover}}"
-                    loading="lazy">{{title.name}}</a>
+        <div class="popular-manga">
+
+            <a href="/manga/{{title.id}}">
+                <img src="/proxy/images/{{title.cover}}">
+           
+            <div class="ranking">{{loop.index}}</div>
+            <h2 >{{title.name}}</h2>
+            </a>
         </div>
         {% endfor %}
 
@@ -33,9 +39,9 @@
         <h1>New Releases</h1>
 
         {% for chapter in new_chapters %}
-        <div class="new_chapter"><a class="chapter"
-                href="/manga/{{chapter.manga_id}}/{{chapter.chapter_id}}">{{chapter.chapter_name}}
-                {{chapter.language.lang}}</a>
+        <div class="new_chapter">
+            <a class="chapter" href="/manga/{{chapter.manga_id}}/{{chapter.chapter_id}}">{{chapter.chapter_name}}
+            </a>{{chapter.language.lang}}
         </div>
         {% endfor %}
     </div>

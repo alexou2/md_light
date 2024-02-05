@@ -44,8 +44,8 @@ pub struct ShortMangaInfo {
     // pub tags: Vec<String>,
     pub cover: String,
     pub status: String,
-    pub original_language: String,
-    pub translated_languages: Vec<Value>,
+    pub original_language: Language,
+    pub translated_languages: Vec<Language>,
     pub description: String,
 }
 
@@ -58,8 +58,8 @@ pub struct MangaInfo {
     pub tags: Vec<String>,
     pub thumbnail: String,
     pub status: String,
-    pub original_language: String,
-    pub translated_languages: Vec<Option<String>>,
+    pub original_language: Language,
+    pub translated_languages: Vec<Language>,
     pub year: Option<i64>,
     pub description: String,
     // pub chapters: Vec<Result<Chapter, ApiError>>,

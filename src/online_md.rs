@@ -50,7 +50,7 @@ pub async fn request_with_agent(
 ) -> Result<impl Future<Output = Result<reqwest::Response, reqwest::Error>>, ApiError> {
     // initializes a new client if none is passed as argument
     // let client = reqwest::Client::new();
-
+println!("{}", url);
     let response = CLIENT
         .get(url)
         .header(reqwest::header::USER_AGENT, USER_AGENT)
@@ -136,7 +136,9 @@ pub async fn get_new_chapters() -> Result<Vec<NewChapters>, ApiError> {
             let chapter_name = &attributes["title"]
                 .remove_quotes()
                 .unwrap_or(chapter_number.clone()); // sets the chapter name to the chapter number if the real chapter name is null
-            let language = &attributes["translatedLanguage"].remove_quotes();
+                                                    // let language = &attributes["translatedLanguage"].remove_quotes();
+            let language: Language =
+                Language::from(&attributes["translatedLanguage"].remove_quotes());
             // .ok_or("error while removing quotes in language")?;
             let page_number = attributes["pages"]
                 .remove_quotes()
@@ -279,12 +281,11 @@ pub async fn search_manga(
             let status = &attributes["status"]
                 .remove_quotes()
                 .ok_or("error while removing quotes")?;
-            let original_language = &attributes["originalLanguage"]
-                .remove_quotes()
-                .ok_or("error while removing quotes")?;
+            let original_language = Language::from(&attributes["originalLanguage"].remove_quotes());
             let available_languages = attributes["availableTranslatedLanguages"]
                 .as_array()
                 .ok_or("error while getting translated languages options")?;
+            let available_languages = Language::to_language_vec(attributes["availableTranslatedLanguages"].as_array());
             let thumbnail = get_manga_cover(manga_id, &manga)?;
             let description = &attributes["description"]["en"]
                 .remove_quotes()
@@ -361,7 +362,7 @@ pub fn get_manga_cover(manga_id: &String, manga_json: &Value) -> Result<String, 
             if i["type"] == "cover_art" {
                 let cover_id = i["attributes"]["fileName"].to_string();
                 let cover_link =
-                    format!("https://mangadex.org/covers/{manga_id}/{cover_id}.256.jpg")
+                    format!("https://mangadex.org/covers/{manga_id}/{cover_id}.512.jpg")
                         .replace('"', "");
                 thumbnail = cover_link;
                 break; //breaks the loop if the cover is found
@@ -401,9 +402,8 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
     let status = &attributes["status"]
         .remove_quotes()
         .ok_or("error while removing quotes in the status")?;
-    let original_language = &attributes["originalLanguage"]
-        .remove_quotes()
-        .ok_or("error while removing quotes in the og language")?;
+    let original_language = Language::from( &attributes["originalLanguage"]
+        .remove_quotes());
     let description = &attributes["description"]["en"]
         .remove_quotes()
         .unwrap_or("N/a".to_string());
@@ -463,19 +463,10 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
         .as_array()
         .ok_or("translated_languages is not an array")?;
     for language in translation_options_json {
-        translated_language_list.push(language.remove_quotes());
-        // .ok_or(format!(
-        //     "error while removing quotes in the language options: {}",
-        //     language
-        // ))?);
+        let translation = Language::from(language.remove_quotes());
+        translated_language_list.push(translation);
+      
     }
-
-    // let mut chaps = vec![];
-    // let chaps = manga_chapters_future;
-    // for i in manga_chapters_future.await{
-    // chaps.push(i)
-    // chaps = i
-    // }
 
     // building the struct with all of the manga's informations+ chapters
     let manga_info = MangaInfo {
@@ -555,8 +546,7 @@ pub async fn get_manga_chapters(
             .unwrap_or("Oneshot".to_string()); // if there is no chapter number, set the chapter as a Oneshot
 
         let chapter_name = attributes["title"].remove_quotes();
-        let language = &attributes["translatedLanguage"].remove_quotes();
-        let language = Language::from(language);
+        let language = Language::from(&attributes["translatedLanguage"].remove_quotes());
         // .ok_or(format!(
         //     "error while removing quotes in the chapter language {}",
         //     attributes["translatedLanguage"]
@@ -627,7 +617,6 @@ pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterPage, ApiErr
         .remove_quotes()
         .ok_or("can't get chapter hash")?;
 
-    println!("{}", resp);
 
     let pages_json = json_resp["chapter"]["data"]
         .as_array()
@@ -690,6 +679,7 @@ async fn parse_json(response: &String) -> Result<Value, ApiError> {
     let json_resp = from_str(&response);
     // checks if the response is of type error
     let json_success: Value;
+
     match json_resp {
         Ok(v) => json_success = v,
         Err(e) => return Err(ApiError::JSON(e)),
@@ -704,3 +694,5 @@ async fn parse_json(response: &String) -> Result<Value, ApiError> {
         _ => Err(ApiError::ApiResponseError),
     }
 }
+
+pub fn get_prev_and_next_chapters(offset: i32, language: Language) {}

@@ -1,6 +1,8 @@
 use core::fmt;
 use serde::{ser::SerializeStruct, Serialize, Serializer};
+use serde_json::Value;
 
+use crate::tera_templates::ValueExtensions;
 
 const EN: &'static str = "🇬🇧"; //english
 const FR: &'static str = "🇲🇫"; //french
@@ -49,7 +51,6 @@ impl Serialize for Language {
         // s.serialize_field("lang", to_flag_str(&self.lang))?;
         s.serialize_field("lang", &self.lang)?;
 
-        println!("language: {}", &self.lang);
         s.end()
     }
 }
@@ -74,6 +75,50 @@ impl std::convert::From<&Option<String>> for Language {
         Language {
             lang: flag.to_owned(),
         }
+    }
+}
+
+impl std::convert::From<Option<String>> for Language {
+    fn from(lang: Option<String>) -> Self {
+        let lang = match lang {
+            Some(e) => e,
+            None => ERROR.to_string(),
+        };
+
+        let flag = to_flag_str(&lang);
+        Language {
+            lang: flag.to_owned(),
+        }
+    }
+}
+
+impl Language {
+    pub fn to_language_vec(lang_vec: Option<&Vec<Value>>) -> Vec<Self> {
+        let mut language_vector = vec![];
+        if let None = lang_vec {
+            let flag = to_flag_str(ERROR);
+            let flag = Language {
+                lang: flag.to_owned(),
+            };
+            return vec![flag];
+        }
+        for lang in lang_vec.unwrap() {
+            let lang = lang.remove_quotes();
+
+            let lang = match lang {
+                Some(e) => e,
+                None => ERROR.to_string(),
+            };
+            let flag = to_flag_str(&lang);
+            let flag = Language {
+                lang: flag.to_owned(),
+            };
+
+            language_vector.push(flag);
+        }
+
+        // todo!()
+        language_vector
     }
 }
 

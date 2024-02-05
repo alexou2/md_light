@@ -68,7 +68,6 @@ pub fn render_homepage(feed: MdHomepageFeed) -> String {
 
     context.insert("popular_manga", &feed.currently_popular);
     context.insert("new_chapters", &feed.new_chapter_releases);
-    println!("{}", feed.new_chapter_releases[0].language.lang);
     let rendered = TEMPLATES
         .render("home.html", &context)
         // .expect("Failed to render template");
