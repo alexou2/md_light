@@ -101,7 +101,6 @@ pub fn to_flag_str(language: &str) -> &'static str {
         "ro" => RO,
         "tr" => TR,
         "Error" => ERROR,
-        // _=>format!("{}: {}", unknown, language).as_str().clone(),
         _ => {
             println!("unknown language: {}", language);
             UNKNOWN

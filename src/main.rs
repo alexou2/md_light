@@ -14,15 +14,12 @@ use actix_files::Files;
 use actix_web::{
     get, http::StatusCode, web, App, HttpRequest, HttpResponse, HttpServer, Responder, Result,
 };
-use clap::Parser;
 use cli_options::*;
 use colored::Colorize;
-use lazy_static::lazy_static;
 use local_ip_address::local_ip;
 use query_struct::*;
 use reqwest::Client;
 use tera_templates::render_chapter_view;
-
 
 #[get("/")]
 async fn index(path: HttpRequest) -> HttpResponse {
@@ -211,8 +208,7 @@ async fn ping_md() -> impl Responder {
 // kills the server
 #[get("/server/kill")]
 async fn kill_server(path: HttpRequest) -> impl Responder {
-    // let restrict = CliArgs::parse().secure;
-    let restrict =  CONFIG.secure;
+    let restrict = CONFIG.secure;
     // allows killing the server only if the restrict option is on and the client is the host or if the  restrict option is false
     if (restrict && utills::check_localhost(&path)) || (!restrict) {
         println!("The server was killed with exit code 1");
@@ -266,10 +262,9 @@ async fn image_proxy(image_url: web::Path<String>) -> Result<HttpResponse> {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // the launch options
-    // let mut args = CliArgs::parse();
 
     // sets the recommended options if launched with `--recommended`
-    
+
     // prints the options the server will start with
     println!(
         r"Startup options:
@@ -283,19 +278,18 @@ async fn main() -> std::io::Result<()> {
         recom = CONFIG.recommended,
         sec = CONFIG.secure
     );
-    println!("{:?}", CONFIG.command.is_some());
     // creates the config file
     if CONFIG.command.is_some() {
         // creates a mutable version of the startup argments
-        let mut config_args = CliArgs{
+        let mut config_args = CliArgs {
             install: CONFIG.install,
             lan: CONFIG.lan,
-            datasaver:CONFIG.datasaver,
+            datasaver: CONFIG.datasaver,
             secure: CONFIG.secure,
             port: CONFIG.port,
             recommended: CONFIG.recommended,
-            config:CONFIG.config,
-            command: CONFIG.command.clone()
+            config: CONFIG.config,
+            command: CONFIG.command.clone(),
         };
         installer::init(&mut config_args);
         // match installer {

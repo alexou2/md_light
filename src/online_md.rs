@@ -14,7 +14,6 @@ const CHAPTER_ORDERING: [(&str, &str); 1] = [("order[chapter]", "asc")];
 const INCLUDE_TL_GROUP: [(&str, &str); 1] = [("includes[]", "scanlation_group")];
 
 lazy_static! {
-    /// the client used to make api requests
     static ref CLIENT: Client = Client::new();
 }
 
@@ -59,68 +58,6 @@ pub async fn request_with_agent(
 
     Ok(response)
 }
-
-// pub fn request_with_agent_blocking(url: String) -> Result<String, ApiError> {
-//     // let client: Client = reqwest::Client::new();
-//     // initializes a new client if none is passed as argument
-//     let client = reqwest::blocking::Client::new();
-
-//     let response = client
-//         .get(url)
-//         .header(reqwest::header::USER_AGENT, USER_AGENT)
-//         .query(&INCLUDE_TL_GROUP)
-//         .send()?
-//         .text()?;
-
-//     Ok(response)
-// }
-
-// uses threads to fetch all of the chapters for a manga
-// async fn get_chapters(url: String) -> Vec<Result<Value, ApiError>> {
-//     let start = std::time::Instant::now(); //starting the timer for request time
-//     let client = reqwest::blocking::Client::new();
-//     let mut handles = vec![]; //a vector containing all of the threads
-//     let mut result = vec![]; //a vector containing the result of all of the requests
-
-//     // true while there are no errors and not all of the chapters were returned
-//     let valid_request = Arc::new(Mutex::new(true));
-//     let mut th = 0; // used to calculate the offset
-
-//     //loops utill there are no more chapters to get for the manga
-//     while *valid_request.lock().unwrap() {
-//         let url = url.clone();
-//         let offset = [("offset", (LIMIT[0].1 * th.clone()))];
-//         let client = client.clone();
-//         let mut valid_req_clone = Arc::clone(&valid_request);
-
-//         //creates a new thread to fetch manga chapters
-//         handles.push(tokio::task::spawn(
-//             sync_chap(url, offset, client, &mut Arc::clone(&valid_req_clone))
-//         ));
-//         th += 1;
-//         // limits the number of threads created per second
-//         std::thread::sleep(Duration::from_millis(200))
-//     }
-
-//     //waiting for the threads to finish
-//     for th in handles {
-//         // if *valid_request.lock().unwrap() {
-
-//         // break;
-//         // }
-//         let response = th.await;
-//         match response {
-//             Ok(e) => result.push(e),
-//             Err(_) => (),
-//         }
-//     }
-//     println!(
-//         "took {:?} and {th} threads to fetch chapters",
-//         start.elapsed(),
-//     );
-
-//     result
-// }
 
 /// requests manga chapters
 async fn sync_chap(

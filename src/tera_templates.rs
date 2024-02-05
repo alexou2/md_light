@@ -4,7 +4,6 @@ use lazy_static::lazy_static;
 use markdown::to_html;
 use serde_json::value::{to_value, Value};
 use serde_json::{from_value, json};
-use std::collections::BTreeMap;
 use std::collections::HashMap;
 use tera::try_get_value;
 use tera::{Context, Function, Tera};
