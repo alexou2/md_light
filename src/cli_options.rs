@@ -1,18 +1,17 @@
 use clap::{Parser, Subcommand};
-use serde::{Deserialize, Serialize};
 use lazy_static::lazy_static;
-
-
+use serde::{Deserialize, Serialize};
 
 lazy_static! {
     /// the startup arguments for the server
+     #[derive(Debug)]
    pub static ref CONFIG: CliArgs = get_startup_config();
 }
 
 /// loads the config file if the user used --conf
 fn get_startup_config() -> CliArgs {
     let mut args = CliArgs::parse();
-    
+
     if args.recommended {
         args.lan = true;
         args.secure = true;
@@ -35,22 +34,17 @@ fn get_startup_config() -> CliArgs {
     }
     return args;
 }
-/// parses the config file 
+/// parses the config file
 fn parse_config_file(content: String) -> CliArgs {
     let config = toml::from_str(&content).unwrap();
     config
 }
 
-
-
 /// A web server that uses the mangadex api with a lighweight frontend for potato devices
-#[derive(Parser, Serialize, Debug, Deserialize)]
-#[command(propagate_version = true)]
+#[derive(Parser, Serialize, Debug, Deserialize, Clone)]
+// #[command(propagate_version = true)]
 #[command(author = "_alexou_", version = "0.1.2", about , long_about = None, name = "completion-derive")]
 pub struct CliArgs {
-    /// Downloads the ressources files for the front-end
-    #[arg(short, long)]
-    pub install: bool,
 
     /// Allows other lan devices to connect to the server (you will need to open the port on your device)
     #[arg(short, long)]
@@ -80,8 +74,17 @@ pub struct CliArgs {
     pub command: Option<Commands>,
 }
 
-#[derive(Subcommand, Debug, Serialize, Deserialize, Clone)]
+#[derive(Subcommand, Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum Commands {
     /// Creates the config and service files for the server. The other parameters used will also be the default params for the config file
     Init,
+    /// removes all of the files created by the program
+    Uninstall
+}
+
+impl CliArgs{
+    /// returns the server configuration as a CliArgs ref
+   pub fn to_args(&self)-> &CliArgs{
+        self
+    }
 }

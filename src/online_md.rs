@@ -699,7 +699,7 @@ async fn parse_json(response: &String) -> Result<Value, ApiError> {
     // Ok(json_success)
     let result = json_success["result"].to_owned();
     match result.to_string().as_str() {
-        r#""error""# => Err(ApiError::ApiResponseError),
+        r#""error""# => Err(ApiError::ApiPageNotFound404),
         r#""ok""# => Ok(json_success),
         _ => Err(ApiError::ApiResponseError),
     }

@@ -1,17 +1,17 @@
 use crate::cli_options::CliArgs;
+use colored::{control, Colorize};
 use dirs;
-
-use std::fs::{create_dir, write};
+use colored::Color;
+use std::fs::{create_dir, remove_dir, remove_file, write};
+use std::io::Write;
 use std::path::PathBuf;
-
 use toml;
 
 // base url of the repo
 
 /// initialises the server by creating the required files for the server
 pub fn init(args: &mut CliArgs) {
-    args.install = false;
-    println!("{}", args.install);
+    args.command = None;
     create_config(args)
 }
 
@@ -39,11 +39,47 @@ fn init_config_file(args: &CliArgs) -> String {
     config_content
 }
 
-fn download_ressources(){
+pub fn uninstall() {
+    let mut config_path = dirs::config_local_dir().unwrap();
+    config_path.push("md_light");
+    config_path.push("mdl.conf");
+
+    if config_path.exists() {
+        println!("Path to remove: {}", config_path.to_str().unwrap().red());
+        let prompt = prompt_true_false(
+            "Do you want to remove your md_light configuration Y/[n] ",
+            false,
+        );
+        println!("{}", prompt);
+    }
+
+    std::process::exit(0)
+}
+
+fn delete_file_or_dir(name: PathBuf) {
+    todo!()
+}
+
+fn prompt_true_false(name: &str, default: bool) -> bool {
+    let mut line = String::new();
+    print!("{}", name);
+    std::io::stdout().flush().unwrap();
+    std::io::stdin()
+        .read_line(&mut line)
+        .expect("Error: Could not read a line");
+
+    let resp = line.trim();
+
+    match resp {
+        "Y" | "y" | "yes" | "Yes" => true,
+        "N" | "n" | "no" | "No" | "" => false,
+        _ => default,
+    }
+}
+
+fn download_ressources() {
     let cache_dir = dirs::cache_dir().unwrap();
 
     let template_dir = cache_dir.clone().push("templates");
     let ressources_dir = cache_dir.clone().push("ressources");
-
-
 }

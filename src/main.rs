@@ -261,53 +261,21 @@ async fn image_proxy(image_url: web::Path<String>) -> Result<HttpResponse> {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    // the launch options
-
-    // sets the recommended options if launched with `--recommended`
-
-    // prints the options the server will start with
-    println!(
-        r"Startup options:
-    Lan: {lan},
-    Port: {port},
-    Recommended settings:{recom},
-    Secure: {sec}
-    ",
-        lan = CONFIG.lan,
-        port = CONFIG.port,
-        recom = CONFIG.recommended,
-        sec = CONFIG.secure
-    );
     // creates the config file
-    if CONFIG.command.is_some() {
-        // creates a mutable version of the startup argments
-        let mut config_args = CliArgs {
-            install: CONFIG.install,
-            lan: CONFIG.lan,
-            datasaver: CONFIG.datasaver,
-            secure: CONFIG.secure,
-            port: CONFIG.port,
-            recommended: CONFIG.recommended,
-            config: CONFIG.config,
-            command: CONFIG.command.clone(),
-        };
-        installer::init(&mut config_args);
-        // match installer {
-        //     Ok(_) => {
-        //         println!("installation successful, now exiting");
-        //         std::process::exit(0);
-        //     }
-        //     Err(e) => {
-        //         println!("error while installing the files: {}", e);
-        //         std::process::exit(1);
-        //     }
-        // };
+    // if CONFIG.command == Some(Commands::Init) {
+    //     // creates a mutable version of the startup argments
+    //     let mut config_args = CONFIG.to_args().clone();
+    //     installer::init(& mut CONFIG.to_args().clone());
+    // }
+    if let Some(command) = &CONFIG.command {
+        match command {
+            Commands::Init => installer::init(&mut CONFIG.to_args().clone()),
+            Commands::Uninstall => installer::uninstall(),
+        }
     }
 
-    //sets the server port
-    let port = CONFIG.port;
+    println!("{:#?}", CONFIG.to_args());
 
-    println!("Server running at port {}", &port);
     // creates the server
     let mut server = HttpServer::new(|| {
         App::new()
@@ -326,10 +294,10 @@ async fn main() -> std::io::Result<()> {
     });
 
     // the ip addreses used to access the server
-    server = server.bind(("127.0.0.1", port))?;
+    server = server.bind(("127.0.0.1", CONFIG.port))?;
     if CONFIG.lan {
         let lan_addr = local_ip().unwrap();
-        server = server.bind((lan_addr, port))?;
+        server = server.bind((lan_addr, CONFIG.port))?;
         println!("ip address: {}", lan_addr)
     }
 

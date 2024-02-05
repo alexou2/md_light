@@ -13,7 +13,7 @@ pub enum ApiError {
     ParseIntError(ParseIntError),
     FileWriteError(std::io::Error),
     ApiResponseError,
-    ServerDown(serde_json::Error),
+    ApiPageNotFound404
 }
 
 impl fmt::Display for ApiError {
@@ -29,8 +29,8 @@ impl fmt::Display for ApiError {
             ApiError::Box(_) => write!(f, "unknown box error"),
             ApiError::ParseIntError(err) => write!(f, "ParseInt error: {err}"),
             ApiError::FileWriteError(err) => write!(f, "unable to write to file or creating directory: {err}"),
-            ApiError::ServerDown(err) => write!(f, "The server is down: {err}"),
             ApiError::ApiResponseError => write!(f, "Got an api response error"),
+            ApiError::ApiPageNotFound404 => write!(f, "404 Page not found (Api error)"),
         }
     }
 }
