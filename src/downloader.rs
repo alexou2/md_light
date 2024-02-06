@@ -23,27 +23,13 @@ pub struct DownloadData {
     pub offset: i32,
 }
 
-const RESSOURCE_DIR: &'static str = ".md_light";
 
 /// downloads the manga
 /// the pages are stored in ~/.md_light/ (linux)
 pub fn download_manga(download_infos: Option<DownloadData>) {
-    // let os = check_os();
-    let os = todo!();
-    // Checks if the os is compatible first
-    match os {
-        "linux" | "Linux" => (),
-        non_comp => {
-            println!("Your OS ({non_comp}) is not compatible with the download feature yet. Please check later.");
-            return;
-        }
-    }
 
-    // let manga_dir_name = download_infos.manga_info.manga_name;
-    use std::env;
-
-    match env::home_dir() {
-        Some(path) => println!("Your home directory, probably: {}", path.display()),
-        None => println!("Impossible to get your home dir!"),
-    }
+}
+struct chapters{
+    prev:Option<String>,
+    next:Option<String>
 }
