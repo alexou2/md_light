@@ -26,7 +26,7 @@ pub async fn test_connection() -> Result<ServerStatus, ApiError> {
 
     // true only if the server response is "pong", otherwise the server is down
     let up = if reachable {
-        let resp_content = &resp?.await?.text().await?;
+        let resp_content = &resp?;
 
         if resp_content.as_str() == "pong" {
             true
@@ -47,14 +47,14 @@ pub async fn test_connection() -> Result<ServerStatus, ApiError> {
 // makes the request to the url with custom user agents, since MD requires them now
 pub async fn request_with_agent(
     url: String,
-) -> Result<impl Future<Output = Result<reqwest::Response, reqwest::Error>>, ApiError> {
+) -> Result<String, ApiError> {
     // initializes a new client if none is passed as argument
     // let client = reqwest::Client::new();
 println!("{}", url);
     let response = CLIENT
         .get(url)
         .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .send();
+        .send().await?.text().await?;
 
     Ok(response)
 }
@@ -117,7 +117,7 @@ pub async fn get_new_chapters() -> Result<Vec<NewChapters>, ApiError> {
     let resp = request_with_agent(url.to_string()).await?;
     // converts the api response to a json string and gets the data part of it
     // let json_resp: Value = from_str(&resp)?;
-    let json_resp = parse_json(&resp.await?.text().await?).await?;
+    let json_resp = parse_json(&resp).await?;
     let data = &json_resp["data"];
 
     // getting the required info of each new chapter
@@ -203,7 +203,7 @@ pub async fn get_popular_manga() -> Result<Vec<PopularManga>, ApiError> {
     //     );
 
     // doing the get request to the api and transforming it into a json object
-    let resp = request_with_agent(url).await?.await?.text().await?;
+    let resp = request_with_agent(url).await?;
     // let resp = request_with_agent_blocking(url)?;
     // let json_resp: Value = serde_json::from_str(&resp)?;
     let json_resp = parse_json(&resp).await?;
@@ -311,7 +311,7 @@ pub async fn search_author(query: String) -> Result<Vec<AuthorInfo>, ApiError> {
     let url = format!("{BASE_URL}/author?name={query}");
 
     // does the request and converts it to json
-    let resp = request_with_agent(url).await?.await?.text().await?;
+    let resp = request_with_agent(url).await?;
     // let json_resp: Value = from_str(&resp)?;
     let json_resp = parse_json(&resp).await?;
 
@@ -364,6 +364,7 @@ pub fn get_manga_cover(manga_id: &String, manga_json: &Value) -> Result<String, 
                 let cover_link =
                     format!("https://mangadex.org/covers/{manga_id}/{cover_id}.512.jpg")
                         .replace('"', "");
+                    println!("{}", cover_link);
                 thumbnail = cover_link;
                 break; //breaks the loop if the cover is found
             }
@@ -383,7 +384,7 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
         BASE_URL, &manga_id
     );
     // calling the function to make the request to the api
-    let resp = request_with_agent(url.clone()).await?.await?.text().await?;
+    let resp = request_with_agent(url.clone()).await?;
     // parsing the api response into a json
     // let json_resp: Value = from_str(&resp)?;
     let json_resp = parse_json(&resp).await?;
@@ -609,7 +610,7 @@ pub async fn get_manga_chapters(
 pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterPage, ApiError> {
     let url = format!("{}/at-home/server/{}", BASE_URL, chapter_id);
     // let resp = reqwest::get(&url).await?.text().await?;
-    let resp = request_with_agent(url).await?.await?.text().await?;
+    let resp = request_with_agent(url).await?;
 
     // let json_resp: Value = from_str(&resp)?;
     let json_resp = parse_json(&resp).await?;
@@ -643,7 +644,7 @@ pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterPage, ApiErr
 
 pub async fn get_author_infos(author_id: String) -> Result<AuthorInfo, ApiError> {
     let url = format!("{}/author/{}", BASE_URL, author_id);
-    let resp = request_with_agent(url).await?.await?.text().await?;
+    let resp = request_with_agent(url).await?;
     // let json_resp: Value = from_str(&resp)?;
     let json_resp = parse_json(&resp).await?;
 

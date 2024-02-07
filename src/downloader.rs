@@ -29,7 +29,3 @@ pub struct DownloadData {
 pub fn download_manga(download_infos: Option<DownloadData>) {
 
 }
-struct chapters{
-    prev:Option<String>,
-    next:Option<String>
-}
