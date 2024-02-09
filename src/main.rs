@@ -18,7 +18,7 @@ use cli_options::*;
 use colored::Colorize;
 use local_ip_address::local_ip;
 use query_struct::*;
-use reqwest::Client;
+use reqwest::{header::USER_AGENT, Client};
 use tera_templates::render_chapter_view;
 
 #[get("/")]
@@ -236,7 +236,8 @@ async fn image_proxy(image_url: web::Path<String>) -> Result<HttpResponse> {
     let client = Client::new();
     let image_url = image_url.into_inner();
 
-    let response = client.get(&image_url).send().await;
+    let response = client.get(&image_url).header(reqwest::header::USER_AGENT, USER_AGENT).send().await;
+    // let response = online_md::request_with_agent(&image_url).await;
 
     match response {
         Ok(resp) => {
