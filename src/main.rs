@@ -13,7 +13,8 @@ use actix_web::{
 use clap::Parser;
 use colored::Colorize;
 use local_ip_address::local_ip;
-use reqwest::Client;
+// use reqwest::Client;
+use reqwest::{header::USER_AGENT, Client};
 use std::thread::sleep;
 use std::time::Duration;
 
@@ -174,7 +175,7 @@ async fn image_proxy(image_url: web::Path<String>) -> Result<HttpResponse> {
     let client = Client::new();
     let image_url = image_url.into_inner();
 
-    let response = client.get(&image_url).send().await;
+    let response = client.get(&image_url).header(reqwest::header::USER_AGENT, USER_AGENT).send().await;
 
     match response {
         Ok(resp) => {
