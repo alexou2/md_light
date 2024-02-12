@@ -1,4 +1,5 @@
 /target
-*tar*
-release.tar
-release.tar.gz
+# *tar*
+# release.tar
+# release.tar.gz
+Md_Light_release.tar
