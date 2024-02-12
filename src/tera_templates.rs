@@ -3,7 +3,6 @@ pub use crate::md_struct::*;
 use lazy_static::lazy_static;
 use markdown::to_html;
 use serde_json::value::{to_value, Value};
-use serde_json::{from_value, json};
 use std::collections::HashMap;
 use tera::try_get_value;
 use tera::{Context, Function, Tera};
@@ -56,11 +55,9 @@ pub fn render_complete_search(
 
     context.insert("author_list", &search_data.1);
 
-    let rendered = TEMPLATES
+    TEMPLATES
         .render("search.html", &context)
-        .expect("Failed to render template");
-
-    rendered
+        .expect("Failed to render template")
 }
 
 pub fn render_homepage(feed: MdHomepageFeed) -> String {
@@ -68,11 +65,10 @@ pub fn render_homepage(feed: MdHomepageFeed) -> String {
 
     context.insert("popular_manga", &feed.currently_popular);
     context.insert("new_chapters", &feed.new_chapter_releases);
-    let rendered = TEMPLATES
+    TEMPLATES
         .render("home.html", &context)
         // .expect("Failed to render template");
-        .unwrap();
-    rendered
+        .unwrap()
 }
 
 /// renders the manga without the chapters
@@ -81,17 +77,15 @@ pub fn render_manga_info(manga: MangaInfo) -> String {
 
     context.insert("manga_name", &manga.manga_name);
 
-    context.insert("cover", &manga.thumbnail);
+    context.insert("cover", &manga.cover);
     let html = to_html(&manga.description);
     context.insert("description", &html);
     context.insert("authors", &manga.author);
     context.insert("manga_id", &manga.manga_id);
 
-    let rendered = TEMPLATES
+    TEMPLATES
         .render("manga_info.html", &context)
-        .expect("Failed to render manga info template");
-
-    rendered
+        .expect("Failed to render manga info template")
 }
 /// renders the chapter list of a manga
 pub fn render_manga_chapters(
@@ -125,11 +119,9 @@ pub fn render_chapter_view(chapter: ChapterPage, is_localhost: bool) -> String {
     context.insert("is_localhost", &is_localhost);
     context.insert("chapter", &chapter);
 
-    let rendered = TEMPLATES
+    TEMPLATES
         .render("read_chapter.html", &context)
-        .expect("Failed to render chapter template");
-
-    rendered
+        .expect("Failed to render chapter template")
 }
 
 pub fn render_author(author_info: AuthorInfo, is_localhost: bool) -> String {
@@ -138,11 +130,9 @@ pub fn render_author(author_info: AuthorInfo, is_localhost: bool) -> String {
     context.insert("is_localhost", &is_localhost);
     context.insert("author", &author_info);
 
-    let rendered = TEMPLATES
+    TEMPLATES
         .render("author.html", &context)
-        .expect("Failed to render chapter template");
-
-    rendered
+        .expect("Failed to render chapter template")
 }
 
 /// transforms the offset to an index ex: 501 => 6

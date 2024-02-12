@@ -4,28 +4,28 @@ use serde_json::Value;
 
 use crate::tera_templates::ValueExtensions;
 
-const EN: &'static str = "🇬🇧"; //english
-const FR: &'static str = "🇲🇫"; //french
-const VI: &'static str = "🇻🇳"; //vietnamese
-const IT: &'static str = "🇮🇹"; //italian
-const ZH: &'static str = "🇨🇳"; //simplified chinese
-const ES: &'static str = "🇲🇽"; //spanish
-const BR: &'static str = "🇧🇷"; //brasilian
-const PL: &'static str = "🇵🇱"; //polish
-const UK: &'static str = "🇺🇦"; //ukranian
-const KO: &'static str = "🇰🇷"; //korean
-const AR: &'static str = "🇸🇦"; //arabic
-const JP: &'static str = "🇯🇵"; //japanese
-const DE: &'static str = "🇩🇪"; //german
-const HI: &'static str = "🇮🇳"; //india
-const PT: &'static str = "🇵🇹"; //portugal
-const ID: &'static str = "🇮🇩"; //indonesia
-const RU: &'static str = "🇷🇺"; //russian
-const TH: &'static str = "🇹🇭"; //thailand
-const TR: &'static str = "🇹🇷"; //turkish
-const RO: &'static str = "🇷🇴"; //romanian
-const UNKNOWN: &'static str = "🌍"; //unknown flag
-const ERROR: &'static str = "⚠️"; //unknown flag
+const EN: &str = "🇬🇧"; //english
+const FR: &str = "🇲🇫"; //french
+const VI: &str = "🇻🇳"; //vietnamese
+const IT: &str = "🇮🇹"; //italian
+const ZH: &str = "🇨🇳"; //simplified chinese
+const ES: &str = "🇲🇽"; //spanish
+const BR: &str = "🇧🇷"; //brasilian
+const PL: &str = "🇵🇱"; //polish
+const UK: &str = "🇺🇦"; //ukranian
+const KO: &str = "🇰🇷"; //korean
+const AR: &str = "🇸🇦"; //arabic
+const JP: &str = "🇯🇵"; //japanese
+const DE: &str = "🇩🇪"; //german
+const HI: &str = "🇮🇳"; //india
+const PT: &str = "🇵🇹"; //portugal
+const ID: &str = "🇮🇩"; //indonesia
+const RU: &str = "🇷🇺"; //russian
+const TH: &str = "🇹🇭"; //thailand
+const TR: &str = "🇹🇷"; //turkish
+const RO: &str = "🇷🇴"; //romanian
+const UNKNOWN: &str = "🌍"; //unknown flag
+const ERROR: &str = "⚠️"; //unknown flag
 
 #[derive(Clone, Debug)]
 pub struct Language {
@@ -36,8 +36,13 @@ impl fmt::Display for Language {
         write!(f, "{}", &self.lang)
     }
 }
-impl Language {
-    pub fn as_str(&self) -> &str {
+
+pub trait AsStr {
+    fn as_str(&self) -> &str;
+}
+
+impl AsStr for Language {
+    fn as_str(&self) -> &str {
         &self.lang
     }
 }
@@ -95,7 +100,7 @@ impl std::convert::From<Option<String>> for Language {
 impl Language {
     pub fn to_language_vec(lang_vec: Option<&Vec<Value>>) -> Vec<Self> {
         let mut language_vector = vec![];
-        if let None = lang_vec {
+        if lang_vec.is_none() {
             let flag = to_flag_str(ERROR);
             let flag = Language {
                 lang: flag.to_owned(),
@@ -124,7 +129,7 @@ impl Language {
 
 /// takes a language and returns the flag fot the language
 pub fn to_flag_str(language: &str) -> &'static str {
-    let flag = match language {
+    match language {
         "en" => EN,
         "fr" => FR,
         "vi" => VI,
@@ -150,6 +155,5 @@ pub fn to_flag_str(language: &str) -> &'static str {
             println!("unknown language: {}", language);
             UNKNOWN
         }
-    };
-    return flag;
+    }
 }

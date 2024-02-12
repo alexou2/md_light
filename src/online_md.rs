@@ -4,12 +4,10 @@ use crate::md_struct::*;
 use crate::utills::*;
 use lazy_static::lazy_static;
 
-use reqwest::ClientBuilder;
 use reqwest::{header::USER_AGENT, Client};
 use serde_json::{from_str, Value};
-use std::future::Future;
 
-const BASE_URL: &'static str = "https://api.mangadex.org";
+const BASE_URL: &str = "https://api.mangadex.org";
 const LIMIT: [(&str, i32); 1] = [("limit", 500)];
 const CHAPTER_ORDERING: [(&str, &str); 1] = [("order[chapter]", "asc")];
 const INCLUDE_TL_GROUP: [(&str, &str); 1] = [("includes[]", "scanlation_group")];
@@ -31,18 +29,14 @@ pub async fn test_connection() -> Result<ServerStatus, ApiError> {
     let up = if reachable {
         let resp_content = &resp?;
 
-        if resp_content.as_str() == "pong" {
-            true
-        } else {
-            false
-        }
+        resp_content.as_str() == "pong"
     } else {
         false
     };
 
     let status = ServerStatus {
-        up: up,
-        reachable: reachable,
+        up,
+        reachable,
     };
     Ok(status)
 }
@@ -86,12 +80,10 @@ async fn sync_chap(
 
     // converting the text response into a json value
     let json_res_result = from_str(&response);
-    let json_res: Value;
-
-    match json_res_result {
-        Ok(json) => json_res = json,
+    let json_res: Value = match json_res_result {
+        Ok(json) => json,
         Err(err) => {
-            return Err(ApiError::JSON(err));
+            return Err(ApiError::Json(err));
         }
     };
 
@@ -99,9 +91,10 @@ async fn sync_chap(
 }
 
 /// gets the informations for the homepage
-pub async fn get_md_homepage_feed(is_high_res: bool) -> Result<MdHomepageFeed, ApiError> {
-    let popular_future = std::thread::spawn(move || get_popular_manga(is_high_res));
-    let new_chap_future = std::thread::spawn(|| get_new_chapters());
+pub async fn get_md_homepage_feed(is_low_res: bool) -> Result<MdHomepageFeed, ApiError> {
+    let popular_future = std::thread::spawn(move || get_popular_manga(is_low_res));
+    let new_chap_future = std::thread::spawn(get_new_chapters);
+
 
     // builds the struct for the popular titles+ new chapters
     let homepage_feed = MdHomepageFeed {
@@ -177,13 +170,13 @@ pub async fn get_new_chapters() -> Result<Vec<NewChapters>, ApiError> {
 
             let new_chapter_data = NewChapters {
                 chapter_name: chapter_name.to_owned(),
-                chapter_number: chapter_number,
-                language: Language::from(language),
-                manga_id: manga_id,
-                tl_group_id: tl_group_id,
-                tl_group_name: tl_group_name,
+                chapter_number,
+                language,
+                manga_id,
+                tl_group_id,
+                tl_group_name,
                 chapter_id: chapter_id.to_owned(),
-                page_number: page_number,
+                page_number,
             };
             new_chapters.push(new_chapter_data)
         }
@@ -193,7 +186,7 @@ pub async fn get_new_chapters() -> Result<Vec<NewChapters>, ApiError> {
 }
 
 // gets the most popular mangas from the last month that are displayed at the top of the md homepage
-pub async fn get_popular_manga(is_high_res: bool) -> Result<Vec<PopularManga>, ApiError> {
+pub async fn get_popular_manga(is_low_res: bool) -> Result<Vec<PopularManga>, ApiError> {
     let mut popular_manga: Vec<PopularManga> = Vec::new();
     let formatted_time = get_offset_time();
     // formatting the request url to include the atrists/authors and the cover fileName
@@ -224,12 +217,12 @@ pub async fn get_popular_manga(is_high_res: bool) -> Result<Vec<PopularManga>, A
             let manga_id = &manga["id"]
                 .remove_quotes()
                 .ok_or("error while removing quotes")?;
-            let thumbnail = get_manga_cover(manga_id, manga, is_high_res)?;
+            let cover = get_manga_cover(manga_id, manga, is_low_res)?;
 
             // creating the search result for each popular manga
             let manga_instance = PopularManga {
-                name: title.clone(),
-                cover: thumbnail.clone(),
+                title,
+                cover,
                 id: manga_id.clone(),
             };
 
@@ -244,7 +237,7 @@ pub async fn get_popular_manga(is_high_res: bool) -> Result<Vec<PopularManga>, A
 pub async fn search_manga(
     title: Option<String>,
     params: Option<[(&str, String); 1]>,
-    is_high_res: bool,
+    is_low_res: bool,
 ) -> Result<Vec<ShortMangaInfo>, ApiError> {
     let mut search_results: Vec<ShortMangaInfo> = Vec::new();
     // sending the get request for the search
@@ -287,23 +280,23 @@ pub async fn search_manga(
                 .remove_quotes()
                 .ok_or("error while removing quotes")?;
             let original_language = Language::from(&attributes["originalLanguage"].remove_quotes());
-            let available_languages = attributes["availableTranslatedLanguages"]
-                .as_array()
-                .ok_or("error while getting translated languages options")?;
+            // let available_languages = attributes["availableTranslatedLanguages"]
+            //     .as_array()
+            //     .ok_or("error while getting translated languages options")?;
             let available_languages =
                 Language::to_language_vec(attributes["availableTranslatedLanguages"].as_array());
-            let thumbnail = get_manga_cover(manga_id, &manga, is_high_res)?;
+            let cover = get_manga_cover(manga_id, manga, is_low_res)?;
             let description = &attributes["description"]["en"]
                 .remove_quotes()
-                .unwrap_or("N/a".to_string());
+                .unwrap_or("No description".to_string());
             // creating the struct instnce containing all of the usefull ionfos about the manga
             let manga_attributes = ShortMangaInfo {
-                name: title.clone(),
+                title,
                 id: manga_id.clone(),
-                cover: thumbnail,
+                cover,
                 status: status.clone(),
-                original_language: original_language.clone(),
-                translated_languages: available_languages.clone(),
+                original_language,
+                translated_languages: available_languages,
                 description: description.clone(),
             };
             search_results.push(manga_attributes)
@@ -351,8 +344,8 @@ pub async fn search_author(query: String) -> Result<Vec<AuthorInfo>, ApiError> {
         }
 
         let author_info = AuthorInfo {
-            name: name,
-            id: id,
+            name,
+            id,
             titles_id: title_id_list,
         };
         author_info_list.push(author_info);
@@ -364,11 +357,13 @@ pub async fn search_author(query: String) -> Result<Vec<AuthorInfo>, ApiError> {
 pub fn get_manga_cover(
     manga_id: &String,
     manga_json: &Value,
-    is_high_res: bool,
+    is_low_res: bool,
 ) -> Result<String, ApiError> {
-    let quality = match is_high_res {
-        true => 512,
-        false => 256,
+    
+    //uses the low quality images if the low auality argument is given
+    let quality = match is_low_res {
+        false => 512,
+        true => 256,
     };
 
     let mut thumbnail = String::new();
@@ -389,7 +384,7 @@ pub fn get_manga_cover(
 }
 
 // gets the manga info and chapters
-pub async fn get_manga_info(manga_id: String, is_high_res: bool) -> Result<MangaInfo, ApiError> {
+pub async fn get_manga_info(manga_id: String, is_low_res: bool) -> Result<MangaInfo, ApiError> {
     // calls the function to get chapters for a faster page loading
     // let id_clone = manga_id.clone();
     // let manga_chapters_future = get_manga_chapters(id_clone, None);
@@ -414,7 +409,7 @@ pub async fn get_manga_info(manga_id: String, is_high_res: bool) -> Result<Manga
         .ok_or("error while getting title")?
         .remove_quotes()
         .ok_or("error while removing quotes in the manga name")?;
-    let thumbnail = get_manga_cover(&manga_id, &data, is_high_res)?;
+    let cover = get_manga_cover(&manga_id, data, is_low_res)?;
     let status = &attributes["status"]
         .remove_quotes()
         .ok_or("error while removing quotes in the status")?;
@@ -449,9 +444,9 @@ pub async fn get_manga_info(manga_id: String, is_high_res: bool) -> Result<Manga
 
                 // the author/artist instance
                 let author_instance = Author {
-                    author_name: author_name.clone(),
-                    author_id: author_id.clone(),
-                    role: role.clone(),
+                    author_name: author_name.to_string(),
+                    author_id: author_id.to_string(),
+                    role: role.to_string(),
                 };
                 author_list.push(author_instance)
             }
@@ -484,17 +479,16 @@ pub async fn get_manga_info(manga_id: String, is_high_res: bool) -> Result<Manga
 
     // building the struct with all of the manga's informations+ chapters
     let manga_info = MangaInfo {
-        manga_name: manga_name.clone(),
-        manga_id: manga_id.clone(),
+        manga_name,
+        manga_id,
         author: author_list,
         tags: tag_list,
-        thumbnail: thumbnail,
+        cover,
         status: status.clone(),
-        original_language: original_language.clone(),
+        original_language,
         translated_languages: translated_language_list,
-        year: year.clone(),
+        year: *year,
         description: description.clone(),
-        // chapters: chaps.await,
     };
     Ok(manga_info)
 }
@@ -603,11 +597,11 @@ pub async fn get_manga_chapters(
         }
 
         let chapter_instance = Ok(Chapter {
-            chapter_name: chapter_name,
-            chapter_number: chapter_number,
-            language: language,
-            tl_group: tl_group,
-            chapter_id: chapter_id,
+            chapter_name,
+            chapter_number,
+            language,
+            tl_group,
+            chapter_id,
         });
         chapter_list.push(chapter_instance)
     }
@@ -654,8 +648,8 @@ pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterPage, ApiErr
     Ok(chapter)
 }
 
-pub async fn get_author_infos(author_id: String) -> Result<AuthorInfo, ApiError> {
-    let url = format!("{}/author/{}", BASE_URL, author_id);
+pub async fn get_author_infos(id: String) -> Result<AuthorInfo, ApiError> {
+    let url = format!("{}/author/{}", BASE_URL, id);
     let resp = request_with_agent(url).await?;
     // let json_resp: Value = from_str(&resp)?;
     let json_resp = parse_json(&resp).await?;
@@ -680,22 +674,20 @@ pub async fn get_author_infos(author_id: String) -> Result<AuthorInfo, ApiError>
 
     let author_info = AuthorInfo {
         name: name.clone(),
-        id: author_id,
-        titles_id: titles_id,
+        id,
+        titles_id,
     };
 
     Ok(author_info)
 }
 
 // parses the json response from the api and returns an error if it is invalid
-async fn parse_json(response: &String) -> Result<Value, ApiError> {
-    let json_resp = from_str(&response);
+async fn parse_json(response: &str) -> Result<Value, ApiError> {
+    let json_resp = from_str(response);
     // checks if the response is of type error
-    let json_success: Value;
-
-    match json_resp {
-        Ok(v) => json_success = v,
-        Err(e) => return Err(ApiError::JSON(e)),
+    let json_success: Value = match json_resp {
+        Ok(v) => v,
+        Err(e) => return Err(ApiError::Json(e)),
     };
 
     println!(" result: {}", json_success["result"]);

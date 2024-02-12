@@ -1,6 +1,2 @@
 /target
-t.json
-t.html
-t.txt
-*.json
-*.jpg
+*tar*

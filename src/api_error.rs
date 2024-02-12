@@ -5,8 +5,8 @@ use std::sync::PoisonError;
 
 #[derive(Debug)]
 pub enum ApiError {
-    REQWEST(reqwest::Error),
-    JSON(serde_json::Error),
+    Reqwest(reqwest::Error),
+    Json(serde_json::Error),
     StrError(String),
     Box(Box<dyn std::any::Any + Send>),
     ParseIntError(ParseIntError),
@@ -18,11 +18,11 @@ pub enum ApiError {
 impl fmt::Display for ApiError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match &self {
-            ApiError::REQWEST(_) => write!(
+            ApiError::Reqwest(_) => write!(
                 f,
                 "Unable to make a request to the api. Please check your connection"
             ),
-            ApiError::JSON(err) => write!(f, "json conversion error: {err}"),
+            ApiError::Json(err) => write!(f, "json conversion error: {err}"),
             ApiError::StrError(err) => write!(f, "error while processing strings: {err}"),
             ApiError::Box(_) => write!(f, "unknown box error"),
             ApiError::ParseIntError(err) => write!(f, "ParseInt error: {err}"),
@@ -48,7 +48,7 @@ impl std::convert::From<&str> for ApiError {
 }
 impl std::convert::From<reqwest::Error> for ApiError {
     fn from(err: reqwest::Error) -> Self {
-        ApiError::REQWEST(err)
+        ApiError::Reqwest(err)
     }
 }
 
@@ -59,7 +59,7 @@ impl std::convert::From<ParseIntError> for ApiError {
 }
 impl std::convert::From<serde_json::Error> for ApiError {
     fn from(err: serde_json::Error) -> Self {
-        ApiError::JSON(err)
+        ApiError::Json(err)
     }
 }
 

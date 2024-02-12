@@ -19,7 +19,7 @@ use colored::Colorize;
 use lazy_static::lazy_static;
 use local_ip_address::local_ip;
 use query_struct::*;
-use reqwest::{header::USER_AGENT, Client};
+use reqwest::Client;
 use tera_templates::render_chapter_view;
 
 lazy_static! {
@@ -60,7 +60,7 @@ async fn get_manga_info(manga_id: web::Path<String>, path: HttpRequest) -> HttpR
         // Ok(e) => manga_templates::render_manga_info_page(e, is_localhost),
         Ok(e) => tera_templates::render_manga_info(e),
 
-        Err(v) => manga_templates::render_error_page(v.into(), requested_page),
+        Err(v) => manga_templates::render_error_page(v, requested_page),
     };
 
     HttpResponse::build(StatusCode::OK)
@@ -99,7 +99,7 @@ async fn get_chapters(
     let html = match html {
         // Ok(e) => manga_templates::render_manga_info_page(e, is_localhost),
         Ok(e) => e,
-        Err(v) => manga_templates::render_error_page(v.into(), requested_page),
+        Err(v) => manga_templates::render_error_page(v, requested_page),
     };
 
     // let html = "234";
@@ -119,7 +119,7 @@ async fn get_chapter(chapter: web::Path<(String, String)>, path: HttpRequest) ->
     let html = match chapter_info {
         // Ok(e) => manga_templates::render_chapter(e, is_localhost, manga_id),
         Ok(e) => render_chapter_view(e, is_localhost),
-        Err(v) => manga_templates::render_error_page(v.into(), path.path()),
+        Err(v) => manga_templates::render_error_page(v, path.path()),
     };
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
@@ -203,7 +203,7 @@ async fn get_server_options() -> HttpResponse {
 async fn ping_md() -> impl Responder {
     match online_md::test_connection().await {
         Ok(status) => {
-            return format!(
+            format!(
                 r"
         reachable: {}
         server up: {}
@@ -211,7 +211,7 @@ async fn ping_md() -> impl Responder {
                 status.reachable, status.up
             )
         }
-        Err(v) => return format!("internal server error: {}", v),
+        Err(v) => format!("internal server error: {}", v),
     }
 }
 
@@ -220,7 +220,7 @@ async fn ping_md() -> impl Responder {
 async fn kill_server(path: HttpRequest) -> impl Responder {
     let restrict = CONFIG.secure;
     // allows killing the server only if the restrict option is on and the client is the host or if the  restrict option is false
-    if (restrict && utills::check_localhost(&path)) || (!restrict) {
+    if (utills::check_localhost(&path)) || !restrict {
         println!("The server was killed with exit code 1");
         std::process::exit(1);
     } else {
@@ -247,7 +247,6 @@ async fn image_proxy(image_url: web::Path<String>) -> Result<HttpResponse> {
     let image_url = image_url.into_inner();
 
     let response = online_md::CLIENT.get(&image_url).send().await;
-    // let response = online_md::request_with_agent(&image_url).await;
 
     match response {
         Ok(resp) => {
@@ -257,10 +256,7 @@ async fn image_proxy(image_url: web::Path<String>) -> Result<HttpResponse> {
                     // .content_type(resp.headers().get("content-type").unwrap())
                     .body(image_byte)),
                 // returns an empty image in case of an error
-                Err(_) => {
-                    // utills::log_error(e);
-                    Ok(HttpResponse::NotFound().finish())
-                }
+                Err(_) => Ok(HttpResponse::NotFound().finish()),
             }
         }
         Err(_) => {

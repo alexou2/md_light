@@ -1,7 +1,6 @@
 use crate::api_error::ApiError;
 use crate::language::*;
 use crate::md_struct::*;
-use markdown::to_html;
 use maud::*;
 
 fn get_top_bar() -> PreEscaped<String> {
@@ -44,9 +43,9 @@ fn get_return_to_manga(manga_id: String) -> PreEscaped<String> {
 
 fn get_correct_image(is_localhost: bool, image_thumbnail: String) -> String {
     if !is_localhost {
-        return format!("/proxy/images/{}", image_thumbnail);
+        format!("/proxy/images/{}", image_thumbnail)
     } else {
-        return image_thumbnail;
+        image_thumbnail
     }
 }
 
@@ -66,7 +65,7 @@ pub fn render_homepage(feed: MdHomepageFeed, is_localhost: bool) -> String {
                     div.popular-manga{
                         a href = (format!("/manga/{}",i.id)){
                             img src = (get_correct_image(is_localhost, i.cover))loading="lazy";
-                            {(i.name)}
+                            {(i.title)}
                         }
                     }
             }
@@ -196,7 +195,7 @@ pub fn render_search_page(search_results: Vec<ShortMangaInfo>, is_localhost: boo
                     div.manga_restult.title{
                         a href = (format!("/manga/{}",i.id)){
                             img src = (get_correct_image(is_localhost, i.cover))loading="lazy";
-                        div.manga-title{(i.name)}
+                        div.manga-title{(i.title)}
                         }
                     }
                 }
@@ -242,7 +241,7 @@ pub fn render_author_page(author: AuthorInfo) -> String {
 
             div.author_name {(author.name)}
             // script {"console.log(`kj`)"}
-            div.title_number {(author.titles_id.len())" titles"}
+            // div.title_number {(author.titles_id.len())" titles"}
             div.works #works{
 
                 // button onclick = {"getAuhorChapters(['"(author.titles_id.join("', '"))"'])"}{}
@@ -261,7 +260,7 @@ pub fn render_author_manga(titles: Vec<ShortMangaInfo>, is_localhost: bool) -> S
     div.title{
         a.title-image href = {"/manga/"(manga.id)}{
             img src = (get_correct_image(is_localhost, manga.cover)) loading="lazy";
-            div.manga-title{(manga.name)}
+            div.manga-title{(manga.title)}
         }
     }
 
@@ -314,7 +313,7 @@ pub fn render_complete_search(
                     div.manga_result.title{
                         a href = (format!("/manga/{}",i.id)){
                             img src = (get_correct_image(is_localhost, i.cover))loading="lazy";
-                        div.manga-title{(i.name)}
+                        div.manga-title{(i.title)}
                         }
                     }
                 }
@@ -323,7 +322,7 @@ pub fn render_complete_search(
             div.search_author{
                 @for i in authors{
                     div.author_result{
-                        a href = {"/author/"(i.id)}{(i.name)": "(i.titles_id.len())" titles"};
+                        a href = {"/author/"(i.id)}{(i.name)};
                     }
                 }
             }

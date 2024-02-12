@@ -32,12 +32,11 @@ fn get_startup_config() -> CliArgs {
             Err(_) => println!("Unable to load the config file. Starting with the other arguments"),
         }
     }
-    return args;
+    args
 }
 /// parses the config file
 fn parse_config_file(content: String) -> CliArgs {
-    let config = toml::from_str(&content).unwrap();
-    config
+    toml::from_str(&content).unwrap()
 }
 
 /// A web server that uses the mangadex api with a lighweight frontend for potato devices

@@ -19,7 +19,7 @@ pub struct MdHomepageFeed {
 
 #[derive(Serialize)]
 pub struct PopularManga {
-    pub name: String,
+    pub title: String,
     pub cover: String,
     pub id: String,
 }
@@ -39,7 +39,7 @@ pub struct NewChapters {
 
 #[derive(Serialize)]
 pub struct ShortMangaInfo {
-    pub name: String,
+    pub title: String,
     pub id: String,
     // pub tags: Vec<String>,
     pub cover: String,
@@ -56,7 +56,7 @@ pub struct MangaInfo {
     pub manga_id: String,
     pub author: Vec<Author>,
     pub tags: Vec<String>,
-    pub thumbnail: String,
+    pub cover: String,
     pub status: String,
     pub original_language: Language,
     pub translated_languages: Vec<Language>,
