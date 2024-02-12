@@ -4,6 +4,7 @@ use crate::md_struct::*;
 use crate::utills::*;
 use lazy_static::lazy_static;
 
+use reqwest::ClientBuilder;
 use reqwest::{header::USER_AGENT, Client};
 use serde_json::{from_str, Value};
 use std::future::Future;
@@ -14,7 +15,9 @@ const CHAPTER_ORDERING: [(&str, &str); 1] = [("order[chapter]", "asc")];
 const INCLUDE_TL_GROUP: [(&str, &str); 1] = [("includes[]", "scanlation_group")];
 
 lazy_static! {
-    static ref CLIENT: Client = Client::new();
+    // static ref CLIENT: Client = Client::new();
+    pub static ref CLIENT:Client = Client::builder().user_agent(USER_AGENT).build().expect("unable to create Client");
+
 }
 
 /// sends a get request to the /ping endpoint of the api
@@ -31,7 +34,7 @@ pub async fn test_connection() -> Result<ServerStatus, ApiError> {
         if resp_content.as_str() == "pong" {
             true
         } else {
-            true
+            false
         }
     } else {
         false
@@ -45,16 +48,17 @@ pub async fn test_connection() -> Result<ServerStatus, ApiError> {
 }
 
 // makes the request to the url with custom user agents, since MD requires them now
-pub async fn request_with_agent(
-    url: String,
-) -> Result<String, ApiError> {
+pub async fn request_with_agent(url: String) -> Result<String, ApiError> {
     // initializes a new client if none is passed as argument
     // let client = reqwest::Client::new();
-println!("{}", url);
+    println!("{}", url);
     let response = CLIENT
         .get(url)
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .send().await?.text().await?;
+        // .header(reqwest::header::USER_AGENT, USER_AGENT)
+        .send()
+        .await?
+        .text()
+        .await?;
 
     Ok(response)
 }
@@ -68,7 +72,7 @@ async fn sync_chap(
 ) -> Result<Value, ApiError> {
     let mut response = CLIENT
         .get(url)
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
+        // .header(reqwest::header::USER_AGENT, USER_AGENT)
         .query(&LIMIT)
         .query(&[("offset", offset)])
         .query(&CHAPTER_ORDERING)
@@ -95,8 +99,8 @@ async fn sync_chap(
 }
 
 /// gets the informations for the homepage
-pub async fn get_md_homepage_feed() -> Result<MdHomepageFeed, ApiError> {
-    let popular_future = std::thread::spawn(|| get_popular_manga());
+pub async fn get_md_homepage_feed(is_high_res: bool) -> Result<MdHomepageFeed, ApiError> {
+    let popular_future = std::thread::spawn(move || get_popular_manga(is_high_res));
     let new_chap_future = std::thread::spawn(|| get_new_chapters());
 
     // builds the struct for the popular titles+ new chapters
@@ -189,7 +193,7 @@ pub async fn get_new_chapters() -> Result<Vec<NewChapters>, ApiError> {
 }
 
 // gets the most popular mangas from the last month that are displayed at the top of the md homepage
-pub async fn get_popular_manga() -> Result<Vec<PopularManga>, ApiError> {
+pub async fn get_popular_manga(is_high_res: bool) -> Result<Vec<PopularManga>, ApiError> {
     let mut popular_manga: Vec<PopularManga> = Vec::new();
     let formatted_time = get_offset_time();
     // formatting the request url to include the atrists/authors and the cover fileName
@@ -220,7 +224,7 @@ pub async fn get_popular_manga() -> Result<Vec<PopularManga>, ApiError> {
             let manga_id = &manga["id"]
                 .remove_quotes()
                 .ok_or("error while removing quotes")?;
-            let thumbnail = get_manga_cover(manga_id, manga)?;
+            let thumbnail = get_manga_cover(manga_id, manga, is_high_res)?;
 
             // creating the search result for each popular manga
             let manga_instance = PopularManga {
@@ -240,6 +244,7 @@ pub async fn get_popular_manga() -> Result<Vec<PopularManga>, ApiError> {
 pub async fn search_manga(
     title: Option<String>,
     params: Option<[(&str, String); 1]>,
+    is_high_res: bool,
 ) -> Result<Vec<ShortMangaInfo>, ApiError> {
     let mut search_results: Vec<ShortMangaInfo> = Vec::new();
     // sending the get request for the search
@@ -253,7 +258,7 @@ pub async fn search_manga(
         .get(url)
         .query(&title_param)
         .query(&params)
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
+        // .header(reqwest::header::USER_AGENT, USER_AGENT)
         .send()
         .await?
         .text()
@@ -285,8 +290,9 @@ pub async fn search_manga(
             let available_languages = attributes["availableTranslatedLanguages"]
                 .as_array()
                 .ok_or("error while getting translated languages options")?;
-            let available_languages = Language::to_language_vec(attributes["availableTranslatedLanguages"].as_array());
-            let thumbnail = get_manga_cover(manga_id, &manga)?;
+            let available_languages =
+                Language::to_language_vec(attributes["availableTranslatedLanguages"].as_array());
+            let thumbnail = get_manga_cover(manga_id, &manga, is_high_res)?;
             let description = &attributes["description"]["en"]
                 .remove_quotes()
                 .unwrap_or("N/a".to_string());
@@ -355,16 +361,25 @@ pub async fn search_author(query: String) -> Result<Vec<AuthorInfo>, ApiError> {
 }
 
 // gets the cover from the json the request url needs to have includes[]=cover_art for this function to work
-pub fn get_manga_cover(manga_id: &String, manga_json: &Value) -> Result<String, ApiError> {
+pub fn get_manga_cover(
+    manga_id: &String,
+    manga_json: &Value,
+    is_high_res: bool,
+) -> Result<String, ApiError> {
+    let quality = match is_high_res {
+        true => 512,
+        false => 256,
+    };
+
     let mut thumbnail = String::new();
     if let Some(manga_cover) = manga_json["relationships"].as_array() {
         for i in manga_cover {
             if i["type"] == "cover_art" {
                 let cover_id = i["attributes"]["fileName"].to_string();
                 let cover_link =
-                    format!("https://mangadex.org/covers/{manga_id}/{cover_id}.512.jpg")
+                    format!("https://mangadex.org/covers/{manga_id}/{cover_id}.{quality}.jpg")
                         .replace('"', "");
-                    println!("{}", cover_link);
+                println!("{}", cover_link);
                 thumbnail = cover_link;
                 break; //breaks the loop if the cover is found
             }
@@ -374,7 +389,7 @@ pub fn get_manga_cover(manga_id: &String, manga_json: &Value) -> Result<String, 
 }
 
 // gets the manga info and chapters
-pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
+pub async fn get_manga_info(manga_id: String, is_high_res: bool) -> Result<MangaInfo, ApiError> {
     // calls the function to get chapters for a faster page loading
     // let id_clone = manga_id.clone();
     // let manga_chapters_future = get_manga_chapters(id_clone, None);
@@ -399,12 +414,11 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
         .ok_or("error while getting title")?
         .remove_quotes()
         .ok_or("error while removing quotes in the manga name")?;
-    let thumbnail = get_manga_cover(&manga_id, &data)?;
+    let thumbnail = get_manga_cover(&manga_id, &data, is_high_res)?;
     let status = &attributes["status"]
         .remove_quotes()
         .ok_or("error while removing quotes in the status")?;
-    let original_language = Language::from( &attributes["originalLanguage"]
-        .remove_quotes());
+    let original_language = Language::from(&attributes["originalLanguage"].remove_quotes());
     let description = &attributes["description"]["en"]
         .remove_quotes()
         .unwrap_or("N/a".to_string());
@@ -466,7 +480,6 @@ pub async fn get_manga_info(manga_id: String) -> Result<MangaInfo, ApiError> {
     for language in translation_options_json {
         let translation = Language::from(language.remove_quotes());
         translated_language_list.push(translation);
-      
     }
 
     // building the struct with all of the manga's informations+ chapters
@@ -617,7 +630,6 @@ pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterPage, ApiErr
     let chapter_hash = json_resp["chapter"]["hash"]
         .remove_quotes()
         .ok_or("can't get chapter hash")?;
-
 
     let pages_json = json_resp["chapter"]["data"]
         .as_array()

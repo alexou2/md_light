@@ -282,7 +282,7 @@ pub fn get_server_options() -> String {
 
             button type="button" onclick = "location.href = '/server/kill' "{"Kill server"}
             button type="button" onclick = "location.href = '/server/ping' "{"Ping MangaDex"}
-            
+
 
             a href = ("https://gitlab.com/_alexou_/md_light.git"){"pull via https:"};
 

@@ -23,9 +23,6 @@ pub struct DownloadData {
     pub offset: i32,
 }
 
-
 /// downloads the manga
 /// the pages are stored in ~/.md_light/ (linux)
-pub fn download_manga(download_infos: Option<DownloadData>) {
-
-}
+pub fn download_manga(download_infos: Option<DownloadData>) {}

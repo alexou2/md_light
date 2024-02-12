@@ -8,6 +8,5 @@ pub struct ChapterQuery {
 #[derive(serde::Deserialize)]
 pub struct SearchQuery {
     pub query: String,
-    pub ordering: Option<String>
+    pub ordering: Option<String>,
 }
-

@@ -28,7 +28,7 @@ pub fn get_offset_time() -> String {
 pub fn check_localhost(path: &HttpRequest) -> bool {
     let binding = path.connection_info();
     let ip = binding.peer_addr().expect("unable to get client IP");
-    
+
     let is_localhost = match ip {
         "172.0.0.1" | "localhost" => true,
         _ => false,

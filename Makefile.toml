@@ -1,0 +1,21 @@
+[tasks.compile]
+command = "cargo"
+args = ["build"]
+
+[tasks.compress]
+command = "tar"
+args = [
+    "-cvf",
+    "Md_Light_release.tar",
+    "ressources/",
+    "templates/",
+    "-C",
+    "target/debug/",
+    "md_light",
+]
+
+[tasks.release]
+dependencies = [
+    "compile",
+      "compress"
+]

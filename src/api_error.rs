@@ -3,7 +3,6 @@ use std::num::ParseIntError;
 use std::sync::MutexGuard;
 use std::sync::PoisonError;
 
-
 #[derive(Debug)]
 pub enum ApiError {
     REQWEST(reqwest::Error),
@@ -13,12 +12,11 @@ pub enum ApiError {
     ParseIntError(ParseIntError),
     FileWriteError(std::io::Error),
     ApiResponseError,
-    ApiPageNotFound404
+    ApiPageNotFound404,
 }
 
 impl fmt::Display for ApiError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-
         match &self {
             ApiError::REQWEST(_) => write!(
                 f,
@@ -28,7 +26,9 @@ impl fmt::Display for ApiError {
             ApiError::StrError(err) => write!(f, "error while processing strings: {err}"),
             ApiError::Box(_) => write!(f, "unknown box error"),
             ApiError::ParseIntError(err) => write!(f, "ParseInt error: {err}"),
-            ApiError::FileWriteError(err) => write!(f, "unable to write to file or creating directory: {err}"),
+            ApiError::FileWriteError(err) => {
+                write!(f, "unable to write to file or creating directory: {err}")
+            }
             ApiError::ApiResponseError => write!(f, "Got an api response error"),
             ApiError::ApiPageNotFound404 => write!(f, "404 Page not found (Api error)"),
         }
@@ -40,7 +40,6 @@ impl fmt::Display for ApiError {
 // todo!()
 //     }
 // }
-
 
 impl std::convert::From<&str> for ApiError {
     fn from(err: &str) -> Self {

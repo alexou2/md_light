@@ -119,7 +119,7 @@ pub fn render_manga_chapters(
     Ok(rendered)
 }
 
-pub fn render_chapter_view(chapter: ChapterPage, is_localhost: bool)-> String{
+pub fn render_chapter_view(chapter: ChapterPage, is_localhost: bool) -> String {
     let mut context = Context::new();
 
     context.insert("is_localhost", &is_localhost);
@@ -132,7 +132,7 @@ pub fn render_chapter_view(chapter: ChapterPage, is_localhost: bool)-> String{
     rendered
 }
 
-pub fn render_author(author_info: AuthorInfo, is_localhost: bool)-> String{
+pub fn render_author(author_info: AuthorInfo, is_localhost: bool) -> String {
     let mut context = Context::new();
 
     context.insert("is_localhost", &is_localhost);
@@ -144,7 +144,6 @@ pub fn render_author(author_info: AuthorInfo, is_localhost: bool)-> String{
 
     rendered
 }
-
 
 /// transforms the offset to an index ex: 501 => 6
 fn round_idx(x: i32) -> i32 {

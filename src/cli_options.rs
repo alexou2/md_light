@@ -43,9 +43,8 @@ fn parse_config_file(content: String) -> CliArgs {
 /// A web server that uses the mangadex api with a lighweight frontend for potato devices
 #[derive(Parser, Serialize, Debug, Deserialize, Clone)]
 // #[command(propagate_version = true)]
-#[command(author = "_alexou_", version = "0.1.2", about , long_about = None, name = "completion-derive")]
+#[command(author = "_alexou_", version, about, long_about, name = "md_light")]
 pub struct CliArgs {
-
     /// Allows other lan devices to connect to the server (you will need to open the port on your device)
     #[arg(short, long)]
     pub lan: bool,
@@ -79,12 +78,12 @@ pub enum Commands {
     /// Creates the config and service files for the server. The other parameters used will also be the default params for the config file
     Init,
     /// removes all of the files created by the program
-    Uninstall
+    Uninstall,
 }
 
-impl CliArgs{
+impl CliArgs {
     /// returns the server configuration as a CliArgs ref
-   pub fn to_args(&self)-> &CliArgs{
+    pub fn to_args(&self) -> &CliArgs {
         self
     }
 }

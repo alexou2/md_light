@@ -1,7 +1,7 @@
 use crate::cli_options::CliArgs;
+use colored::Color;
 use colored::{control, Colorize};
 use dirs;
-use colored::Color;
 use std::fs::{create_dir, remove_dir, remove_file, write};
 use std::io::Write;
 use std::path::PathBuf;

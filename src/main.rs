@@ -16,16 +16,21 @@ use actix_web::{
 };
 use cli_options::*;
 use colored::Colorize;
+use lazy_static::lazy_static;
 use local_ip_address::local_ip;
 use query_struct::*;
 use reqwest::{header::USER_AGENT, Client};
 use tera_templates::render_chapter_view;
 
+lazy_static! {
+    static ref CLIENT: Client = Client::new();
+}
+
 #[get("/")]
 async fn index(path: HttpRequest) -> HttpResponse {
     let is_localhost = utills::check_localhost(&path);
 
-    let feed = online_md::get_md_homepage_feed().await;
+    let feed = online_md::get_md_homepage_feed(CONFIG.datasaver).await;
 
     // handles the errors by sending the error page
     // let html = match feed {
@@ -48,7 +53,7 @@ async fn get_manga_info(manga_id: web::Path<String>, path: HttpRequest) -> HttpR
     let requested_page = path.path();
     let is_localhost = utills::check_localhost(&path);
 
-    let manga_info = online_md::get_manga_info(manga_id.to_string());
+    let manga_info = online_md::get_manga_info(manga_id.to_string(), CONFIG.datasaver);
 
     // handles the errors by sending the error page
     let html = match manga_info.await {
@@ -128,7 +133,8 @@ async fn search(path: HttpRequest, params: web::Query<SearchQuery>) -> HttpRespo
     let search_query = &params.query;
     println!("search for: {}", search_query);
 
-    let manga_results = online_md::search_manga(Some(search_query.to_string()), None).await;
+    let manga_results =
+        online_md::search_manga(Some(search_query.to_string()), None, CONFIG.datasaver).await;
     let author_results = online_md::search_author(search_query.to_string()).await;
 
     let search_result = manga_results.and_then(|a| author_results.map(|b| (a, b)));
@@ -166,8 +172,12 @@ async fn get_author(author_id: web::Path<String>, path: HttpRequest) -> HttpResp
 async fn get_author_feed(author_id: web::Path<String>, path: HttpRequest) -> HttpResponse {
     let is_localhost = utills::check_localhost(&path);
 
-    let manga_list =
-        online_md::search_manga(None, Some([("authorOrArtist", author_id.to_string())])).await;
+    let manga_list = online_md::search_manga(
+        None,
+        Some([("authorOrArtist", author_id.to_string())]),
+        CONFIG.datasaver,
+    )
+    .await;
 
     // handles the errors by sending the error page
     let html = match manga_list {
@@ -222,21 +232,21 @@ async fn kill_server(path: HttpRequest) -> impl Responder {
                 .expect("unable to get client IP")
                 .on_red()
         );
-        return format!(
+        format!(
             "You do not have the permission to kill the server\nIP address: {}",
             path.connection_info()
                 .peer_addr()
                 .expect("unabel to get client IP")
-        );
+        )
     }
     // "".to_string()
 }
 
 async fn image_proxy(image_url: web::Path<String>) -> Result<HttpResponse> {
-    let client = Client::new();
+    // let client = Client::new();
     let image_url = image_url.into_inner();
 
-    let response = client.get(&image_url).header(reqwest::header::USER_AGENT, USER_AGENT).send().await;
+    let response = online_md::CLIENT.get(&image_url).send().await;
     // let response = online_md::request_with_agent(&image_url).await;
 
     match response {
