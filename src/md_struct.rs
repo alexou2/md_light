@@ -83,6 +83,11 @@ pub struct Chapter {
     // pub total_chapters: i32,
 }
 
+pub struct PrevAndNextChaps{
+    pub prev_chapter_id:Option<String>,
+    pub next_chapter_id:Option<String>,
+}
+
 // #[derive(Clone, Serialize)]
 pub struct MangaChapters {
     pub chapters: Vec<Result<Chapter, ApiError>>,
@@ -106,6 +111,9 @@ pub struct ChapterPage {
     pub name: String,
     pub pages: Vec<String>,
 }
+
+
+
 
 pub trait ValueExtensions {
     fn remove_quotes(&self) -> Option<String>;

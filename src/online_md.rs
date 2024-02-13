@@ -1,3 +1,4 @@
+use crate::api_error;
 use crate::api_error::ApiError;
 use crate::language::Language;
 use crate::md_struct::*;
@@ -700,4 +701,10 @@ async fn parse_json(response: &str) -> Result<Value, ApiError> {
     }
 }
 
-pub fn get_prev_and_next_chapters(offset: i32, language: Language) {}
+pub fn get_prev_and_next_chapters(chapter_id:String)-> Result<PrevAndNextChaps, ApiError> {
+    // let url = format!("{}/{}")
+    // let resp = request_with_agent()
+
+
+    Ok(todo!())
+}
