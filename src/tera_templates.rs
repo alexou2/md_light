@@ -124,6 +124,8 @@ pub fn render_chapter_view(
     // th pages and url
     context.insert("is_localhost", &is_localhost);
     context.insert("chapter", &chapter);
+    context.insert("chapter_name", &chapter_infos.curr_chapter_name);
+    
 
     // the contrnt for changing chapters
     context.insert("next_chap", &chapter_infos.next);

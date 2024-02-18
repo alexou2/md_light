@@ -15,10 +15,13 @@
             <input autocomplete="off" id="search_box" type="text" name="query" placeholder="Search" required>
         </form>
     </div>
+
+<h1>{{chapter_name |default (value="")}}</h1>
+
     {% if has_prev %}
     <a href="/manga/{{manga_id}}/{{prev_chap.chapter_id}}/{{prev_chap.chapter_number}}">prev chapter</a>
     {% endif %}
-    
+
     {% if has_next %}
     <a href="/manga/{{manga_id}}/{{next_chap.chapter_id}}/{{next_chap.chapter_number}}">next chapter</a>
     {% endif %}
