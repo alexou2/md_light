@@ -19,11 +19,11 @@
 <h1>{{chapter_name |default (value="")}}</h1>
 
     {% if has_prev %}
-    <a href="/manga/{{manga_id}}/{{prev_chap.chapter_id}}/{{prev_chap.chapter_number}}">prev chapter</a>
+    <a href="/manga/{{manga_id}}/{{prev_chap.chapter_id}}/{{prev_chap.chapter_number}}/{{prev_chap.language.lang}}">prev chapter</a>
     {% endif %}
 
     {% if has_next %}
-    <a href="/manga/{{manga_id}}/{{next_chap.chapter_id}}/{{next_chap.chapter_number}}">next chapter</a>
+    <a href="/manga/{{manga_id}}/{{next_chap.chapter_id}}/{{next_chap.chapter_number}}/{{next_chap.language.lang}}">next chapter</a>
     {% endif %}
 
     {% for page in chapter.pages %}

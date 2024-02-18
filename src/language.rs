@@ -30,10 +30,12 @@ const ERROR: &str = "⚠️"; //unknown flag
 #[derive(Clone, Debug)]
 pub struct Language {
     pub lang: String,
+    pub flag: String,
 }
+
 impl fmt::Display for Language {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", &self.lang)
+        write!(f, "{}", &self.flag)
     }
 }
 
@@ -43,7 +45,7 @@ pub trait AsStr {
 
 impl AsStr for Language {
     fn as_str(&self) -> &str {
-        &self.lang
+        &self.flag
     }
 }
 
@@ -54,6 +56,7 @@ impl Serialize for Language {
     {
         let mut s = serializer.serialize_struct("Language", 1)?;
         // s.serialize_field("lang", to_flag_str(&self.lang))?;
+        s.serialize_field("flag", &self.flag)?;
         s.serialize_field("lang", &self.lang)?;
 
         s.end()
@@ -64,7 +67,8 @@ impl std::convert::From<String> for Language {
     fn from(lang: String) -> Self {
         let flag = to_flag_str(&lang);
         Language {
-            lang: flag.to_owned(),
+            lang: lang.to_owned(),
+            flag: flag.to_owned(),
         }
     }
 }
@@ -78,7 +82,8 @@ impl std::convert::From<&Option<String>> for Language {
 
         let flag = to_flag_str(lang);
         Language {
-            lang: flag.to_owned(),
+            lang: lang.to_owned(),
+            flag: flag.to_owned(),
         }
     }
 }
@@ -92,7 +97,8 @@ impl std::convert::From<Option<String>> for Language {
 
         let flag = to_flag_str(&lang);
         Language {
-            lang: flag.to_owned(),
+            lang: lang.to_owned(),
+            flag: flag.to_owned(),
         }
     }
 }
@@ -103,7 +109,8 @@ impl Language {
         if lang_vec.is_none() {
             let flag = to_flag_str(ERROR);
             let flag = Language {
-                lang: flag.to_owned(),
+                lang: "Error".to_owned(),
+                flag: flag.to_owned(),
             };
             return vec![flag];
         }
@@ -116,7 +123,8 @@ impl Language {
             };
             let flag = to_flag_str(&lang);
             let flag = Language {
-                lang: flag.to_owned(),
+                lang: lang.to_owned(),
+                flag: flag.to_owned(),
             };
 
             language_vector.push(flag);

@@ -67,8 +67,7 @@ pub fn render_homepage(feed: MdHomepageFeed) -> String {
     context.insert("new_chapters", &feed.new_chapter_releases);
     TEMPLATES
         .render("home.html", &context)
-        // .expect("Failed to render template");
-        .unwrap()
+        .expect("Failed to render template")
 }
 
 /// renders the manga without the chapters
@@ -125,7 +124,6 @@ pub fn render_chapter_view(
     context.insert("is_localhost", &is_localhost);
     context.insert("chapter", &chapter);
     context.insert("chapter_name", &chapter_infos.curr_chapter_name);
-    
 
     // the contrnt for changing chapters
     context.insert("next_chap", &chapter_infos.next);
