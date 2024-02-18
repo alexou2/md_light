@@ -80,15 +80,13 @@ pub struct Chapter {
     pub chapter_number: String,
     pub language: Language,
     pub chapter_id: String,
-    // pub total_chapters: i32,
 }
 
 pub struct PrevAndNextChaps{
-    pub prev_chapter_id:Option<String>,
-    pub next_chapter_id:Option<String>,
+    pub prev:Option<Chapter>,
+    pub next:Option<Chapter>,
 }
 
-// #[derive(Clone, Serialize)]
 pub struct MangaChapters {
     pub chapters: Vec<Result<Chapter, ApiError>>,
     pub total: i32,

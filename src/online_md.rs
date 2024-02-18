@@ -3,6 +3,7 @@ use crate::api_error::ApiError;
 use crate::language::Language;
 use crate::md_struct::*;
 use crate::utills::*;
+use clap::builder::Str;
 use lazy_static::lazy_static;
 
 use reqwest::{header::USER_AGENT, Client};
@@ -35,10 +36,7 @@ pub async fn test_connection() -> Result<ServerStatus, ApiError> {
         false
     };
 
-    let status = ServerStatus {
-        up,
-        reachable,
-    };
+    let status = ServerStatus { up, reachable };
     Ok(status)
 }
 
@@ -95,7 +93,6 @@ async fn sync_chap(
 pub async fn get_md_homepage_feed(is_low_res: bool) -> Result<MdHomepageFeed, ApiError> {
     let popular_future = std::thread::spawn(move || get_popular_manga(is_low_res));
     let new_chap_future = std::thread::spawn(get_new_chapters);
-
 
     // builds the struct for the popular titles+ new chapters
     let homepage_feed = MdHomepageFeed {
@@ -360,7 +357,6 @@ pub fn get_manga_cover(
     manga_json: &Value,
     is_low_res: bool,
 ) -> Result<String, ApiError> {
-    
     //uses the low quality images if the low auality argument is given
     let quality = match is_low_res {
         false => 512,
@@ -701,10 +697,46 @@ async fn parse_json(response: &str) -> Result<Value, ApiError> {
     }
 }
 
-pub fn get_prev_and_next_chapters(chapter_id:String)-> Result<PrevAndNextChaps, ApiError> {
-    // let url = format!("{}/{}")
-    // let resp = request_with_agent()
+/// returns the previous and next chapter
+pub async fn get_prev_and_next_chapters(
+    chapter_id: String,
+    chapter_number: f32,
+    manga_id: String,
+    language: String,
+) -> Result<PrevAndNextChaps, ApiError> {
+    let offset = get_offset_from_f32(chapter_number);
+    let chapters = get_manga_chapters(manga_id, Some(language), offset).await?;
+    let mut index = 0;
 
+    for i in 0..chapters.chapters.len() {
+        // if chapters.chapters[i]
+        let ch = chapters.chapters[i].as_ref().unwrap();
+        if ch.chapter_id == chapter_id {
+            index = i;
+            break;
+        }
+    }
 
-    Ok(todo!())
+    let mut prev = None;
+    let mut next = None;
+
+    if index != chapters.chapters.len() {
+        next = Some(chapters.chapters[index + 1].as_ref().unwrap().clone())
+    }
+    if index > 0 {
+        prev = Some(chapters.chapters[index - 1].as_ref().unwrap().clone())
+    }
+
+    Ok(PrevAndNextChaps { prev, next })
+}
+
+/// returns the offset required to get the previous and next chapters
+fn get_offset_from_f32(number: f32) -> i32 {
+    // let offset: i32 = offset as i32;
+    let mut offset = (number - 10.0) as i32;
+    // let mut tt = offset as i32;
+    if offset < 0 {
+        offset = 0;
+    }
+    offset
 }
