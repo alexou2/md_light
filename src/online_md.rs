@@ -56,6 +56,11 @@ pub async fn request_with_agent(url: String) -> Result<String, ApiError> {
     Ok(response)
 }
 
+
+// const JSON_OFFLINE:&'static str = r##"	
+// {"result":"ok","response":"collection","data":[{"id":"32a379d5-8bef-471b-9bfb-d52407d9ea84","type":"chapter","attributes":{"volume":null,"chapter":"0.5","title":"Preserialization Twitter Shorts.","translatedLanguage":"en","externalUrl":null,"publishAt":"2024-02-13T18:24:18+00:00","readableAt":"2024-02-13T18:24:18+00:00","createdAt":"2024-02-13T18:24:18+00:00","updatedAt":"2024-02-13T21:41:49+00:00","pages":6,"version":4},"relationships":[{"id":"142cab1a-005c-499b-9bdf-ff73cf5abd4a","type":"manga"},{"id":"01287da1-4754-4258-a6c8-52c34e888bdb","type":"user"}]},{"id":"740e59f1-609c-4112-8d60-bf879a49584f","type":"chapter","attributes":{"volume":null,"chapter":"1","title":null,"translatedLanguage":"pt-br","externalUrl":null,"publishAt":"2024-02-16T03:19:57+00:00","readableAt":"2024-02-16T03:19:57+00:00","createdAt":"2024-02-16T03:19:57+00:00","updatedAt":"2024-02-16T03:20:57+00:00","pages":41,"version":3},"relationships":[{"id":"337fbc53-711c-4942-987e-6aa0f6989df3","type":"scanlation_group"},{"id":"142cab1a-005c-499b-9bdf-ff73cf5abd4a","type":"manga"},{"id":"1532c0a9-4620-45d3-8951-0a59802e8392","type":"user"}]},{"id":"c5fdb850-331e-4e54-9d6a-560534269ed2","type":"chapter","attributes":{"volume":null,"chapter":"1","title":null,"translatedLanguage":"en","externalUrl":null,"publishAt":"2024-02-11T23:49:46+00:00","readableAt":"2024-02-11T23:49:46+00:00","createdAt":"2024-02-11T15:17:36+00:00","updatedAt":"2024-02-11T23:49:46+00:00","pages":39,"version":3},"relationships":[{"id":"142cab1a-005c-499b-9bdf-ff73cf5abd4a","type":"manga"},{"id":"01287da1-4754-4258-a6c8-52c34e888bdb","type":"user"}]}],"limit":100,"offset":0,"total":3}"##;
+
+
 /// requests manga chapters
 async fn sync_chap(
     url: String,
@@ -72,10 +77,10 @@ async fn sync_chap(
         .query(&INCLUDE_TL_GROUP);
 
     if let Some(lang) = language {
-        response = response.query(&[("language", lang)])
+        response = response.query(&[("translatedLanguage[]", lang)])
     }
-
     let response = response.send().await?.text().await?;
+// let response = JSON_OFFLINE.to_string();
 
     // converting the text response into a json value
     let json_res_result = from_str(&response);
@@ -499,6 +504,7 @@ pub async fn get_manga_chapters(
     // ) -> Result<Vec<Result<Chapter, ApiError>>, ApiError> {
 ) -> Result<MangaChapters, ApiError> {
     let url = format!("{}/manga/{}/feed", BASE_URL, manga_id);
+    println!("url: {}", url);
 
     let chapter_json = sync_chap(url, offset, language).await?;
 
@@ -697,13 +703,27 @@ async fn parse_json(response: &str) -> Result<Value, ApiError> {
     }
 }
 
+// #[tokio::main]
+// #[test]
+pub async fn tt() {
+    let chaps = get_prev_and_next_chapters(
+        "32a379d5-8bef-471b-9bfb-d52407d9ea84".to_string(),
+        0.5,
+        "142cab1a-005c-499b-9bdf-ff73cf5abd4a".to_string(),
+        "en".to_string(),
+    )
+    .await
+    .unwrap();
+    println!("{:#?}", chaps);
+}
+
 /// returns the previous and next chapter
 pub async fn get_prev_and_next_chapters(
     chapter_id: String,
     chapter_number: f32,
     manga_id: String,
     language: String,
-) -> Result<PrevAndNextChaps, ApiError> {
+) -> Result<CurrentChapter, ApiError> {
     let offset = get_offset_from_f32(chapter_number);
     let chapters = get_manga_chapters(manga_id, Some(language), offset).await?;
     let mut index = 0;
@@ -720,14 +740,27 @@ pub async fn get_prev_and_next_chapters(
     let mut prev = None;
     let mut next = None;
 
-    if index != chapters.chapters.len() {
+
+
+println!(r"idx: {index}
+len:{}" ,chapters.chapters.len());
+    if index != chapters.chapters.len()-1 {
         next = Some(chapters.chapters[index + 1].as_ref().unwrap().clone())
     }
     if index > 0 {
         prev = Some(chapters.chapters[index - 1].as_ref().unwrap().clone())
     }
 
-    Ok(PrevAndNextChaps { prev, next })
+    Ok(CurrentChapter {
+        prev,
+        next,
+        curr_chapter_name: chapters.chapters[index]
+            .as_ref()
+            .unwrap()
+            .chapter_name
+            .clone(),
+        curr_chapter_number: chapter_number,
+    })
 }
 
 /// returns the offset required to get the previous and next chapters

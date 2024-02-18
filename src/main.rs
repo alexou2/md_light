@@ -9,6 +9,7 @@ mod online_md;
 mod query_struct;
 mod tera_templates;
 mod utills;
+mod tests;
 
 use actix_files::Files;
 use actix_web::{
@@ -109,16 +110,20 @@ async fn get_chapters(
 }
 
 // returns the chapter's pages
-#[get("/manga/{manga}/{chapter}")]
-async fn get_chapter(chapter: web::Path<(String, String)>, path: HttpRequest) -> HttpResponse {
+#[get("/manga/{manga}/{chapter}/{chapter_number}")]
+async fn get_chapter(chapter: web::Path<(String, String, String)>, path: HttpRequest) -> HttpResponse {
     let is_localhost = utills::check_localhost(&path);
     let manga_id = chapter.0.to_string();
     let chapter_id = chapter.1.to_string();
+    let chapter_number = chapter.2.to_string().parse::<f32>().unwrap();
+
 
     let chapter_info = online_md::get_chapter_pages(chapter_id.clone()).await;
+    let infos = online_md::get_prev_and_next_chapters(chapter_id, chapter_number, manga_id.clone(), "en".to_string()).await.unwrap();
+
     let html = match chapter_info {
         // Ok(e) => manga_templates::render_chapter(e, is_localhost, manga_id),
-        Ok(e) => render_chapter_view(e, is_localhost),
+        Ok(e) => render_chapter_view(e, is_localhost, infos, manga_id),
         Err(v) => manga_templates::render_error_page(v, path.path()),
     };
     HttpResponse::build(StatusCode::OK)
@@ -242,6 +247,16 @@ async fn kill_server(path: HttpRequest) -> impl Responder {
     // "".to_string()
 }
 
+
+
+// kills the server
+#[get("/test")]
+async fn test_code() -> impl Responder {
+    online_md::tt().await;
+
+    "123".to_string()
+}
+
 async fn image_proxy(image_url: web::Path<String>) -> Result<HttpResponse> {
     // let client = Client::new();
     let image_url = image_url.into_inner();
@@ -287,6 +302,7 @@ async fn main() -> std::io::Result<()> {
     let mut server = HttpServer::new(|| {
         App::new()
             .route("/proxy/images/{image_url:.+}", web::get().to(image_proxy))
+            .service(test_code)
             .service(index)
             .service(kill_server)
             .service(get_server_options)
@@ -298,6 +314,7 @@ async fn main() -> std::io::Result<()> {
             .service(get_author)
             .service(get_chapters)
             .service(Files::new("/", "/ressources"))
+            
     });
 
     // the ip addreses used to access the server

@@ -1,3 +1,4 @@
+use clap::builder::Str;
 use serde_json::Value;
 // use serde_derive::Serialize;
 use crate::api_error::ApiError;
@@ -73,7 +74,7 @@ pub struct Author {
 }
 
 /// the chapters that are listed in the manga info page
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Debug)]
 pub struct Chapter {
     pub tl_group: Vec<TlGroup>,
     pub chapter_name: Option<String>,
@@ -81,10 +82,12 @@ pub struct Chapter {
     pub language: Language,
     pub chapter_id: String,
 }
-
-pub struct PrevAndNextChaps{
-    pub prev:Option<Chapter>,
-    pub next:Option<Chapter>,
+#[derive(Clone, Serialize, Debug)]
+pub struct CurrentChapter {
+    pub curr_chapter_number: f32,
+    pub curr_chapter_name: Option<String>,
+    pub prev: Option<Chapter>,
+    pub next: Option<Chapter>,
 }
 
 pub struct MangaChapters {
@@ -99,7 +102,7 @@ pub struct AuthorInfo {
     pub titles_id: Vec<String>,
 }
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Debug)]
 pub struct TlGroup {
     pub id: String,
     pub name: String,
@@ -109,9 +112,6 @@ pub struct ChapterPage {
     pub name: String,
     pub pages: Vec<String>,
 }
-
-
-
 
 pub trait ValueExtensions {
     fn remove_quotes(&self) -> Option<String>;

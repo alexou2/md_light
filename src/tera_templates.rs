@@ -113,11 +113,25 @@ pub fn render_manga_chapters(
     Ok(rendered)
 }
 
-pub fn render_chapter_view(chapter: ChapterPage, is_localhost: bool) -> String {
+/// renders the page to read the chapters
+pub fn render_chapter_view(
+    chapter: ChapterPage,
+    is_localhost: bool,
+    chapter_infos: CurrentChapter,
+    manga_id: String,
+) -> String {
     let mut context = Context::new();
-
+    // th pages and url
     context.insert("is_localhost", &is_localhost);
     context.insert("chapter", &chapter);
+
+    // the contrnt for changing chapters
+    context.insert("next_chap", &chapter_infos.next);
+    context.insert("has_next", &chapter_infos.next.is_some());
+    context.insert("prev_chap", &chapter_infos.prev);
+    context.insert("has_prev", &chapter_infos.prev.is_some());
+
+    context.insert("manga_id", &manga_id);
 
     TEMPLATES
         .render("read_chapter.html", &context)

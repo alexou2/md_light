@@ -15,14 +15,21 @@
             <input autocomplete="off" id="search_box" type="text" name="query" placeholder="Search" required>
         </form>
     </div>
+    {% if has_prev %}
+    <a href="/manga/{{manga_id}}/{{prev_chap.chapter_id}}/{{prev_chap.chapter_number}}">prev chapter</a>
+    {% endif %}
     
-{% for page in chapter.pages %}
-<div class="page_list" onclick="goFullscreen()">
-<img class="chapter_page" src="/proxy/images/{{page}}">
+    {% if has_next %}
+    <a href="/manga/{{manga_id}}/{{next_chap.chapter_id}}/{{next_chap.chapter_number}}">next chapter</a>
+    {% endif %}
 
-</div>
+    {% for page in chapter.pages %}
+    <div class="page_list" onclick="goFullscreen()">
+        <img class="chapter_page" src="/proxy/images/{{page}}">
 
-{% endfor %}
+    </div>
+
+    {% endfor %}
 
 
 </body>
