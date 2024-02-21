@@ -34,9 +34,12 @@ fn get_startup_config() -> CliArgs {
     }
     args
 }
+
+
+
 /// parses the config file
 fn parse_config_file(content: String) -> CliArgs {
-    toml::from_str(&content).unwrap()
+    toml::from_str(&content).expect("unable to read the server config file")
 }
 
 /// A web server that uses the mangadex api with a lighweight frontend for potato devices
@@ -71,6 +74,7 @@ pub struct CliArgs {
     #[command(subcommand)]
     pub command: Option<Commands>,
 }
+
 
 #[derive(Subcommand, Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum Commands {

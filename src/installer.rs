@@ -4,8 +4,6 @@ use std::fs::{create_dir, remove_dir, remove_file, write};
 use std::io::Write;
 use std::path::PathBuf;
 
-// base url of the repo
-
 /// initialises the server by creating the required files for the server
 pub fn init(args: &mut CliArgs) {
     args.command = None;
@@ -72,11 +70,4 @@ fn prompt_true_false(name: &str, default: bool) -> bool {
         "N" | "n" | "no" | "No" | "" => false,
         _ => default,
     }
-}
-
-fn download_ressources() {
-    let cache_dir = dirs::cache_dir().unwrap();
-
-    let template_dir = cache_dir.clone().push("templates");
-    let ressources_dir = cache_dir.clone().push("ressources");
 }
