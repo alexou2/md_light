@@ -112,6 +112,13 @@ pub struct ChapterPage {
     pub pages: Vec<String>,
 }
 
+enum MangaImage{
+    /// the url to the image
+    Url(String),
+    /// the data of the image. used when the 'embeded' argument is given
+    Data(String)
+}
+
 pub trait ValueExtensions {
     fn remove_quotes(&self) -> Option<String>;
 }

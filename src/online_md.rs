@@ -1,10 +1,16 @@
+use std::vec;
+
 use crate::api_error::ApiError;
 use crate::language::Language;
 use crate::md_struct::*;
 use crate::utills::*;
+use base64::prelude::BASE64_STANDARD;
+use base64::Engine;
+use clap::builder::Str;
 use lazy_static::lazy_static;
 use reqwest::Client;
 use serde_json::{from_str, Value};
+use tokio::task::JoinError;
 
 const BASE_URL: &str = "https://api.mangadex.org";
 const LIMIT: [(&str, i32); 1] = [("limit", 100)];
@@ -737,4 +743,37 @@ fn get_offset_from_f32(number: &str) -> i32 {
         offset = 0;
     }
     offset
+}
+
+/// gets the data of images for
+pub async fn get_image_data(image_vec: Vec<String>) -> Vec<Result<String, JoinError>> {
+    let mut handles = vec![];
+    for img in image_vec {
+        handles.push(tokio::spawn(get_image_hash(img)))
+    }
+    let mut image_data = vec![];
+    for i in handles {
+        image_data.push(i.await)
+    }
+    image_data
+}
+
+/// encodes the image to base64
+async fn get_image_hash(image_url: String) -> String {
+    let response = CLIENT.get(&image_url).send().await;
+
+    match response {
+        Ok(resp) => {
+            let bytes = resp.bytes().await;
+            match bytes {
+                Ok(image_byte) => BASE64_STANDARD.encode(image_byte),
+                // returns an empty image in case of an error
+                Err(_) => "".into(),
+            }
+        }
+        Err(_) => {
+            // Return an error response or a placeholder image
+            "".into()
+        }
+    }
 }

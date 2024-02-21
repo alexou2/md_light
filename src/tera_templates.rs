@@ -77,7 +77,7 @@ pub fn render_homepage(feed: MdHomepageFeed, is_localhost: bool, embeded_images:
 
     // data for the images
     let mut proxy_url = "";
-    if is_localhost{
+    if is_localhost {
         proxy_url = "/proxy/images/"
     }
     context.insert("proxy_url", proxy_url);
@@ -150,7 +150,7 @@ pub fn render_chapter_view(
     is_localhost: bool,
     chapter_infos: CurrentChapter,
     manga_id: String,
-    embeded_images: bool
+    embeded_images: bool,
 ) -> String {
     let mut context = Context::new();
     // th pages and url
@@ -166,12 +166,12 @@ pub fn render_chapter_view(
 
     context.insert("manga_id", &manga_id);
 
-      // data for the images
-      let mut proxy_url = "";
-      if is_localhost {
-          proxy_url = "/proxy/images/"
-      }
-      context.insert("proxy_url", proxy_url);
+    // data for the images
+    let mut proxy_url = "";
+    if is_localhost {
+        proxy_url = "/proxy/images/"
+    }
+    context.insert("proxy_url", proxy_url);
 
     TEMPLATES
         .render("read_chapter.html", &context)
