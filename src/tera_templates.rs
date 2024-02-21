@@ -43,6 +43,8 @@ lazy_static! {
 pub fn render_complete_search(
     search_data: (Vec<ShortMangaInfo>, Vec<AuthorInfo>),
     query: String,
+    is_localhost: bool,
+    embeded_images: bool,
 ) -> String {
     let mut context = Context::new();
     context.insert("title", "Search | MD_light");
@@ -55,23 +57,38 @@ pub fn render_complete_search(
 
     context.insert("author_list", &search_data.1);
 
+    // data for the images
+    let mut proxy_url = "";
+    if is_localhost {
+        proxy_url = "/proxy/images/"
+    }
+    context.insert("proxy_url", proxy_url);
+
     TEMPLATES
         .render("search.html", &context)
         .expect("Failed to render template")
 }
 
-pub fn render_homepage(feed: MdHomepageFeed) -> String {
+pub fn render_homepage(feed: MdHomepageFeed, is_localhost: bool, embeded_images: bool) -> String {
     let mut context = Context::new();
 
     context.insert("popular_manga", &feed.currently_popular);
     context.insert("new_chapters", &feed.new_chapter_releases);
+
+    // data for the images
+    let mut proxy_url = "";
+    if is_localhost{
+        proxy_url = "/proxy/images/"
+    }
+    context.insert("proxy_url", proxy_url);
+
     TEMPLATES
         .render("home.html", &context)
         .expect("Failed to render template")
 }
 
 /// renders the manga without the chapters
-pub fn render_manga_info(manga: MangaInfo) -> String {
+pub fn render_manga_info(manga: MangaInfo, is_localhost: bool, embeded_images: bool) -> String {
     let mut context = Context::new();
 
     context.insert("manga_name", &manga.manga_name);
@@ -81,6 +98,13 @@ pub fn render_manga_info(manga: MangaInfo) -> String {
     context.insert("description", &html);
     context.insert("authors", &manga.author);
     context.insert("manga_id", &manga.manga_id);
+
+    // data for the images
+    let mut proxy_url = "";
+    if is_localhost {
+        proxy_url = "/proxy/images/"
+    }
+    context.insert("proxy_url", proxy_url);
 
     TEMPLATES
         .render("manga_info.html", &context)
@@ -92,6 +116,7 @@ pub fn render_manga_chapters(
     offset: i32,
     manga_id: String,
     is_localhost: bool,
+    embeded_images: bool,
 ) -> Result<String, ApiError> {
     let mut context = Context::new();
 
@@ -104,6 +129,13 @@ pub fn render_manga_chapters(
     context.insert("current", &round_idx(offset));
     context.insert("total", &round_idx(chapters.total));
     context.insert("is_localhost", &is_localhost);
+
+    // data for the images
+    let mut proxy_url = "";
+    if is_localhost {
+        proxy_url = "/proxy/images/"
+    }
+    context.insert("proxy_url", proxy_url);
 
     let rendered = TEMPLATES
         .render("manga_chapter.html", &context)
@@ -118,6 +150,7 @@ pub fn render_chapter_view(
     is_localhost: bool,
     chapter_infos: CurrentChapter,
     manga_id: String,
+    embeded_images: bool
 ) -> String {
     let mut context = Context::new();
     // th pages and url
@@ -132,6 +165,13 @@ pub fn render_chapter_view(
     context.insert("has_prev", &chapter_infos.prev.is_some());
 
     context.insert("manga_id", &manga_id);
+
+      // data for the images
+      let mut proxy_url = "";
+      if is_localhost {
+          proxy_url = "/proxy/images/"
+      }
+      context.insert("proxy_url", proxy_url);
 
     TEMPLATES
         .render("read_chapter.html", &context)

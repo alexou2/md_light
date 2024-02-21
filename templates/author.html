@@ -22,7 +22,7 @@
     <div class="works" id="works">
         {% for title in titles %}
         <div class="title">
-            <a class="title-image" href="/manga/{{title.id}}"><img src="/proxy/images/{{title.cover}}">
+            <a class="title-image" href="/manga/{{title.id}}"><img src="{{proxy_url}}{{title.cover}}">
                 <div class="manga-title">{{manga.name}}</div>
             </a>
         </div>

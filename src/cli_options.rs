@@ -35,8 +35,6 @@ fn get_startup_config() -> CliArgs {
     args
 }
 
-
-
 /// parses the config file
 fn parse_config_file(content: String) -> CliArgs {
     toml::from_str(&content).expect("unable to read the server config file")
@@ -68,13 +66,16 @@ pub struct CliArgs {
     pub recommended: bool,
 
     /// uses the config file to start the server
-    #[arg(short, long = "config")]
+    #[arg(short, long )]
     pub config: bool,
+
+    /// embeds the images directly in the html
+    #[arg(short, long)]
+    pub embeded: bool,
 
     #[command(subcommand)]
     pub command: Option<Commands>,
 }
-
 
 #[derive(Subcommand, Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum Commands {
