@@ -15,8 +15,7 @@ const CHAPTER_ORDERING: [(&str, &str); 1] = [("order[chapter]", "asc")];
 const INCLUDE_TL_GROUP: [(&str, &str); 1] = [("includes[]", "scanlation_group")];
 
 lazy_static! {
-    // static ref CLIENT: Client = Client::new();
-    pub static ref CLIENT:Client = Client::builder().user_agent(USER_AGENT).build().expect("unable to create Client");
+    pub static ref CLIENT:Client = Client::builder().user_agent("Md_light").build().expect("unable to create Client");
 
 }
 
@@ -764,9 +763,7 @@ fn get_offset_from_f32(number: &str) -> i32 {
         return 0;
     }
     let number:f32 = from_str(number).unwrap();
-    // let offset: i32 = offset as i32;
     let mut offset = (number - 10.0) as i32;
-    // let mut tt = offset as i32;
     if offset < 0 {
         offset = 0;
     }
