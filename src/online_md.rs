@@ -56,10 +56,8 @@ pub async fn request_with_agent(url: String) -> Result<String, ApiError> {
     Ok(response)
 }
 
-
-// const JSON_OFFLINE:&'static str = r##"	
+// const JSON_OFFLINE:&'static str = r##"
 // {"result":"ok","response":"collection","data":[{"id":"32a379d5-8bef-471b-9bfb-d52407d9ea84","type":"chapter","attributes":{"volume":null,"chapter":"0.5","title":"Preserialization Twitter Shorts.","translatedLanguage":"en","externalUrl":null,"publishAt":"2024-02-13T18:24:18+00:00","readableAt":"2024-02-13T18:24:18+00:00","createdAt":"2024-02-13T18:24:18+00:00","updatedAt":"2024-02-13T21:41:49+00:00","pages":6,"version":4},"relationships":[{"id":"142cab1a-005c-499b-9bdf-ff73cf5abd4a","type":"manga"},{"id":"01287da1-4754-4258-a6c8-52c34e888bdb","type":"user"}]},{"id":"740e59f1-609c-4112-8d60-bf879a49584f","type":"chapter","attributes":{"volume":null,"chapter":"1","title":null,"translatedLanguage":"pt-br","externalUrl":null,"publishAt":"2024-02-16T03:19:57+00:00","readableAt":"2024-02-16T03:19:57+00:00","createdAt":"2024-02-16T03:19:57+00:00","updatedAt":"2024-02-16T03:20:57+00:00","pages":41,"version":3},"relationships":[{"id":"337fbc53-711c-4942-987e-6aa0f6989df3","type":"scanlation_group"},{"id":"142cab1a-005c-499b-9bdf-ff73cf5abd4a","type":"manga"},{"id":"1532c0a9-4620-45d3-8951-0a59802e8392","type":"user"}]},{"id":"c5fdb850-331e-4e54-9d6a-560534269ed2","type":"chapter","attributes":{"volume":null,"chapter":"1","title":null,"translatedLanguage":"en","externalUrl":null,"publishAt":"2024-02-11T23:49:46+00:00","readableAt":"2024-02-11T23:49:46+00:00","createdAt":"2024-02-11T15:17:36+00:00","updatedAt":"2024-02-11T23:49:46+00:00","pages":39,"version":3},"relationships":[{"id":"142cab1a-005c-499b-9bdf-ff73cf5abd4a","type":"manga"},{"id":"01287da1-4754-4258-a6c8-52c34e888bdb","type":"user"}]}],"limit":100,"offset":0,"total":3}"##;
-
 
 /// requests manga chapters
 async fn sync_chap(
@@ -80,7 +78,7 @@ async fn sync_chap(
         response = response.query(&[("translatedLanguage[]", lang)])
     }
     let response = response.send().await?.text().await?;
-// let response = JSON_OFFLINE.to_string();
+    // let response = JSON_OFFLINE.to_string();
 
     // converting the text response into a json value
     let json_res_result = from_str(&response);
@@ -708,7 +706,7 @@ async fn parse_json(response: &str) -> Result<Value, ApiError> {
 pub async fn tt() {
     let chaps = get_prev_and_next_chapters(
         "32a379d5-8bef-471b-9bfb-d52407d9ea84".to_string(),
-        0.5,
+        "0.5",
         "142cab1a-005c-499b-9bdf-ff73cf5abd4a".to_string(),
         "en".to_string(),
     )
@@ -720,7 +718,7 @@ pub async fn tt() {
 /// returns the previous and next chapter
 pub async fn get_prev_and_next_chapters(
     chapter_id: String,
-    chapter_number: f32,
+    chapter_number: &str,
     manga_id: String,
     language: String,
 ) -> Result<CurrentChapter, ApiError> {
@@ -736,15 +734,12 @@ pub async fn get_prev_and_next_chapters(
             break;
         }
     }
-
+println!("index: {index} ||| len: {}", chapters.chapters.len());
     let mut prev = None;
     let mut next = None;
 
 
-
-println!(r"idx: {index}
-len:{}" ,chapters.chapters.len());
-    if index != chapters.chapters.len()-1 {
+    if index != chapters.chapters.len() - 1 {
         next = Some(chapters.chapters[index + 1].as_ref().unwrap().clone())
     }
     if index > 0 {
@@ -759,12 +754,16 @@ len:{}" ,chapters.chapters.len());
             .unwrap()
             .chapter_name
             .clone(),
-        curr_chapter_number: chapter_number,
+        curr_chapter_number: chapter_number.parse().unwrap_or(0.0),
     })
 }
 
 /// returns the offset required to get the previous and next chapters
-fn get_offset_from_f32(number: f32) -> i32 {
+fn get_offset_from_f32(number: &str) -> i32 {
+    if number == "Oneshot"{
+        return 0;
+    }
+    let number:f32 = from_str(number).unwrap();
     // let offset: i32 = offset as i32;
     let mut offset = (number - 10.0) as i32;
     // let mut tt = offset as i32;

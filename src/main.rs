@@ -115,13 +115,13 @@ async fn get_chapter(chapter: web::Path<(String, String, String, String)>, path:
     let is_localhost = utills::check_localhost(&path);
     let manga_id = chapter.0.to_string();
     let chapter_id = chapter.1.to_string();
-    let chapter_number = chapter.2.to_string().parse::<f32>().unwrap();
+    let chapter_number = chapter.2.to_string();
     let language = chapter.3.to_string();
 
 
 
     let chapter_info = online_md::get_chapter_pages(chapter_id.clone()).await;
-    let infos = online_md::get_prev_and_next_chapters(chapter_id, chapter_number, manga_id.clone(), language).await.unwrap();
+    let infos = online_md::get_prev_and_next_chapters(chapter_id, &chapter_number, manga_id.clone(), language).await.unwrap();
 
     let html = match chapter_info {
         // Ok(e) => manga_templates::render_chapter(e, is_localhost, manga_id),
