@@ -132,7 +132,7 @@ async fn get_chapter(
 
     let html = match chapter_info {
         // Ok(e) => manga_templates::render_chapter(e, is_localhost, manga_id),
-        Ok(e) => render_chapter_view(e, is_localhost, infos, manga_id, embeded_images),
+        Ok(e) => render_chapter_view(e, is_localhost, infos, manga_id, embeded_images).await,
         Err(v) => manga_templates::render_error_page(v, path.path()),
     };
     HttpResponse::build(StatusCode::OK)

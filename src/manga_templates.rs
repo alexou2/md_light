@@ -157,20 +157,13 @@ pub fn render_chapter(chapter_info: ChapterPage, is_localhost: bool, manga_id: S
             (DOCTYPE)
             link rel="stylesheet" href="/ressources/styles.css";
             script src = {"/ressources/index.js"}{}
-            title  {(chapter_info.name)" | MD_Light"}
+            // title  {(chapter_info.name)" | MD_Light"}
 
             body {
                 (get_top_bar())
-            h1 {(chapter_info.name)}
+            // h1 {(chapter_info.name)}
             div.page_list ondblclick = "goFullscreen()";{
                 @for i in chapter_info.pages{
-
-                    // uses the proxied images if not localhost or links the images directly
-                    // @if !is_localhost{
-                    //     img.chapter_page src = { (format!("/proxy/images/{}", i))};
-                    // }@else{
-                    //     img.chapter_page src = (i);
-                    // }
                     img.chapter_page src = (get_correct_image(is_localhost, i));
                 }
             }

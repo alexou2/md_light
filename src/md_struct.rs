@@ -108,7 +108,6 @@ pub struct TlGroup {
 }
 #[derive(Clone, Serialize)]
 pub struct ChapterPage {
-    pub name: String,
     pub pages: Vec<String>,
 }
 

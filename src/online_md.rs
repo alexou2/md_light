@@ -1,3 +1,5 @@
+use std::str::Bytes;
+// use actix_web::web::Bytes;
 use std::vec;
 
 use crate::api_error::ApiError;
@@ -6,7 +8,6 @@ use crate::md_struct::*;
 use crate::utills::*;
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
-use clap::builder::Str;
 use lazy_static::lazy_static;
 use reqwest::Client;
 use serde_json::{from_str, Value};
@@ -604,7 +605,7 @@ pub async fn get_manga_chapters(
     Ok(ret)
 }
 
-pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterPage, ApiError> {
+pub async fn get_chapter_pages(chapter_id: String) -> Result<Vec<String>, ApiError> {
     let url = format!("{}/at-home/server/{}", BASE_URL, chapter_id);
     // let resp = reqwest::get(&url).await?.text().await?;
     let resp = request_with_agent(url).await?;
@@ -631,11 +632,11 @@ pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterPage, ApiErr
         );
         page_list.push(page_link)
     }
-    let chapter = ChapterPage {
-        name: "ch".to_string(),
-        pages: page_list,
-    };
-    Ok(chapter)
+    // let chapter = ChapterPage {
+    //     // name: "ch".to_string(),
+    //     pages: page_list,
+    // };
+    Ok(page_list)
 }
 
 pub async fn get_author_infos(id: String) -> Result<AuthorInfo, ApiError> {
@@ -746,14 +747,16 @@ fn get_offset_from_f32(number: &str) -> i32 {
 }
 
 /// gets the data of images for
-pub async fn get_image_data(image_vec: Vec<String>) -> Vec<Result<String, JoinError>> {
+pub async fn get_image_data(image_vec: Vec<String>) -> Vec<String> {
     let mut handles = vec![];
     for img in image_vec {
+        println!("page saved");
+
         handles.push(tokio::spawn(get_image_hash(img)))
     }
     let mut image_data = vec![];
     for i in handles {
-        image_data.push(i.await)
+        image_data.push(i.await.unwrap())
     }
     image_data
 }
@@ -764,16 +767,27 @@ async fn get_image_hash(image_url: String) -> String {
 
     match response {
         Ok(resp) => {
-            let bytes = resp.bytes().await;
+            let bytes = resp.text().await;
             match bytes {
-                Ok(image_byte) => BASE64_STANDARD.encode(image_byte),
+                Ok(image_byte) => format_base64_image(image_byte),
                 // returns an empty image in case of an error
-                Err(_) => "".into(),
+                Err(_) => {
+                    println!("can't geet image");
+                    "".into()
+                }
             }
         }
         Err(_) => {
+            println!("can't geet image");
             // Return an error response or a placeholder image
             "".into()
         }
     }
+}
+
+fn format_base64_image(image_byte: String) -> String {
+    let st = std::time::Instant::now();
+    let hash = BASE64_STANDARD.encode(image_byte);
+    println!("encode time; {:#?}", st.elapsed());
+    format!("data:image/jpeg;base64, {hash}")
 }
