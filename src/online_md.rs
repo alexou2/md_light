@@ -1,5 +1,4 @@
-use std::str::Bytes;
-// use actix_web::web::Bytes;
+use actix_web::web::Bytes;
 use std::vec;
 
 use crate::api_error::ApiError;
@@ -11,7 +10,6 @@ use base64::Engine;
 use lazy_static::lazy_static;
 use reqwest::Client;
 use serde_json::{from_str, Value};
-use tokio::task::JoinError;
 
 const BASE_URL: &str = "https://api.mangadex.org";
 const LIMIT: [(&str, i32); 1] = [("limit", 100)];
@@ -749,15 +747,18 @@ fn get_offset_from_f32(number: &str) -> i32 {
 /// gets the data of images for
 pub async fn get_image_data(image_vec: Vec<String>) -> Vec<String> {
     let mut handles = vec![];
-    for img in image_vec {
-        println!("page saved");
+    let st = std::time::Instant::now();
 
-        handles.push(tokio::spawn(get_image_hash(img)))
+    for img in image_vec {
+        handles.push(tokio::spawn(get_image_hash(img)));
+        println!("page saved");
     }
     let mut image_data = vec![];
     for i in handles {
         image_data.push(i.await.unwrap())
     }
+    println!("encode time; {:#?}", st.elapsed());
+
     image_data
 }
 
@@ -766,28 +767,21 @@ async fn get_image_hash(image_url: String) -> String {
     let response = CLIENT.get(&image_url).send().await;
 
     match response {
-        Ok(resp) => {
-            let bytes = resp.text().await;
-            match bytes {
-                Ok(image_byte) => format_base64_image(image_byte),
-                // returns an empty image in case of an error
-                Err(_) => {
-                    println!("can't geet image");
-                    "".into()
-                }
+        Ok(resp) => match resp.bytes().await {
+            Ok(image_byte) => format_base64_image(image_byte),
+            Err(_) => {
+                println!("can't geet image");
+                "/ressources/feather.svg".into()
             }
-        }
+        },
         Err(_) => {
             println!("can't geet image");
-            // Return an error response or a placeholder image
-            "".into()
+            "/ressources/feather.svg".into()
         }
     }
 }
 
-fn format_base64_image(image_byte: String) -> String {
-    let st = std::time::Instant::now();
+fn format_base64_image(image_byte: Bytes) -> String {
     let hash = BASE64_STANDARD.encode(image_byte);
-    println!("encode time; {:#?}", st.elapsed());
     format!("data:image/jpeg;base64, {hash}")
 }

@@ -28,7 +28,7 @@
         {% for manga in manga_result %}
 
         <div class="manga_result title"><a href="manga/{{manga.id}}"><img
-                    src={{proxy_url}}{{manga.cover}} loading="lazy">
+                    src={{proxy_url}}{{manga.cover}} loading="lazy" alt="image not found">
                 <div class="manga-title">{{manga.title}}</div>
             </a></div>
         {% endfor %}

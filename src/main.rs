@@ -27,6 +27,52 @@ lazy_static! {
     static ref CLIENT: Client = Client::new();
 }
 
+
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    if let Some(command) = &CONFIG.command {
+        match command {
+            Commands::Init => installer::init(&mut CONFIG.to_args().clone()),
+            Commands::Uninstall => installer::uninstall(),
+        }
+    }
+
+    println!("{:#?}", CONFIG.to_args());
+
+    // creates the server
+    let mut server = HttpServer::new(|| {
+        App::new()
+            .route("/proxy/images/{image_url:.+}", web::get().to(image_proxy))
+            .service(index)
+            .service(kill_server)
+            .service(get_server_options)
+            .service(get_chapter)
+            .service(get_manga_info)
+            .service(search)
+            .service(ping_md)
+            .service(get_author_feed)
+            .service(get_author)
+            .service(get_chapters)
+            .service(Files::new("/", "/ressources"))
+    });
+
+    // the ip addreses used to access the server
+    server = server.bind(("127.0.0.1", CONFIG.port))?;
+    if CONFIG.lan {
+        let lan_addr = local_ip().unwrap();
+        server = server.bind((lan_addr, CONFIG.port))?;
+        println!("ip address: {}", lan_addr)
+    }
+
+    server.run().await
+}
+
+
+
+
+
+/// the homepage 
 #[get("/")]
 async fn index(path: HttpRequest) -> HttpResponse {
     let is_localhost = utills::check_localhost(&path);
@@ -279,43 +325,4 @@ async fn image_proxy(image_url: web::Path<String>) -> Result<HttpResponse> {
             Ok(HttpResponse::NotFound().finish())
         }
     }
-}
-
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    if let Some(command) = &CONFIG.command {
-        match command {
-            Commands::Init => installer::init(&mut CONFIG.to_args().clone()),
-            Commands::Uninstall => installer::uninstall(),
-        }
-    }
-
-    println!("{:#?}", CONFIG.to_args());
-
-    // creates the server
-    let mut server = HttpServer::new(|| {
-        App::new()
-            .route("/proxy/images/{image_url:.+}", web::get().to(image_proxy))
-            .service(index)
-            .service(kill_server)
-            .service(get_server_options)
-            .service(get_chapter)
-            .service(get_manga_info)
-            .service(search)
-            .service(ping_md)
-            .service(get_author_feed)
-            .service(get_author)
-            .service(get_chapters)
-            .service(Files::new("/", "/ressources"))
-    });
-
-    // the ip addreses used to access the server
-    server = server.bind(("127.0.0.1", CONFIG.port))?;
-    if CONFIG.lan {
-        let lan_addr = local_ip().unwrap();
-        server = server.bind((lan_addr, CONFIG.port))?;
-        println!("ip address: {}", lan_addr)
-    }
-
-    server.run().await
 }

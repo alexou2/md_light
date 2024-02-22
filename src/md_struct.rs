@@ -106,10 +106,10 @@ pub struct TlGroup {
     pub id: String,
     pub name: String,
 }
-#[derive(Clone, Serialize)]
-pub struct ChapterPage {
-    pub pages: Vec<String>,
-}
+// #[derive(Clone, Serialize)]
+// pub struct ChapterPage {
+//     pub pages: Vec<String>,
+// }
 
 enum MangaImage{
     /// the url to the image

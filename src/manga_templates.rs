@@ -152,26 +152,26 @@ pub fn render_homepage(feed: MdHomepageFeed, is_localhost: bool) -> String {
 //     template.into_string()
 // }
 
-pub fn render_chapter(chapter_info: ChapterPage, is_localhost: bool, manga_id: String) -> String {
-    let template = html!(
-            (DOCTYPE)
-            link rel="stylesheet" href="/ressources/styles.css";
-            script src = {"/ressources/index.js"}{}
-            // title  {(chapter_info.name)" | MD_Light"}
+// pub fn render_chapter(chapter_info: ChapterPage, is_localhost: bool, manga_id: String) -> String {
+//     let template = html!(
+//             (DOCTYPE)
+//             link rel="stylesheet" href="/ressources/styles.css";
+//             script src = {"/ressources/index.js"}{}
+//             // title  {(chapter_info.name)" | MD_Light"}
 
-            body {
-                (get_top_bar())
-            // h1 {(chapter_info.name)}
-            div.page_list ondblclick = "goFullscreen()";{
-                @for i in chapter_info.pages{
-                    img.chapter_page src = (get_correct_image(is_localhost, i));
-                }
-            }
-            (get_return_to_manga(manga_id))
-        }
-    );
-    template.into_string()
-}
+//             body {
+//                 (get_top_bar())
+//             // h1 {(chapter_info.name)}
+//             div.page_list ondblclick = "goFullscreen()";{
+//                 @for i in chapter_info.pages{
+//                     img.chapter_page src = (get_correct_image(is_localhost, i));
+//                 }
+//             }
+//             (get_return_to_manga(manga_id))
+//         }
+//     );
+//     template.into_string()
+// }
 
 pub fn render_search_page(search_results: Vec<ShortMangaInfo>, is_localhost: bool) -> String {
     let template = html!(

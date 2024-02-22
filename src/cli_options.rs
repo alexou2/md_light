@@ -12,9 +12,11 @@ lazy_static! {
 fn get_startup_config() -> CliArgs {
     let mut args = CliArgs::parse();
 
+    //the recommended options are overwritten by the config option
     if args.recommended {
         args.lan = true;
         args.secure = true;
+        args.embeded= false;
     }
 
     if args.config {
@@ -69,6 +71,7 @@ pub struct CliArgs {
     #[arg(short, long )]
     pub config: bool,
 
+    /// !!! This might get you banned from the api!!!
     /// embeds the images directly in the html
     #[arg(short, long)]
     pub embeded: bool,
