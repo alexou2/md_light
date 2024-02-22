@@ -1,21 +1,26 @@
+use actix_web::web::Bytes;
+use std::vec;
+
 use crate::api_error::ApiError;
 use crate::language::Language;
 use crate::md_struct::*;
 use crate::utills::*;
+use base64::prelude::BASE64_STANDARD;
+use base64::Engine;
 use lazy_static::lazy_static;
-
-use reqwest::{header::USER_AGENT, Client};
+use reqwest::Client;
 use serde_json::{from_str, Value};
 
 const BASE_URL: &str = "https://api.mangadex.org";
-const LIMIT: [(&str, i32); 1] = [("limit", 500)];
+const LIMIT: [(&str, i32); 1] = [("limit", 100)];
 const CHAPTER_ORDERING: [(&str, &str); 1] = [("order[chapter]", "asc")];
 const INCLUDE_TL_GROUP: [(&str, &str); 1] = [("includes[]", "scanlation_group")];
 
 lazy_static! {
-    // static ref CLIENT: Client = Client::new();
-    pub static ref CLIENT:Client = Client::builder().user_agent(USER_AGENT).build().expect("unable to create Client");
-
+    pub static ref CLIENT: Client = Client::builder()
+        .user_agent("Md_light")
+        .build()
+        .expect("unable to build Client");
 }
 
 /// sends a get request to the /ping endpoint of the api
@@ -38,47 +43,35 @@ pub async fn test_connection() -> Result<ServerStatus, ApiError> {
     Ok(status)
 }
 
-// makes the request to the url with custom user agents, since MD requires them now
+/// makes a web request
 pub async fn request_with_agent(url: String) -> Result<String, ApiError> {
-    // initializes a new client if none is passed as argument
-    // let client = reqwest::Client::new();
-    let response = CLIENT
-        .get(url)
-        // .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .send()
-        .await?
-        .text()
-        .await?;
+    let response = CLIENT.get(url).send().await?.text().await?;
 
     Ok(response)
 }
 
-
-// const JSON_OFFLINE:&'static str = r##"	
-// {"result":"ok","response":"collection","data":[{"id":"32a379d5-8bef-471b-9bfb-d52407d9ea84","type":"chapter","attributes":{"volume":null,"chapter":"0.5","title":"Preserialization Twitter Shorts.","translatedLanguage":"en","externalUrl":null,"publishAt":"2024-02-13T18:24:18+00:00","readableAt":"2024-02-13T18:24:18+00:00","createdAt":"2024-02-13T18:24:18+00:00","updatedAt":"2024-02-13T21:41:49+00:00","pages":6,"version":4},"relationships":[{"id":"142cab1a-005c-499b-9bdf-ff73cf5abd4a","type":"manga"},{"id":"01287da1-4754-4258-a6c8-52c34e888bdb","type":"user"}]},{"id":"740e59f1-609c-4112-8d60-bf879a49584f","type":"chapter","attributes":{"volume":null,"chapter":"1","title":null,"translatedLanguage":"pt-br","externalUrl":null,"publishAt":"2024-02-16T03:19:57+00:00","readableAt":"2024-02-16T03:19:57+00:00","createdAt":"2024-02-16T03:19:57+00:00","updatedAt":"2024-02-16T03:20:57+00:00","pages":41,"version":3},"relationships":[{"id":"337fbc53-711c-4942-987e-6aa0f6989df3","type":"scanlation_group"},{"id":"142cab1a-005c-499b-9bdf-ff73cf5abd4a","type":"manga"},{"id":"1532c0a9-4620-45d3-8951-0a59802e8392","type":"user"}]},{"id":"c5fdb850-331e-4e54-9d6a-560534269ed2","type":"chapter","attributes":{"volume":null,"chapter":"1","title":null,"translatedLanguage":"en","externalUrl":null,"publishAt":"2024-02-11T23:49:46+00:00","readableAt":"2024-02-11T23:49:46+00:00","createdAt":"2024-02-11T15:17:36+00:00","updatedAt":"2024-02-11T23:49:46+00:00","pages":39,"version":3},"relationships":[{"id":"142cab1a-005c-499b-9bdf-ff73cf5abd4a","type":"manga"},{"id":"01287da1-4754-4258-a6c8-52c34e888bdb","type":"user"}]}],"limit":100,"offset":0,"total":3}"##;
-
-
 /// requests manga chapters
-async fn sync_chap(
+async fn get_chaps(
     url: String,
     // offset: [(&str, i32); 1],
     offset: i32,
     language: Option<String>, // valid_req: &mut Arc<Mutex<bool>>,
 ) -> Result<Value, ApiError> {
-    let mut response = CLIENT
+    let mut req = CLIENT
         .get(url)
         // .header(reqwest::header::USER_AGENT, USER_AGENT)
         .query(&LIMIT)
         .query(&[("offset", offset)])
+        // .query(&[("includeExternalUrl", "0")])
         .query(&CHAPTER_ORDERING)
         .query(&INCLUDE_TL_GROUP);
 
     if let Some(lang) = language {
-        response = response.query(&[("translatedLanguage[]", lang)])
+        req = req.query(&[("translatedLanguage[]", lang)])
     }
-    let response = response.send().await?.text().await?;
-// let response = JSON_OFFLINE.to_string();
-
+    let response = req.send().await?;
+    let response = response.text().await?;
+    // let response = JSON_OFFLINE.to_string();
     // converting the text response into a json value
     let json_res_result = from_str(&response);
     let json_res: Value = match json_res_result {
@@ -110,14 +103,12 @@ pub async fn get_new_chapters() -> Result<Vec<NewChapters>, ApiError> {
     let mut new_chapters = Vec::new();
     // let url = "https://api.mangadex.org/chapter?includes[]=scanlation_group&translatedLanguage[]=en&translatedLanguage[]=de&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&order[readableAt]=desc&limit=64&includes[]=cover_art";
     let url = "https://api.mangadex.org/chapter?includes[]=scanlation_group&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&order[readableAt]=desc&limit=64&includes[]=cover_art";
-    // let resp = request_with_agent_blocking(url.to_string())?;
     let resp = request_with_agent(url.to_string()).await?;
     // converts the api response to a json string and gets the data part of it
-    // let json_resp: Value = from_str(&resp)?;
     let json_resp = parse_json(&resp).await?;
     let data = &json_resp["data"];
 
-    // getting the required info of each new chapter
+    // iterating over every chapter from the json file
     if let Some(new_chapter_list) = data.as_array() {
         // transforming the json data into an array
         for chapter in new_chapter_list {
@@ -127,16 +118,18 @@ pub async fn get_new_chapters() -> Result<Vec<NewChapters>, ApiError> {
             let chapter_id = &chapter["id"]
                 .remove_quotes()
                 .ok_or("error while removing quotes")?;
+
+            // if the chapter number is 0, then its name will be "Onshot"
             let chapter_number = attributes["chapter"]
                 .remove_quotes()
-                .unwrap_or("Oneshot".to_string()); //sets the chapter number to Oneshot if the real number is null
+                .unwrap_or("Oneshot".to_string());
+
+            // sets the chapter name to the chapter number if the real chapter name is null
             let chapter_name = &attributes["title"]
                 .remove_quotes()
-                .unwrap_or(chapter_number.clone()); // sets the chapter name to the chapter number if the real chapter name is null
-                                                    // let language = &attributes["translatedLanguage"].remove_quotes();
-            let language: Language =
-                Language::from(&attributes["translatedLanguage"].remove_quotes());
-            // .ok_or("error while removing quotes in language")?;
+                .unwrap_or(chapter_number.clone());
+
+            let language = Language::from(&attributes["translatedLanguage"].remove_quotes());
             let page_number = attributes["pages"]
                 .remove_quotes()
                 .ok_or("error while removing quotes in page")?;
@@ -185,7 +178,7 @@ pub async fn get_new_chapters() -> Result<Vec<NewChapters>, ApiError> {
     Ok(new_chapters)
 }
 
-// gets the most popular mangas from the last month that are displayed at the top of the md homepage
+// gets the most popular mangas from the last month for the homepage feed
 pub async fn get_popular_manga(is_low_res: bool) -> Result<Vec<PopularManga>, ApiError> {
     let mut popular_manga: Vec<PopularManga> = Vec::new();
     let formatted_time = get_offset_time();
@@ -201,8 +194,6 @@ pub async fn get_popular_manga(is_low_res: bool) -> Result<Vec<PopularManga>, Ap
 
     // doing the get request to the api and transforming it into a json object
     let resp = request_with_agent(url).await?;
-    // let resp = request_with_agent_blocking(url)?;
-    // let json_resp: Value = serde_json::from_str(&resp)?;
     let json_resp = parse_json(&resp).await?;
 
     // transforming the json into an array in order to get all of the search results
@@ -233,7 +224,7 @@ pub async fn get_popular_manga(is_low_res: bool) -> Result<Vec<PopularManga>, Ap
     Ok(popular_manga)
 }
 
-/// searches for a manga
+/// searches for a manga. Can also use parameters to search for authors or more
 pub async fn search_manga(
     title: Option<String>,
     params: Option<[(&str, String); 1]>,
@@ -373,7 +364,6 @@ pub fn get_manga_cover(
                 let cover_link =
                     format!("https://mangadex.org/covers/{manga_id}/{cover_id}.{quality}.jpg")
                         .replace('"', "");
-                println!("{}", cover_link);
                 thumbnail = cover_link;
                 break; //breaks the loop if the cover is found
             }
@@ -502,7 +492,7 @@ pub async fn get_manga_chapters(
 ) -> Result<MangaChapters, ApiError> {
     let url = format!("{}/manga/{}/feed", BASE_URL, manga_id);
 
-    let chapter_json = sync_chap(url, offset, language).await?;
+    let chapter_json = get_chaps(url, offset, language).await?;
 
     let mut json_list: Vec<Value> = vec![]; // a list containing the json data about the chapters
 
@@ -613,7 +603,7 @@ pub async fn get_manga_chapters(
     Ok(ret)
 }
 
-pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterPage, ApiError> {
+pub async fn get_chapter_pages(chapter_id: String) -> Result<Vec<String>, ApiError> {
     let url = format!("{}/at-home/server/{}", BASE_URL, chapter_id);
     // let resp = reqwest::get(&url).await?.text().await?;
     let resp = request_with_agent(url).await?;
@@ -640,11 +630,11 @@ pub async fn get_chapter_pages(chapter_id: String) -> Result<ChapterPage, ApiErr
         );
         page_list.push(page_link)
     }
-    let chapter = ChapterPage {
-        name: "ch".to_string(),
-        pages: page_list,
-    };
-    Ok(chapter)
+    // let chapter = ChapterPage {
+    //     // name: "ch".to_string(),
+    //     pages: page_list,
+    // };
+    Ok(page_list)
 }
 
 pub async fn get_author_infos(id: String) -> Result<AuthorInfo, ApiError> {
@@ -689,7 +679,6 @@ async fn parse_json(response: &str) -> Result<Value, ApiError> {
         Err(e) => return Err(ApiError::Json(e)),
     };
 
-    println!(" result: {}", json_success["result"]);
     // Ok(json_success)
     let result = json_success["result"].to_owned();
     match result.to_string().as_str() {
@@ -699,12 +688,10 @@ async fn parse_json(response: &str) -> Result<Value, ApiError> {
     }
 }
 
-
-
 /// returns the previous and next chapter
 pub async fn get_prev_and_next_chapters(
     chapter_id: String,
-    chapter_number: f32,
+    chapter_number: &str,
     manga_id: String,
     language: String,
 ) -> Result<CurrentChapter, ApiError> {
@@ -720,21 +707,20 @@ pub async fn get_prev_and_next_chapters(
             break;
         }
     }
-
+    println!("index: {index} ||| len: {}", chapters.chapters.len());
     let mut prev = None;
     let mut next = None;
 
-
-// sets the next chapter
-    if index != chapters.chapters.len()-1 {
-        next = Some(chapters.chapters[index + 1].as_ref().unwrap().clone())
-    }
+    if !chapters.chapters.is_empty() {
+        if index != chapters.chapters.len() - 1 {
+            next = Some(chapters.chapters[index + 1].as_ref().unwrap().clone())
+        }
 
     // sets the previous chapter
-    if index > 0 {
-        prev = Some(chapters.chapters[index - 1].as_ref().unwrap().clone())
+        if index > 0 {
+            prev = Some(chapters.chapters[index - 1].as_ref().unwrap().clone())
+        }
     }
-
     Ok(CurrentChapter {
         prev,
         next,
@@ -743,17 +729,61 @@ pub async fn get_prev_and_next_chapters(
             .unwrap()
             .chapter_name
             .clone(),
-        curr_chapter_number: chapter_number,
+        curr_chapter_number: chapter_number.parse().unwrap_or(0.0),
     })
 }
 
 /// returns the offset required to get the previous and next chapters
-fn get_offset_from_f32(number: f32) -> i32 {
-    // let offset: i32 = offset as i32;
+fn get_offset_from_f32(number: &str) -> i32 {
+    if number == "Oneshot" {
+        return 0;
+    }
+    let number: f32 = from_str(number).unwrap();
     let mut offset = (number - 10.0) as i32;
-    // let mut tt = offset as i32;
     if offset < 0 {
         offset = 0;
     }
     offset
+}
+
+/// gets the data of images for
+pub async fn get_image_data(image_vec: Vec<String>) -> Vec<String> {
+    let mut handles = vec![];
+    let st = std::time::Instant::now();
+
+    for img in image_vec {
+        handles.push(tokio::spawn(get_image_hash(img)));
+        println!("page saved");
+    }
+    let mut image_data = vec![];
+    for i in handles {
+        image_data.push(i.await.unwrap())
+    }
+    println!("encode time; {:#?}", st.elapsed());
+
+    image_data
+}
+
+/// encodes the image to base64
+async fn get_image_hash(image_url: String) -> String {
+    let response = CLIENT.get(&image_url).send().await;
+
+    match response {
+        Ok(resp) => match resp.bytes().await {
+            Ok(image_byte) => format_base64_image(image_byte),
+            Err(_) => {
+                println!("can't geet image");
+                "/ressources/feather.svg".into()
+            }
+        },
+        Err(_) => {
+            println!("can't geet image");
+            "/ressources/feather.svg".into()
+        }
+    }
+}
+
+fn format_base64_image(image_byte: Bytes) -> String {
+    let hash = BASE64_STANDARD.encode(image_byte);
+    format!("data:image/jpeg;base64, {hash}")
 }

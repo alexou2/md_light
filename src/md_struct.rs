@@ -105,10 +105,16 @@ pub struct TlGroup {
     pub id: String,
     pub name: String,
 }
-#[derive(Clone, Serialize)]
-pub struct ChapterPage {
-    pub name: String,
-    pub pages: Vec<String>,
+// #[derive(Clone, Serialize)]
+// pub struct ChapterPage {
+//     pub pages: Vec<String>,
+// }
+
+enum MangaImage{
+    /// the url to the image
+    Url(String),
+    /// the data of the image. used when the 'embeded' argument is given
+    Data(String)
 }
 
 pub trait ValueExtensions {

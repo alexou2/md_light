@@ -1,5 +1,6 @@
 use crate::api_error::ApiError;
 pub use crate::md_struct::*;
+use crate::online_md;
 use lazy_static::lazy_static;
 use markdown::to_html;
 use serde_json::value::{to_value, Value};
@@ -43,6 +44,8 @@ lazy_static! {
 pub fn render_complete_search(
     search_data: (Vec<ShortMangaInfo>, Vec<AuthorInfo>),
     query: String,
+    is_localhost: bool,
+    embeded_images: bool,
 ) -> String {
     let mut context = Context::new();
     context.insert("title", "Search | MD_light");
@@ -55,23 +58,38 @@ pub fn render_complete_search(
 
     context.insert("author_list", &search_data.1);
 
+    // data for the images
+    let mut proxy_url = "";
+    if is_localhost {
+        proxy_url = "/proxy/images/"
+    }
+    context.insert("proxy_url", proxy_url);
+
     TEMPLATES
         .render("search.html", &context)
         .expect("Failed to render template")
 }
 
-pub fn render_homepage(feed: MdHomepageFeed) -> String {
+pub fn render_homepage(feed: MdHomepageFeed, is_localhost: bool, embeded_images: bool) -> String {
     let mut context = Context::new();
 
     context.insert("popular_manga", &feed.currently_popular);
     context.insert("new_chapters", &feed.new_chapter_releases);
+
+    // data for the images
+    let mut proxy_url = "";
+    if is_localhost {
+        proxy_url = "/proxy/images/"
+    }
+    context.insert("proxy_url", proxy_url);
+
     TEMPLATES
         .render("home.html", &context)
         .expect("Failed to render template")
 }
 
 /// renders the manga without the chapters
-pub fn render_manga_info(manga: MangaInfo) -> String {
+pub fn render_manga_info(manga: MangaInfo, is_localhost: bool, embeded_images: bool) -> String {
     let mut context = Context::new();
 
     context.insert("manga_name", &manga.manga_name);
@@ -81,6 +99,13 @@ pub fn render_manga_info(manga: MangaInfo) -> String {
     context.insert("description", &html);
     context.insert("authors", &manga.author);
     context.insert("manga_id", &manga.manga_id);
+
+    // data for the images
+    let mut proxy_url = "";
+    if is_localhost {
+        proxy_url = "/proxy/images/"
+    }
+    context.insert("proxy_url", proxy_url);
 
     TEMPLATES
         .render("manga_info.html", &context)
@@ -92,6 +117,7 @@ pub fn render_manga_chapters(
     offset: i32,
     manga_id: String,
     is_localhost: bool,
+    embeded_images: bool,
 ) -> Result<String, ApiError> {
     let mut context = Context::new();
 
@@ -105,6 +131,13 @@ pub fn render_manga_chapters(
     context.insert("total", &round_idx(chapters.total));
     context.insert("is_localhost", &is_localhost);
 
+    // data for the images
+    let mut proxy_url = "";
+    if is_localhost {
+        proxy_url = "/proxy/images/"
+    }
+    context.insert("proxy_url", proxy_url);
+
     let rendered = TEMPLATES
         .render("manga_chapter.html", &context)
         .expect("Failed to render chapter template");
@@ -113,16 +146,17 @@ pub fn render_manga_chapters(
 }
 
 /// renders the page to read the chapters
-pub fn render_chapter_view(
-    chapter: ChapterPage,
+pub async fn render_chapter_view(
+    mut pages: Vec<String>,
     is_localhost: bool,
     chapter_infos: CurrentChapter,
     manga_id: String,
+    embeded_images: bool,
 ) -> String {
     let mut context = Context::new();
     // th pages and url
     context.insert("is_localhost", &is_localhost);
-    context.insert("chapter", &chapter);
+    context.insert("chapter", &pages);
     context.insert("chapter_name", &chapter_infos.curr_chapter_name);
 
     // the contrnt for changing chapters
@@ -133,11 +167,23 @@ pub fn render_chapter_view(
 
     context.insert("manga_id", &manga_id);
 
+    // data for the images
+    let mut proxy_url = "";
+    if is_localhost {
+        proxy_url = "/proxy/images/"
+    }
+    context.insert("proxy_url", proxy_url);
+
+    if embeded_images {
+        pages =  online_md::get_image_data(pages).await;
+    };
+
     TEMPLATES
         .render("read_chapter.html", &context)
         .expect("Failed to render chapter template")
 }
 
+/// renders the author page with its titles
 pub fn render_author(author_info: AuthorInfo, is_localhost: bool) -> String {
     let mut context = Context::new();
 

@@ -8,8 +8,8 @@ mod md_struct;
 mod online_md;
 mod query_struct;
 mod tera_templates;
-mod utills;
 mod tests;
+mod utills;
 
 use actix_files::Files;
 use actix_web::{
@@ -27,10 +27,56 @@ lazy_static! {
     static ref CLIENT: Client = Client::new();
 }
 
+
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    if let Some(command) = &CONFIG.command {
+        match command {
+            Commands::Init => installer::init(&mut CONFIG.to_args().clone()),
+            Commands::Uninstall => installer::uninstall(),
+        }
+    }
+
+    println!("{:#?}", CONFIG.to_args());
+
+    // creates the server
+    let mut server = HttpServer::new(|| {
+        App::new()
+            .route("/proxy/images/{image_url:.+}", web::get().to(image_proxy))
+            .service(index)
+            .service(kill_server)
+            .service(get_server_options)
+            .service(get_chapter)
+            .service(get_manga_info)
+            .service(search)
+            .service(ping_md)
+            .service(get_author_feed)
+            .service(get_author)
+            .service(get_chapters)
+            .service(Files::new("/", "/ressources"))
+    });
+
+    // the ip addreses used to access the server
+    server = server.bind(("127.0.0.1", CONFIG.port))?;
+    if CONFIG.lan {
+        let lan_addr = local_ip().unwrap();
+        server = server.bind((lan_addr, CONFIG.port))?;
+        println!("ip address: {}", lan_addr)
+    }
+
+    server.run().await
+}
+
+
+
+
+
+/// the homepage 
 #[get("/")]
 async fn index(path: HttpRequest) -> HttpResponse {
     let is_localhost = utills::check_localhost(&path);
-
+let embeded_images = CONFIG.embeded;
     let feed = online_md::get_md_homepage_feed(CONFIG.datasaver).await;
 
     // handles the errors by sending the error page
@@ -40,7 +86,7 @@ async fn index(path: HttpRequest) -> HttpResponse {
     // };
 
     let html = match feed {
-        Ok(e) => tera_templates::render_homepage(e),
+        Ok(e) => tera_templates::render_homepage(e, is_localhost, embeded_images),
         Err(v) => manga_templates::render_error_page(v, "/"),
     };
 
@@ -53,14 +99,14 @@ async fn index(path: HttpRequest) -> HttpResponse {
 async fn get_manga_info(manga_id: web::Path<String>, path: HttpRequest) -> HttpResponse {
     let requested_page = path.path();
     let is_localhost = utills::check_localhost(&path);
+    let embeded_images = CONFIG.embeded;
 
     let manga_info = online_md::get_manga_info(manga_id.to_string(), CONFIG.datasaver);
 
     // handles the errors by sending the error page
     let html = match manga_info.await {
         // Ok(e) => manga_templates::render_manga_info_page(e, is_localhost),
-        Ok(e) => tera_templates::render_manga_info(e),
-
+        Ok(e) => tera_templates::render_manga_info(e, is_localhost, embeded_images),
         Err(v) => manga_templates::render_error_page(v, requested_page),
     };
 
@@ -68,12 +114,6 @@ async fn get_manga_info(manga_id: web::Path<String>, path: HttpRequest) -> HttpR
         .content_type("text/html; charset=utf-8")
         .body(html)
 }
-
-// #[derive(serde::Deserialize)]
-// struct chapter_query {
-//     offset: i32,
-//     language: Option<String>,
-// }
 
 #[get("/chapters/{id}")]
 async fn get_chapters(
@@ -83,6 +123,8 @@ async fn get_chapters(
 ) -> HttpResponse {
     let requested_page = path.path();
     let is_localhost = utills::check_localhost(&path);
+let embeded_images = CONFIG.embeded;
+
 
     let chapters =
         online_md::get_manga_chapters(manga_id.to_string(), infos.language.clone(), infos.offset)
@@ -94,6 +136,7 @@ async fn get_chapters(
         infos.offset,
         manga_id.to_string(),
         is_localhost,
+        embeded_images
     );
 
     // handles the errors by sending the error page
@@ -111,21 +154,31 @@ async fn get_chapters(
 
 // returns the chapter's pages
 #[get("/manga/{manga}/{chapter}/{chapter_number}/{language}")]
-async fn get_chapter(chapter: web::Path<(String, String, String, String)>, path: HttpRequest) -> HttpResponse {
+async fn get_chapter(
+    chapter: web::Path<(String, String, String, String)>,
+    path: HttpRequest,
+) -> HttpResponse {
     let is_localhost = utills::check_localhost(&path);
+    let embeded_images = CONFIG.embeded;
+
     let manga_id = chapter.0.to_string();
     let chapter_id = chapter.1.to_string();
-    let chapter_number = chapter.2.to_string().parse::<f32>().unwrap();
+    let chapter_number = chapter.2.to_string();
     let language = chapter.3.to_string();
 
-
-
     let chapter_info = online_md::get_chapter_pages(chapter_id.clone()).await;
-    let infos = online_md::get_prev_and_next_chapters(chapter_id, chapter_number, manga_id.clone(), language).await.unwrap();
+    let infos = online_md::get_prev_and_next_chapters(
+        chapter_id,
+        &chapter_number,
+        manga_id.clone(),
+        language,
+    )
+    .await
+    .expect("can't get next and previous chapters");
 
     let html = match chapter_info {
         // Ok(e) => manga_templates::render_chapter(e, is_localhost, manga_id),
-        Ok(e) => render_chapter_view(e, is_localhost, infos, manga_id),
+        Ok(e) => render_chapter_view(e, is_localhost, infos, manga_id, embeded_images).await,
         Err(v) => manga_templates::render_error_page(v, path.path()),
     };
     HttpResponse::build(StatusCode::OK)
@@ -137,6 +190,7 @@ async fn get_chapter(chapter: web::Path<(String, String, String, String)>, path:
 #[get("/search")]
 async fn search(path: HttpRequest, params: web::Query<SearchQuery>) -> HttpResponse {
     let is_localhost = utills::check_localhost(&path);
+    let embeded_images = CONFIG.embeded;
     let search_query = &params.query;
     println!("search for: {}", search_query);
 
@@ -144,11 +198,12 @@ async fn search(path: HttpRequest, params: web::Query<SearchQuery>) -> HttpRespo
         online_md::search_manga(Some(search_query.to_string()), None, CONFIG.datasaver).await;
     let author_results = online_md::search_author(search_query.to_string()).await;
 
+    // concats the manga result and the author result list onto a single vector
     let search_result = manga_results.and_then(|a| author_results.map(|b| (a, b)));
 
     let html = match search_result {
         // Ok(e) => manga_templates::render_complete_search(e, is_localhost, query.to_string()),
-        Ok(e) => tera_templates::render_complete_search(e, search_query.to_string()),
+        Ok(e) => tera_templates::render_complete_search(e, search_query.to_string(), is_localhost, embeded_images),
         Err(v) => manga_templates::render_error_page(v, path.path()),
     };
 
@@ -246,17 +301,6 @@ async fn kill_server(path: HttpRequest) -> impl Responder {
                 .expect("unabel to get client IP")
         )
     }
-    // "".to_string()
-}
-
-
-
-// kills the server
-#[get("/test")]
-async fn test_code() -> impl Responder {
-    tests::test().await;
-
-    "123".to_string()
 }
 
 async fn image_proxy(image_url: web::Path<String>) -> Result<HttpResponse> {
@@ -281,51 +325,4 @@ async fn image_proxy(image_url: web::Path<String>) -> Result<HttpResponse> {
             Ok(HttpResponse::NotFound().finish())
         }
     }
-}
-
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    // creates the config file
-    // if CONFIG.command == Some(Commands::Init) {
-    //     // creates a mutable version of the startup argments
-    //     let mut config_args = CONFIG.to_args().clone();
-    //     installer::init(& mut CONFIG.to_args().clone());
-    // }
-    if let Some(command) = &CONFIG.command {
-        match command {
-            Commands::Init => installer::init(&mut CONFIG.to_args().clone()),
-            Commands::Uninstall => installer::uninstall(),
-        }
-    }
-
-    println!("{:#?}", CONFIG.to_args());
-
-    // creates the server
-    let mut server = HttpServer::new(|| {
-        App::new()
-            .route("/proxy/images/{image_url:.+}", web::get().to(image_proxy))
-            .service(test_code)
-            .service(index)
-            .service(kill_server)
-            .service(get_server_options)
-            .service(get_chapter)
-            .service(get_manga_info)
-            .service(search)
-            .service(ping_md)
-            .service(get_author_feed)
-            .service(get_author)
-            .service(get_chapters)
-            .service(Files::new("/", "/ressources"))
-            
-    });
-
-    // the ip addreses used to access the server
-    server = server.bind(("127.0.0.1", CONFIG.port))?;
-    if CONFIG.lan {
-        let lan_addr = local_ip().unwrap();
-        server = server.bind((lan_addr, CONFIG.port))?;
-        println!("ip address: {}", lan_addr)
-    }
-
-    server.run().await
 }

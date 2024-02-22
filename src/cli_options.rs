@@ -12,9 +12,11 @@ lazy_static! {
 fn get_startup_config() -> CliArgs {
     let mut args = CliArgs::parse();
 
+    //the recommended options are overwritten by the config option
     if args.recommended {
         args.lan = true;
         args.secure = true;
+        args.embeded= false;
     }
 
     if args.config {
@@ -34,9 +36,10 @@ fn get_startup_config() -> CliArgs {
     }
     args
 }
+
 /// parses the config file
 fn parse_config_file(content: String) -> CliArgs {
-    toml::from_str(&content).unwrap()
+    toml::from_str(&content).expect("unable to read the server config file")
 }
 
 /// A web server that uses the mangadex api with a lighweight frontend for potato devices
@@ -65,12 +68,13 @@ pub struct CliArgs {
     pub recommended: bool,
 
     /// uses the config file to start the server
-    #[arg(short, long)]
+    #[arg(short, long )]
     pub config: bool,
 
-    /// embeds the data of the images directly in the html file instead of using a proxy
+    /// !!! This might get you banned from the api!!!
+    /// embeds the images directly in the html
     #[arg(short, long)]
-    pub embeded_images: bool,
+    pub embeded: bool,
 
     #[command(subcommand)]
     pub command: Option<Commands>,

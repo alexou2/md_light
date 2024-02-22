@@ -5,7 +5,7 @@
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <link rel="stylesheet" href="/ressources/styles.css">
     <script src="/ressources/index.js"></script>
-    <title>Reading {{chapter.name}} | MD_Light</title>
+    <title>Reading | MD_Light</title>
 </head>
 
 <body>
@@ -16,7 +16,6 @@
         </form>
     </div>
 
-<h1>{{chapter_name |default (value="")}}</h1>
 
     {% if has_prev %}
     <a href="/manga/{{manga_id}}/{{prev_chap.chapter_id}}/{{prev_chap.chapter_number}}/{{prev_chap.language.lang}}">prev chapter</a>
@@ -26,9 +25,9 @@
     <a href="/manga/{{manga_id}}/{{next_chap.chapter_id}}/{{next_chap.chapter_number}}/{{next_chap.language.lang}}">next chapter</a>
     {% endif %}
 
-    {% for page in chapter.pages %}
+    {% for page in chapter %}
     <div class="page_list" onclick="goFullscreen()">
-        <img class="chapter_page" src="/proxy/images/{{page}}">
+        <img class="chapter_page" src="{{proxy_url}}{{page}}" alt="image not found">
 
     </div>
 
