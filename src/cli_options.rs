@@ -65,8 +65,12 @@ pub struct CliArgs {
     pub recommended: bool,
 
     /// uses the config file to start the server
-    #[arg(short, long = "config")]
+    #[arg(short, long)]
     pub config: bool,
+
+    /// embeds the data of the images directly in the html file instead of using a proxy
+    #[arg(short, long)]
+    pub embeded_images: bool,
 
     #[command(subcommand)]
     pub command: Option<Commands>,

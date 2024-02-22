@@ -24,8 +24,8 @@ const RU: &str = "🇷🇺"; //russian
 const TH: &str = "🇹🇭"; //thailand
 const TR: &str = "🇹🇷"; //turkish
 const RO: &str = "🇷🇴"; //romanian
-const UNKNOWN: &str = "🌍"; //unknown flag
-const ERROR: &str = "⚠️"; //unknown flag
+const UNKNOWN: &str = "🌍"; //unknown language flag
+const ERROR: &str = "⚠️"; //used when a known error happens
 
 #[derive(Clone, Debug)]
 pub struct Language {

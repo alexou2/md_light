@@ -1,9 +1,7 @@
-use crate::api_error;
 use crate::api_error::ApiError;
 use crate::language::Language;
 use crate::md_struct::*;
 use crate::utills::*;
-use clap::builder::Str;
 use lazy_static::lazy_static;
 
 use reqwest::{header::USER_AGENT, Client};
@@ -44,7 +42,6 @@ pub async fn test_connection() -> Result<ServerStatus, ApiError> {
 pub async fn request_with_agent(url: String) -> Result<String, ApiError> {
     // initializes a new client if none is passed as argument
     // let client = reqwest::Client::new();
-    println!("{}", url);
     let response = CLIENT
         .get(url)
         // .header(reqwest::header::USER_AGENT, USER_AGENT)
@@ -504,7 +501,6 @@ pub async fn get_manga_chapters(
     // ) -> Result<Vec<Result<Chapter, ApiError>>, ApiError> {
 ) -> Result<MangaChapters, ApiError> {
     let url = format!("{}/manga/{}/feed", BASE_URL, manga_id);
-    println!("url: {}", url);
 
     let chapter_json = sync_chap(url, offset, language).await?;
 
@@ -703,19 +699,7 @@ async fn parse_json(response: &str) -> Result<Value, ApiError> {
     }
 }
 
-// #[tokio::main]
-// #[test]
-pub async fn tt() {
-    let chaps = get_prev_and_next_chapters(
-        "32a379d5-8bef-471b-9bfb-d52407d9ea84".to_string(),
-        0.5,
-        "142cab1a-005c-499b-9bdf-ff73cf5abd4a".to_string(),
-        "en".to_string(),
-    )
-    .await
-    .unwrap();
-    println!("{:#?}", chaps);
-}
+
 
 /// returns the previous and next chapter
 pub async fn get_prev_and_next_chapters(
@@ -741,12 +725,12 @@ pub async fn get_prev_and_next_chapters(
     let mut next = None;
 
 
-
-println!(r"idx: {index}
-len:{}" ,chapters.chapters.len());
+// sets the next chapter
     if index != chapters.chapters.len()-1 {
         next = Some(chapters.chapters[index + 1].as_ref().unwrap().clone())
     }
+
+    // sets the previous chapter
     if index > 0 {
         prev = Some(chapters.chapters[index - 1].as_ref().unwrap().clone())
     }

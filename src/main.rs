@@ -254,7 +254,7 @@ async fn kill_server(path: HttpRequest) -> impl Responder {
 // kills the server
 #[get("/test")]
 async fn test_code() -> impl Responder {
-    online_md::tt().await;
+    tests::test().await;
 
     "123".to_string()
 }
