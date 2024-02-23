@@ -65,10 +65,16 @@ async fn main() -> std::io::Result<()> {
         println!("ip address: {}", lan_addr)
     }
 
+
+
     server.run().await
 }
 
-
+// fn test_fn(){
+//     let mut buffer = String::new();
+//     let stdin = std::io::stdin(); // We get `Stdin` here.
+//     stdin.read_line(&mut buffer).unwrap();
+// }
 
 
 

@@ -1,9 +1,11 @@
 use crate::api_error::ApiError;
 pub use crate::md_struct::*;
 use crate::online_md;
+use clap::builder::Str;
 use lazy_static::lazy_static;
 use markdown::to_html;
 use serde_json::value::{to_value, Value};
+use std::borrow::BorrowMut;
 use std::collections::HashMap;
 use tera::try_get_value;
 use tera::{Context, Function, Tera};
@@ -14,10 +16,10 @@ use tera::{Context, Function, Tera};
 // }
 
 /// uses the proxied url for images
-pub fn proxy_url(value: &Value, _: &HashMap<String, Value>) -> tera::Result<Value> {
-    let url = try_get_value!("proxy_url", "value", String, value);
-    // let localhost = try_get_value!("proxy_url", "is_localhost", bool, value);
-    // println!("{}, {}", url, localhost);
+pub fn markdown(value: &Value, _: &HashMap<String, Value>) -> tera::Result<Value> {
+    let mut url = try_get_value!("markdown", "value", String, value);
+    url = to_html(&url);
+    
     Ok(to_value(url).unwrap())
 }
 pub fn get_random(_: &HashMap<String, Value>) -> tera::Result<Value> {
@@ -25,7 +27,7 @@ pub fn get_random(_: &HashMap<String, Value>) -> tera::Result<Value> {
 }
 
 lazy_static! {
-    pub static ref TEMPLATES: Tera = {
+    static ref  TEMPLATES: Tera = {
         let mut tera = match Tera::new("templates/*") {
             Ok(t) => t,
             Err(e) => {
@@ -35,7 +37,7 @@ lazy_static! {
         };
         tera.register_function("url_for", get_random);
         // tera.autoescape_on(vec!["html", ".sql", "jpg", "svg"]);
-        tera.register_filter("proxy_image", proxy_url);
+        tera.register_filter("markdown", markdown);
 
         tera
     };
@@ -95,8 +97,9 @@ pub fn render_manga_info(manga: MangaInfo, is_localhost: bool, embeded_images: b
     context.insert("manga_name", &manga.manga_name);
 
     context.insert("cover", &manga.cover);
-    let html = to_html(&manga.description);
-    context.insert("description", &html);
+    // let html = to_html(&manga.description);
+    // context.insert("description", &html);
+    context.insert("description", &manga.description);
     context.insert("authors", &manga.author);
     context.insert("manga_id", &manga.manga_id);
 
@@ -174,9 +177,9 @@ pub async fn render_chapter_view(
     }
     context.insert("proxy_url", proxy_url);
 
-    if embeded_images {
-        pages =  online_md::get_image_data(pages).await;
-    };
+    // if embeded_images {
+    //     pages =  online_md::get_image_data(pages).await;
+    // };
 
     TEMPLATES
         .render("read_chapter.html", &context)
@@ -184,11 +187,12 @@ pub async fn render_chapter_view(
 }
 
 /// renders the author page with its titles
-pub fn render_author(author_info: AuthorInfo, is_localhost: bool) -> String {
+pub fn render_author(titles: ShortMangaInfo, is_localhost: bool, author_name: String) -> String {
     let mut context = Context::new();
 
-    context.insert("is_localhost", &is_localhost);
-    context.insert("author", &author_info);
+    context.insert("author_name", &author_name);
+    context.insert("titles", &titles);
+    context.insert("proxy_url", get_proxy_url(is_localhost));
 
     TEMPLATES
         .render("author.html", &context)
@@ -199,4 +203,11 @@ pub fn render_author(author_info: AuthorInfo, is_localhost: bool) -> String {
 fn round_idx(x: i32) -> i32 {
     let x: f32 = x as f32;
     (x / 100.0).ceil() as i32
+}
+fn get_proxy_url(is_localhost: bool) -> &'static str {
+    let mut proxy_url = "";
+    if is_localhost {
+        proxy_url = "/proxy/images/"
+    }
+    proxy_url
 }

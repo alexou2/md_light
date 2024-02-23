@@ -1,5 +1,4 @@
 use crate::api_error::ApiError;
-use crate::language::*;
 use crate::md_struct::*;
 use maud::*;
 
@@ -24,22 +23,22 @@ fn get_top_bar() -> PreEscaped<String> {
     top_bar
 }
 
-fn get_desc(desc: String) -> PreEscaped<String> {
-    html! {(PreEscaped(&desc))}
-}
+// fn get_desc(desc: String) -> PreEscaped<String> {
+//     html! {(PreEscaped(&desc))}
+// }
 
-fn get_return_to_manga(manga_id: String) -> PreEscaped<String> {
-    // let manga_id = path.split("/").collect::<Vec<&str>>()[2];
-    let home = html!(
+// fn get_return_to_manga(manga_id: String) -> PreEscaped<String> {
+//     // let manga_id = path.split("/").collect::<Vec<&str>>()[2];
+//     let home = html!(
 
-        div.bottom_bar{
-            img.feather src = "/ressources/feather.svg";
-            h1.go_home{a href = (format!("/manga/{}", manga_id)); "back to manga"}
+//         div.bottom_bar{
+//             img.feather src = "/ressources/feather.svg";
+//             h1.go_home{a href = (format!("/manga/{}", manga_id)); "back to manga"}
 
-        }
-    );
-    home
-}
+//         }
+//     );
+//     home
+// }
 
 fn get_correct_image(is_localhost: bool, image_thumbnail: String) -> String {
     if !is_localhost {
@@ -49,40 +48,40 @@ fn get_correct_image(is_localhost: bool, image_thumbnail: String) -> String {
     }
 }
 
-pub fn render_homepage(feed: MdHomepageFeed, is_localhost: bool) -> String {
-    let popular_manga = feed.currently_popular;
-    let new_chapters = feed.new_chapter_releases;
-    let template = html!(
-            (DOCTYPE)
-            link rel="stylesheet" href="ressources/styles.css";
-            script src = {"/ressources/index.js"}{}
-            title  {"Home | MD_Light"}
-            body {
-            // h1 {"HOME"}
-            (get_top_bar())
-            div.popular{
-                @for i in popular_manga{
-                    div.popular-manga{
-                        a href = (format!("/manga/{}",i.id)){
-                            img src = (get_correct_image(is_localhost, i.cover))loading="lazy";
-                            {(i.title)}
-                        }
-                    }
-            }
-            }
-            div.new-release{
-                @for chapter in new_chapters{
-                    div.new_chapter{
-                a.chapter href = (format!("/manga/{manga_id}/{chapter_id}", manga_id = chapter.manga_id, chapter_id = chapter.chapter_id)){
-                    {(chapter.chapter_name) (to_flag_str(chapter.language.as_str()))}
-                };
-            }
-                }
-            }
-        }
-    );
-    template.into_string()
-}
+// pub fn render_homepage(feed: MdHomepageFeed, is_localhost: bool) -> String {
+//     let popular_manga = feed.currently_popular;
+//     let new_chapters = feed.new_chapter_releases;
+//     let template = html!(
+//             (DOCTYPE)
+//             link rel="stylesheet" href="ressources/styles.css";
+//             script src = {"/ressources/index.js"}{}
+//             title  {"Home | MD_Light"}
+//             body {
+//             // h1 {"HOME"}
+//             (get_top_bar())
+//             div.popular{
+//                 @for i in popular_manga{
+//                     div.popular-manga{
+//                         a href = (format!("/manga/{}",i.id)){
+//                             img src = (get_correct_image(is_localhost, i.cover))loading="lazy";
+//                             {(i.title)}
+//                         }
+//                     }
+//             }
+//             }
+//             div.new-release{
+//                 @for chapter in new_chapters{
+//                     div.new_chapter{
+//                 a.chapter href = (format!("/manga/{manga_id}/{chapter_id}", manga_id = chapter.manga_id, chapter_id = chapter.chapter_id)){
+//                     {(chapter.chapter_name) (to_flag_str(chapter.language.as_str()))}
+//                 };
+//             }
+//                 }
+//             }
+//         }
+//     );
+//     template.into_string()
+// }
 
 // pub fn render_manga_info_page(manga_info: MangaInfo, is_localhost: bool) -> String {
 //     println!("{}\n{}", manga_info.description, to_html(&manga_info.description));
@@ -173,30 +172,30 @@ pub fn render_homepage(feed: MdHomepageFeed, is_localhost: bool) -> String {
 //     template.into_string()
 // }
 
-pub fn render_search_page(search_results: Vec<ShortMangaInfo>, is_localhost: bool) -> String {
-    let template = html!(
-            (DOCTYPE)
-            link rel="stylesheet" href="/ressources/styles.css";
-            script src = {"/ressources/index.js"}{}
-            title  {"Search | MD_Light"}
+// pub fn render_search_page(search_results: Vec<ShortMangaInfo>, is_localhost: bool) -> String {
+//     let template = html!(
+//             (DOCTYPE)
+//             link rel="stylesheet" href="/ressources/styles.css";
+//             script src = {"/ressources/index.js"}{}
+//             title  {"Search | MD_Light"}
 
-            body {
-                (get_top_bar())
-            h1 {"search results"}
-            div.search_list.works{
-                @for i in search_results{
-                    div.manga_restult.title{
-                        a href = (format!("/manga/{}",i.id)){
-                            img src = (get_correct_image(is_localhost, i.cover))loading="lazy";
-                        div.manga-title{(i.title)}
-                        }
-                    }
-                }
-            }
-        }
-    );
-    template.into_string()
-}
+//             body {
+//                 (get_top_bar())
+//             h1 {"search results"}
+//             div.search_list.works{
+//                 @for i in search_results{
+//                     div.manga_restult.title{
+//                         a href = (format!("/manga/{}",i.id)){
+//                             img src = (get_correct_image(is_localhost, i.cover))loading="lazy";
+//                         div.manga-title{(i.title)}
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+//     );
+//     template.into_string()
+// }
 
 // renders the error page and shows the user the
 pub fn render_error_page(error_code: ApiError, requested_page: &str) -> String {
@@ -283,43 +282,43 @@ pub fn get_server_options() -> String {
     template.into_string()
 }
 
-pub fn render_complete_search(
-    search_data: (Vec<ShortMangaInfo>, Vec<AuthorInfo>),
-    is_localhost: bool,
-    query: String,
-) -> String {
-    let search_results = search_data.0;
-    let authors = search_data.1;
+// pub fn render_complete_search(
+//     search_data: (Vec<ShortMangaInfo>, Vec<AuthorInfo>),
+//     is_localhost: bool,
+//     query: String,
+// ) -> String {
+//     let search_results = search_data.0;
+//     let authors = search_data.1;
 
-    let template = html!(
-            (DOCTYPE)
-            link rel="stylesheet" href="/ressources/styles.css";
-            script src = {"/ressources/index.js"}{}
-            title  {"Search | MD_Light"}
+//     let template = html!(
+//             (DOCTYPE)
+//             link rel="stylesheet" href="/ressources/styles.css";
+//             script src = {"/ressources/index.js"}{}
+//             title  {"Search | MD_Light"}
 
-            body {
-                (get_top_bar())
-                h1 {"search " (query)}
-            h2 {(search_results.len())" titles"}
-            div.search_list.works{
-                @for i in search_results{
-                    div.manga_result.title{
-                        a href = (format!("/manga/{}",i.id)){
-                            img src = (get_correct_image(is_localhost, i.cover))loading="lazy";
-                        div.manga-title{(i.title)}
-                        }
-                    }
-                }
-            }
-            h2 {(authors.len())" authors"}
-            div.search_author{
-                @for i in authors{
-                    div.author_result{
-                        a href = {"/author/"(i.id)}{(i.name)};
-                    }
-                }
-            }
-        }
-    );
-    template.into_string()
-}
+//             body {
+//                 (get_top_bar())
+//                 h1 {"search " (query)}
+//             h2 {(search_results.len())" titles"}
+//             div.search_list.works{
+//                 @for i in search_results{
+//                     div.manga_result.title{
+//                         a href = (format!("/manga/{}",i.id)){
+//                             img src = (get_correct_image(is_localhost, i.cover))loading="lazy";
+//                         div.manga-title{(i.title)}
+//                         }
+//                     }
+//                 }
+//             }
+//             h2 {(authors.len())" authors"}
+//             div.search_author{
+//                 @for i in authors{
+//                     div.author_result{
+//                         a href = {"/author/"(i.id)}{(i.name)};
+//                     }
+//                 }
+//             }
+//         }
+//     );
+//     template.into_string()
+// }

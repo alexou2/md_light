@@ -17,13 +17,16 @@
             <input autocomplete="off" id="search_box" type="text" name="query" placeholder="Search" required>
         </form>
     </div>
-    
-    <h1 class="author_name">{{author.name}}</h1>
+
+    <h1 class="author_name">{{author_name}}</h1>
+    <h3>{{titles | length}}</h3>
     <div class="works" id="works">
+
         {% for title in titles %}
-        <div class="title">
-            <a class="title-image" href="/manga/{{title.id}}"><img src="{{proxy_url}}{{title.cover}}" alt="image not found">
-                <div class="manga-title">{{manga.name}}</div>
+        <div class="title" title="{{title.description}}">
+            <a class="title-image" href="/manga/{{title.id}}"><img src="{{proxy_url}}{{title.cover}}"
+                    alt="image not found">
+                <div class="manga-title">{{title.title}}</div>
             </a>
         </div>
         {% endfor %}

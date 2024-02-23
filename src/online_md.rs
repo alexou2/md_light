@@ -716,7 +716,7 @@ pub async fn get_prev_and_next_chapters(
             next = Some(chapters.chapters[index + 1].as_ref().unwrap().clone())
         }
 
-    // sets the previous chapter
+        // sets the previous chapter
         if index > 0 {
             prev = Some(chapters.chapters[index - 1].as_ref().unwrap().clone())
         }
@@ -744,46 +744,4 @@ fn get_offset_from_f32(number: &str) -> i32 {
         offset = 0;
     }
     offset
-}
-
-/// gets the data of images for
-pub async fn get_image_data(image_vec: Vec<String>) -> Vec<String> {
-    let mut handles = vec![];
-    let st = std::time::Instant::now();
-
-    for img in image_vec {
-        handles.push(tokio::spawn(get_image_hash(img)));
-        println!("page saved");
-    }
-    let mut image_data = vec![];
-    for i in handles {
-        image_data.push(i.await.unwrap())
-    }
-    println!("encode time; {:#?}", st.elapsed());
-
-    image_data
-}
-
-/// encodes the image to base64
-async fn get_image_hash(image_url: String) -> String {
-    let response = CLIENT.get(&image_url).send().await;
-
-    match response {
-        Ok(resp) => match resp.bytes().await {
-            Ok(image_byte) => format_base64_image(image_byte),
-            Err(_) => {
-                println!("can't geet image");
-                "/ressources/feather.svg".into()
-            }
-        },
-        Err(_) => {
-            println!("can't geet image");
-            "/ressources/feather.svg".into()
-        }
-    }
-}
-
-fn format_base64_image(image_byte: Bytes) -> String {
-    let hash = BASE64_STANDARD.encode(image_byte);
-    format!("data:image/jpeg;base64, {hash}")
 }
