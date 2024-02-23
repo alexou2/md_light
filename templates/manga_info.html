@@ -21,27 +21,30 @@
         <div class="manga_info">
             <div class="row_1">
                 <img class="manga_cover" src="{{proxy_url}}{{cover}}" alt="image not found">
-                <h1 class="manga_title">{{manga_name}}</h1>
+                <!-- </div> -->
+                <div class="col_2">
+
+                    <div class="manga_title">{{manga_name}}</div>
+
+                    <!-- the list of authors/ artists -->
+                    <div class="author_list">
+                        <h3>Authors: </h3>
+                        {% for auth in authors %}
+                        <div class="author" id="{{auth.role}}">
+                            <img class="profile" src="/ressources/profile.svg">
+                            <a href="/author/{{auth.author_id}}">{{auth.role |title}}: {{auth.author_name}}</a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
             <div class="row_2">
-
-
-                <!-- the list of authors/ artists -->
-
-                <div class="author_list">
-                    <h3>Authors: </h3>
-                    {% for auth in authors %}
-                    <div class="author" id="{{auth.role}}">
-                        <img class="profile" src="/ressources/profile.svg">
-                        <a href="/author/{{auth.author_id}}">{{auth.role |title}}: {{auth.author_name}}</a>
-                    </div>
-                    {% endfor %}
-                </div>
-
 
                 <div class="description">
                     <div class="description_text">{{description | markdown | safe}}</div>
                 </div>
+
+
             </div>
         </div>
         <!-- chapters will go here -->
