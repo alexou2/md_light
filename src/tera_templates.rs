@@ -15,16 +15,14 @@ use tera::{Context, Function, Tera};
 //     Ok(format!("Custom function called with input: {:?}", text))
 // }
 
-/// uses the proxied url for images
+/// filter to convert markdown to html
 pub fn markdown(value: &Value, _: &HashMap<String, Value>) -> tera::Result<Value> {
     let mut url = try_get_value!("markdown", "value", String, value);
     url = to_html(&url);
     
     Ok(to_value(url).unwrap())
 }
-pub fn get_random(_: &HashMap<String, Value>) -> tera::Result<Value> {
-    Ok("12".into())
-}
+
 
 lazy_static! {
     static ref  TEMPLATES: Tera = {
@@ -35,8 +33,6 @@ lazy_static! {
                 ::std::process::exit(1);
             }
         };
-        tera.register_function("url_for", get_random);
-        // tera.autoescape_on(vec!["html", ".sql", "jpg", "svg"]);
         tera.register_filter("markdown", markdown);
 
         tera
@@ -59,13 +55,8 @@ pub fn render_complete_search(
     context.insert("author_number", &search_data.1.len());
 
     context.insert("author_list", &search_data.1);
+    context.insert("proxy_url", get_proxy_url(is_localhost));
 
-    // data for the images
-    let mut proxy_url = "";
-    if is_localhost {
-        proxy_url = "/proxy/images/"
-    }
-    context.insert("proxy_url", proxy_url);
 
     TEMPLATES
         .render("search.html", &context)
@@ -78,12 +69,8 @@ pub fn render_homepage(feed: MdHomepageFeed, is_localhost: bool, embeded_images:
     context.insert("popular_manga", &feed.currently_popular);
     context.insert("new_chapters", &feed.new_chapter_releases);
 
-    // data for the images
-    let mut proxy_url = "";
-    if is_localhost {
-        proxy_url = "/proxy/images/"
-    }
-    context.insert("proxy_url", proxy_url);
+    context.insert("proxy_url", get_proxy_url(is_localhost));
+
 
     TEMPLATES
         .render("home.html", &context)
@@ -103,12 +90,8 @@ pub fn render_manga_info(manga: MangaInfo, is_localhost: bool, embeded_images: b
     context.insert("authors", &manga.author);
     context.insert("manga_id", &manga.manga_id);
 
-    // data for the images
-    let mut proxy_url = "";
-    if is_localhost {
-        proxy_url = "/proxy/images/"
-    }
-    context.insert("proxy_url", proxy_url);
+    context.insert("proxy_url", get_proxy_url(is_localhost));
+    
 
     TEMPLATES
         .render("manga_info.html", &context)
@@ -134,12 +117,8 @@ pub fn render_manga_chapters(
     context.insert("total", &round_idx(chapters.total));
     context.insert("is_localhost", &is_localhost);
 
-    // data for the images
-    let mut proxy_url = "";
-    if is_localhost {
-        proxy_url = "/proxy/images/"
-    }
-    context.insert("proxy_url", proxy_url);
+   
+    context.insert("proxy_url", get_proxy_url(is_localhost));
 
     let rendered = TEMPLATES
         .render("manga_chapter.html", &context)
@@ -170,12 +149,8 @@ pub async fn render_chapter_view(
 
     context.insert("manga_id", &manga_id);
 
-    // data for the images
-    let mut proxy_url = "";
-    if is_localhost {
-        proxy_url = "/proxy/images/"
-    }
-    context.insert("proxy_url", proxy_url);
+    context.insert("proxy_url", get_proxy_url(is_localhost));
+
 
     // if embeded_images {
     //     pages =  online_md::get_image_data(pages).await;
@@ -206,7 +181,7 @@ fn round_idx(x: i32) -> i32 {
 }
 fn get_proxy_url(is_localhost: bool) -> &'static str {
     let mut proxy_url = "";
-    if is_localhost {
+    if !is_localhost {
         proxy_url = "/proxy/images/"
     }
     proxy_url

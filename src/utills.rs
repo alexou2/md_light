@@ -28,12 +28,12 @@ pub fn get_offset_time() -> String {
 pub fn check_localhost(path: &HttpRequest) -> bool {
     let binding = path.connection_info();
     let ip = binding.peer_addr().expect("unable to get client IP");
-
-    // match ip {
-    //     "172.0.0.1" | "localhost" => true,
-    //     _ => false,
-    // }
-    matches!(ip, "172.0.0.1" | "localhost")
+println!("{}", ip);
+    match ip {
+        "172.0.0.1" | "localhost" => true,
+        _ => false,
+    }
+    // matches!(ip, "172.0.0.1" | "localhost")
 }
 
 pub fn get_current_time() -> String {
