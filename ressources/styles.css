@@ -53,6 +53,23 @@ img.profile {
   margin: .5em;
 }
 
+.change-chapter {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.chapter-button {
+  background-color: #3498db;
+  margin: 1em;
+padding: 1em;
+  border-radius: 1em;
+  color: black;
+  width: 40%;
+  text-align: center;
+  font-size: 2em;
+}
 
 #search_box {
   padding: .5em;
@@ -173,10 +190,11 @@ img.cover_art {
 
 }
 
-.col_2{
+.col_2 {
   margin: 1em;
   /* min-width: 50%; */
 }
+
 .row_2 {
   display: flex;
   flex-wrap: nowrap;

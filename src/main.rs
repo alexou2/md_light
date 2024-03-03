@@ -20,14 +20,12 @@ use colored::Colorize;
 use lazy_static::lazy_static;
 use local_ip_address::local_ip;
 use query_struct::*;
-use reqwest::Client;
+use reqwest::{Client};
 use tera_templates::render_chapter_view;
 
 lazy_static! {
     static ref CLIENT: Client = Client::new();
 }
-
-
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -44,6 +42,8 @@ async fn main() -> std::io::Result<()> {
     let mut server = HttpServer::new(|| {
         App::new()
             .route("/proxy/images/{image_url:.+}", web::get().to(image_proxy))
+            // .default_service(web::route().to(not_found()))
+            .default_service(web::route().to(not_found))
             .service(index)
             .service(kill_server)
             .service(get_server_options)
@@ -65,24 +65,19 @@ async fn main() -> std::io::Result<()> {
         println!("ip address: {}", lan_addr)
     }
 
-
-
     server.run().await
 }
 
-// fn test_fn(){
-//     let mut buffer = String::new();
-//     let stdin = std::io::stdin(); // We get `Stdin` here.
-//     stdin.read_line(&mut buffer).unwrap();
-// }
+/// handles any pages that aren't handled by the
+async fn not_found() -> impl Responder {
+    HttpResponse::NotFound().body("Page not found.")
+}
 
-
-
-/// the homepage 
+/// the homepage
 #[get("/")]
 async fn index(path: HttpRequest) -> HttpResponse {
     let is_localhost = utills::check_localhost(&path);
-let embeded_images = CONFIG.embeded;
+    let embeded_images = CONFIG.embeded;
     let feed = online_md::get_md_homepage_feed(CONFIG.datasaver).await;
 
     // handles the errors by sending the error page
@@ -129,8 +124,7 @@ async fn get_chapters(
 ) -> HttpResponse {
     let requested_page = path.path();
     let is_localhost = utills::check_localhost(&path);
-let embeded_images = CONFIG.embeded;
-
+    let embeded_images = CONFIG.embeded;
 
     let chapters =
         online_md::get_manga_chapters(manga_id.to_string(), infos.language.clone(), infos.offset)
@@ -142,7 +136,7 @@ let embeded_images = CONFIG.embeded;
         infos.offset,
         manga_id.to_string(),
         is_localhost,
-        embeded_images
+        embeded_images,
     );
 
     // handles the errors by sending the error page
@@ -209,7 +203,12 @@ async fn search(path: HttpRequest, params: web::Query<SearchQuery>) -> HttpRespo
 
     let html = match search_result {
         // Ok(e) => manga_templates::render_complete_search(e, is_localhost, query.to_string()),
-        Ok(e) => tera_templates::render_complete_search(e, search_query.to_string(), is_localhost, embeded_images),
+        Ok(e) => tera_templates::render_complete_search(
+            e,
+            search_query.to_string(),
+            is_localhost,
+            embeded_images,
+        ),
         Err(v) => manga_templates::render_error_page(v, path.path()),
     };
 

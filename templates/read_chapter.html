@@ -16,15 +16,21 @@
         </form>
     </div>
 
+    <!-- prev and next chapters -->
+    <div class="change-chapter">
+        {% if has_prev %}
+        <a class="prev-chap chapter-button"
+            href="/manga/{{manga_id}}/{{prev_chap.chapter_id}}/{{prev_chap.chapter_number}}/{{prev_chap.language.lang}}">prev
+            chapter</a>
+        {% endif %}
 
-    {% if has_prev %}
-    <a href="/manga/{{manga_id}}/{{prev_chap.chapter_id}}/{{prev_chap.chapter_number}}/{{prev_chap.language.lang}}">prev chapter</a>
-    {% endif %}
-
-    {% if has_next %}
-    <a href="/manga/{{manga_id}}/{{next_chap.chapter_id}}/{{next_chap.chapter_number}}/{{next_chap.language.lang}}">next chapter</a>
-    {% endif %}
-
+        {% if has_next %}
+        <a class="next-chap chapter-button"
+            href="/manga/{{manga_id}}/{{next_chap.chapter_id}}/{{next_chap.chapter_number}}/{{next_chap.language.lang}}">next
+            chapter</a>
+        {% endif %}
+    </div>
+    <!-- the chapter pages -->
     {% for page in chapter %}
     <div class="page_list" onclick="goFullscreen()">
         <img class="chapter_page" src="{{proxy_url}}{{page}}" alt="image not found">
@@ -33,6 +39,24 @@
 
     {% endfor %}
 
+    <!-- prev and next chapters -->
+    <div class="change-chapter">
+
+        {% if has_prev %}
+        <a class="prev-chap chapter-button"
+            href="/manga/{{manga_id}}/{{prev_chap.chapter_id}}/{{prev_chap.chapter_number}}/{{prev_chap.language.lang}}">prev
+            chapter</a>
+        {% endif %}
+
+        {% if has_next %}
+        <a class="next-chap chapter-button"
+            href="/manga/{{manga_id}}/{{next_chap.chapter_id}}/{{next_chap.chapter_number}}/{{next_chap.language.lang}}">next
+            chapter</a>
+        {% endif %}
+    </div>
+<div class="go-back">
+    <a href="/manga/{{manga_id}}"><img src="/ressources/feather.svg"></a>
+</div>
 
 </body>
 
