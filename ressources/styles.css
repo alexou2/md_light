@@ -214,8 +214,6 @@ img.cover_art {
 
 
 
-img.manga_cover:hover {}
-
 img.manga_cover {
   object-fit: contain;
 

@@ -20,7 +20,7 @@ use colored::Colorize;
 use lazy_static::lazy_static;
 use local_ip_address::local_ip;
 use query_struct::*;
-use reqwest::{Client};
+use reqwest::Client;
 use tera_templates::render_chapter_view;
 
 lazy_static! {
@@ -70,7 +70,9 @@ async fn main() -> std::io::Result<()> {
 
 /// handles any pages that aren't handled by the
 async fn not_found() -> impl Responder {
-    HttpResponse::NotFound().body("Page not found.")
+    actix_web::web::Redirect::to("../").see_other()
+
+    // HttpResponse::NotFound().body("Page not found.")
 }
 
 /// the homepage
